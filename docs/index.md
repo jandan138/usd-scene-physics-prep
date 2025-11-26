@@ -27,6 +27,7 @@ title: USD Scene Physics Prep 文档主页
   - [环境与依赖](references/dependencies.md)
 - 规格说明
   - [数据目录结构规范解读](specs/dataset_structure_interpretation.md)
+  - [目录结构对比：原始输出 vs 规范结构](specs/structure_comparison.md)
 - 运维
   - [Windows 使用注意](operations/windows_notes.md)
   - [环境准备建议](operations/environment_setup.md)
