@@ -25,6 +25,8 @@ title: USD Scene Physics Prep 文档主页
 - 引用与依赖
   - [资产与材质引用](references/assets_and_materials.md)
   - [环境与依赖](references/dependencies.md)
+- 规格说明
+  - [数据目录结构规范解读](specs/dataset_structure_interpretation.md)
 - 运维
   - [Windows 使用注意](operations/windows_notes.md)
   - [环境准备建议](operations/environment_setup.md)
@@ -35,4 +37,3 @@ title: USD Scene Physics Prep 文档主页
 ## 快速链接
 - 仓库主页：`https://github.com/jandan138/usd-scene-physics-prep`
 - Pages（启用后）：`https://jandan138.github.io/usd-scene-physics-prep/`
-

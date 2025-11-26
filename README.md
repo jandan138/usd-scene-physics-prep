@@ -21,6 +21,8 @@
 - 引用与依赖
   - `docs/references/assets_and_materials.md`
   - `docs/references/dependencies.md`
+- 规格说明
+  - `docs/specs/dataset_structure_interpretation.md`
 - 运维
   - `docs/operations/windows_notes.md`
   - `docs/operations/environment_setup.md`
