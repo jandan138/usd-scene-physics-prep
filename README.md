@@ -24,6 +24,7 @@
 - 规格说明
   - `docs/specs/dataset_structure_interpretation.md`
   - `docs/specs/structure_comparison.md`
+  - `docs/specs/normalizer_usage.md`
 - 运维
   - `docs/operations/windows_notes.md`
   - `docs/operations/environment_setup.md`
