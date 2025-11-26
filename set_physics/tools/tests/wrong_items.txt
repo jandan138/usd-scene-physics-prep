@@ -1,0 +1,15 @@
+>>>>>>>>>>>>>>>>>> 空的 instance，检查在哪些场景里存在，是否可以直接删除？
+/ssd/tianshihan/fixed/target/models/layout/articulated/door_
+路径前缀↑
+<<<<<<<<<<<<<<<<<<
+
+
+>>>>>>>>>>>>>>>>>> 没有铰链的窗户，分类错误
+/ssd/tianshihan/fixed/target/models/layout/articulated/window/57b5ab9d79328ea86e508fa7847e18b2/instance.usd
+/ssd/tianshihan/fixed/target/models/layout/articulated/window/493156d72b6cd7ee3bedab86b117d967/instance.usd
+/ssd/tianshihan/fixed/target/models/layout/articulated/window/e02519f806084e5ef93f957c011e5f67/instance.usd
+/ssd/tianshihan/fixed/target/models/layout/articulated/window/5cedccc0878f5f0681f0b432b8931164/instance.usd
+/ssd/tianshihan/fixed/target/models/layout/articulated/window/3650a53a12cbee05b7c5a3de00115131/instance.usd
+
+
+<<<<<<<<<<<<<<<<<<
