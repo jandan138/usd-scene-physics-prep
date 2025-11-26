@@ -11,48 +11,97 @@ import os
 
 # 校验函数，返回 (ok, issues)
 def validate_structure(src_root):
-    issues = []  # 收集问题列表
-    ok = True    # 总体是否通过
-    mats = os.path.join(src_root, "Materials")  # 材质目录路径
-    models = os.path.join(src_root, "models")   # 模型目录路径
-    scenes = os.path.join(src_root, "scenes")   # 场景目录路径
+    issues = []
+    ok = True
+    summary = {"materials": None, "models": {}, "scenes": None}
+    mats = os.path.join(src_root, "Materials")
+    models = os.path.join(src_root, "models")
+    scenes = os.path.join(src_root, "scenes")
     if not os.path.isdir(mats):
-        ok = False  # 缺少材质目录
+        ok = False
         issues.append("missing Materials")
+        summary["materials"] = {"exists": False, "has_mdl": False, "mdl_count": 0, "has_textures": False, "textures_dir": None}
     else:
-        # 至少应存在 .mdl 或 Textures 子目录
-        has_mdl = any(f.lower().endswith(".mdl") for f in os.listdir(mats) if os.path.isfile(os.path.join(mats, f)))
-        has_tex = os.path.isdir(os.path.join(mats, "Textures"))
-        if not has_mdl and not has_tex:
-            issues.append("Materials has no mdl or Textures")
+        mdl_count = sum(1 for f in os.listdir(mats) if os.path.isfile(os.path.join(mats, f)) and f.lower().endswith(".mdl"))
+        has_mdl = mdl_count > 0
+        tex_dir_name = None
+        for d in os.listdir(mats):
+            if os.path.isdir(os.path.join(mats, d)) and d.lower() == "textures":
+                tex_dir_name = d
+                break
+        has_tex = tex_dir_name is not None
+        summary["materials"] = {"exists": True, "has_mdl": has_mdl, "mdl_count": mdl_count, "has_textures": has_tex, "textures_dir": tex_dir_name}
+        if not has_mdl:
+            ok = False
+            issues.append("Materials missing mdl")
+        if not has_tex:
+            ok = False
+            issues.append("Materials missing Textures")
     if not os.path.isdir(models):
-        ok = False  # 缺少模型目录
+        ok = False
         issues.append("missing models")
     else:
-        # 至少存在期望的 scope/子类别组合中的任意一个
         scopes = ["layout", "object"]
         subcats = ["articulated", "others"]
         found_any = False
+        models_summary = {}
         for s in scopes:
+            models_summary.setdefault(s, {})
             for c in subcats:
                 p = os.path.join(models, s, c)
+                cat_summary = {}
                 if os.path.isdir(p):
                     found_any = True
+                    for category in os.listdir(p):
+                        cat_path = os.path.join(p, category)
+                        if not os.path.isdir(cat_path):
+                            continue
+                        uids_total = 0
+                        uids_with_usd = 0
+                        uids_missing = []
+                        for uid in os.listdir(cat_path):
+                            uid_path = os.path.join(cat_path, uid)
+                            if not os.path.isdir(uid_path):
+                                continue
+                            uids_total += 1
+                            has_usd = any(os.path.isfile(os.path.join(uid_path, f)) and f.lower().endswith((".usd", ".usda", ".usdc")) for f in os.listdir(uid_path))
+                            if has_usd:
+                                uids_with_usd += 1
+                            else:
+                                uids_missing.append(uid)
+                        if uids_total > 0:
+                            cat_summary[category] = {"uids_total": uids_total, "uids_with_usd": uids_with_usd, "uids_missing_usd": uids_missing}
+                            if uids_missing:
+                                ok = False
+                                issues.append(f"models {s}/{c}/{category} missing usd in some uids")
+                models_summary[s][c] = cat_summary
         if not found_any:
             issues.append("models has no expected subfolders")
+        summary["models"] = models_summary
     if not os.path.isdir(scenes):
-        ok = False  # 缺少场景目录
+        ok = False
         issues.append("missing scenes")
+        summary["scenes"] = {"exists": False, "total_scene_dirs": 0, "with_any_usd": 0, "missing_any_usd": 0, "details": {"missing": [], "present": []}}
     else:
-        has_layout = False  # 是否找到 start_result_* 布局文件
-        for d in os.listdir(scenes):
-            sp = os.path.join(scenes, d)
-            if not os.path.isdir(sp):
-                continue
-            for nm in ["start_result_fix.usd", "start_result_new.usd"]:
-                if os.path.exists(os.path.join(sp, nm)):
-                    has_layout = True
-                    break
-        if not has_layout:
-            issues.append("no start_result_*.usd in scenes")
-    return ok, issues  # 返回是否通过及问题列表
+        subdirs = [d for d in os.listdir(scenes) if os.path.isdir(os.path.join(scenes, d))]
+        if not subdirs:
+            ok = False
+            issues.append("scenes has no subdir")
+            summary["scenes"] = {"exists": True, "total_scene_dirs": 0, "with_any_usd": 0, "missing_any_usd": 0, "details": {"missing": [], "present": []}}
+        else:
+            missing_any_usd = []
+            present = []
+            with_any = 0
+            for d in subdirs:
+                sp = os.path.join(scenes, d)
+                has_usd = any(os.path.isfile(os.path.join(sp, f)) and f.lower().endswith((".usd", ".usda", ".usdc")) for f in os.listdir(sp))
+                if has_usd:
+                    with_any += 1
+                    present.append(d)
+                else:
+                    missing_any_usd.append(d)
+            if missing_any_usd:
+                ok = False
+                issues.append("some scene dirs missing usd")
+            summary["scenes"] = {"exists": True, "total_scene_dirs": len(subdirs), "with_any_usd": with_any, "missing_any_usd": len(missing_any_usd), "details": {"missing": missing_any_usd, "present": present}}
+    return ok, issues, summary

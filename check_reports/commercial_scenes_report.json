@@ -1,0 +1,22 @@
+{
+  "mode": "scene_only",
+  "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes",
+  "ok": false,
+  "issues": [
+    "no start_result_*.usd found in any scene dir",
+    "some scene dirs missing layout usd"
+  ],
+  "summary": {
+    "total_scene_dirs": 3,
+    "with_layout": 0,
+    "missing_layout": 3,
+    "details": {
+      "missing": [
+        "scenes",
+        "models",
+        "Materials"
+      ],
+      "present": []
+    }
+  }
+}

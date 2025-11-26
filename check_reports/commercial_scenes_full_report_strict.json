@@ -1,0 +1,530 @@
+{
+  "mode": "full",
+  "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes",
+  "ok": true,
+  "issues": [],
+  "summary": {
+    "materials": {
+      "exists": true,
+      "has_mdl": true,
+      "mdl_count": 55,
+      "has_textures": true,
+      "textures_dir": "Textures"
+    },
+    "models": {
+      "layout": {
+        "articulated": {
+          "door_EA253481_2D3A_4169_A10B_A1E429C394EA": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "table": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "window": {
+            "uids_total": 154,
+            "uids_with_usd": 154,
+            "uids_missing_usd": []
+          },
+          "door_E5FB7A0D_3DC1_4768_9275_040EA0FB93E6": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door": {
+            "uids_total": 64,
+            "uids_with_usd": 64,
+            "uids_missing_usd": []
+          },
+          "door_37C6947E_D216_4A5A_BA26_8A5058390159": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "cabinet": {
+            "uids_total": 119,
+            "uids_with_usd": 119,
+            "uids_missing_usd": []
+          },
+          "door_76D1E7ED_803D_4349_B900_847EFA95BCAF": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_5B2F97C6_47A3_4EB4_B62E_1AF4671D2FF5": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          }
+        },
+        "others": {
+          "other": {
+            "uids_total": 567,
+            "uids_with_usd": 567,
+            "uids_missing_usd": []
+          },
+          "ceiling": {
+            "uids_total": 115,
+            "uids_with_usd": 115,
+            "uids_missing_usd": []
+          },
+          "wall": {
+            "uids_total": 1032,
+            "uids_with_usd": 1032,
+            "uids_missing_usd": []
+          },
+          "threshold": {
+            "uids_total": 10,
+            "uids_with_usd": 10,
+            "uids_missing_usd": []
+          },
+          "column": {
+            "uids_total": 171,
+            "uids_with_usd": 171,
+            "uids_missing_usd": []
+          },
+          "ground": {
+            "uids_total": 844,
+            "uids_with_usd": 844,
+            "uids_missing_usd": []
+          }
+        }
+      },
+      "object": {
+        "articulated": {
+          "basket": {
+            "uids_total": 48,
+            "uids_with_usd": 48,
+            "uids_missing_usd": []
+          },
+          "other": {
+            "uids_total": 28,
+            "uids_with_usd": 28,
+            "uids_missing_usd": []
+          },
+          "toilet": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "oven": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "table": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "faucet": {
+            "uids_total": 7,
+            "uids_with_usd": 7,
+            "uids_missing_usd": []
+          },
+          "shoppingtrolley": {
+            "uids_total": 30,
+            "uids_with_usd": 30,
+            "uids_missing_usd": []
+          },
+          "person": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "teatable": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "nightstand": {
+            "uids_total": 11,
+            "uids_with_usd": 11,
+            "uids_missing_usd": []
+          },
+          "refrigerator": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "electriccooker": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "microwave": {
+            "uids_total": 12,
+            "uids_with_usd": 12,
+            "uids_missing_usd": []
+          },
+          "trashcan": {
+            "uids_total": 110,
+            "uids_with_usd": 110,
+            "uids_missing_usd": []
+          },
+          "cart": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "desk": {
+            "uids_total": 17,
+            "uids_with_usd": 17,
+            "uids_missing_usd": []
+          },
+          "chestofdrawers": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "pot": {
+            "uids_total": 42,
+            "uids_with_usd": 42,
+            "uids_missing_usd": []
+          },
+          "pan": {
+            "uids_total": 7,
+            "uids_with_usd": 7,
+            "uids_missing_usd": []
+          }
+        },
+        "others": {
+          "bowl": {
+            "uids_total": 103,
+            "uids_with_usd": 103,
+            "uids_missing_usd": []
+          },
+          "coffee_maker": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "tv": {
+            "uids_total": 19,
+            "uids_with_usd": 19,
+            "uids_missing_usd": []
+          },
+          "couch": {
+            "uids_total": 52,
+            "uids_with_usd": 52,
+            "uids_missing_usd": []
+          },
+          "cup": {
+            "uids_total": 620,
+            "uids_with_usd": 620,
+            "uids_missing_usd": []
+          },
+          "ceiling_light": {
+            "uids_total": 34,
+            "uids_with_usd": 34,
+            "uids_missing_usd": []
+          },
+          "plate": {
+            "uids_total": 448,
+            "uids_with_usd": 448,
+            "uids_missing_usd": []
+          },
+          "plant": {
+            "uids_total": 179,
+            "uids_with_usd": 179,
+            "uids_missing_usd": []
+          },
+          "basket": {
+            "uids_total": 8,
+            "uids_with_usd": 8,
+            "uids_missing_usd": []
+          },
+          "box": {
+            "uids_total": 574,
+            "uids_with_usd": 574,
+            "uids_missing_usd": []
+          },
+          "other": {
+            "uids_total": 10797,
+            "uids_with_usd": 10797,
+            "uids_missing_usd": []
+          },
+          "toilet": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "blanket": {
+            "uids_total": 14,
+            "uids_with_usd": 14,
+            "uids_missing_usd": []
+          },
+          "chair": {
+            "uids_total": 539,
+            "uids_with_usd": 539,
+            "uids_missing_usd": []
+          },
+          "shoe": {
+            "uids_total": 19,
+            "uids_with_usd": 19,
+            "uids_missing_usd": []
+          },
+          "telephone": {
+            "uids_total": 22,
+            "uids_with_usd": 22,
+            "uids_missing_usd": []
+          },
+          "laptop": {
+            "uids_total": 35,
+            "uids_with_usd": 35,
+            "uids_missing_usd": []
+          },
+          "bottle": {
+            "uids_total": 1987,
+            "uids_with_usd": 1987,
+            "uids_missing_usd": []
+          },
+          "mouse": {
+            "uids_total": 84,
+            "uids_with_usd": 84,
+            "uids_missing_usd": []
+          },
+          "book": {
+            "uids_total": 10496,
+            "uids_with_usd": 10496,
+            "uids_missing_usd": []
+          },
+          "table": {
+            "uids_total": 175,
+            "uids_with_usd": 175,
+            "uids_missing_usd": []
+          },
+          "hearth": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "keyboard": {
+            "uids_total": 118,
+            "uids_with_usd": 118,
+            "uids_missing_usd": []
+          },
+          "toy": {
+            "uids_total": 449,
+            "uids_with_usd": 449,
+            "uids_missing_usd": []
+          },
+          "backpack": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "faucet": {
+            "uids_total": 14,
+            "uids_with_usd": 14,
+            "uids_missing_usd": []
+          },
+          "towel": {
+            "uids_total": 20,
+            "uids_with_usd": 20,
+            "uids_missing_usd": []
+          },
+          "person": {
+            "uids_total": 171,
+            "uids_with_usd": 171,
+            "uids_missing_usd": []
+          },
+          "piano": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "stool": {
+            "uids_total": 32,
+            "uids_with_usd": 32,
+            "uids_missing_usd": []
+          },
+          "pen": {
+            "uids_total": 2416,
+            "uids_with_usd": 2416,
+            "uids_missing_usd": []
+          },
+          "monitor": {
+            "uids_total": 121,
+            "uids_with_usd": 121,
+            "uids_missing_usd": []
+          },
+          "light": {
+            "uids_total": 108,
+            "uids_with_usd": 108,
+            "uids_missing_usd": []
+          },
+          "teatable": {
+            "uids_total": 4,
+            "uids_with_usd": 4,
+            "uids_missing_usd": []
+          },
+          "nightstand": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "clock": {
+            "uids_total": 24,
+            "uids_with_usd": 24,
+            "uids_missing_usd": []
+          },
+          "sofa_chair": {
+            "uids_total": 4,
+            "uids_with_usd": 4,
+            "uids_missing_usd": []
+          },
+          "refrigerator": {
+            "uids_total": 7,
+            "uids_with_usd": 7,
+            "uids_missing_usd": []
+          },
+          "bed": {
+            "uids_total": 23,
+            "uids_with_usd": 23,
+            "uids_missing_usd": []
+          },
+          "picture": {
+            "uids_total": 136,
+            "uids_with_usd": 136,
+            "uids_missing_usd": []
+          },
+          "fan": {
+            "uids_total": 19,
+            "uids_with_usd": 19,
+            "uids_missing_usd": []
+          },
+          "trashcan": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "door": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "tray": {
+            "uids_total": 61,
+            "uids_with_usd": 61,
+            "uids_missing_usd": []
+          },
+          "clothes": {
+            "uids_total": 9,
+            "uids_with_usd": 9,
+            "uids_missing_usd": []
+          },
+          "sink": {
+            "uids_total": 17,
+            "uids_with_usd": 17,
+            "uids_missing_usd": []
+          },
+          "desk": {
+            "uids_total": 6,
+            "uids_with_usd": 6,
+            "uids_missing_usd": []
+          },
+          "pillow": {
+            "uids_total": 114,
+            "uids_with_usd": 114,
+            "uids_missing_usd": []
+          },
+          "shelf": {
+            "uids_total": 151,
+            "uids_with_usd": 151,
+            "uids_missing_usd": []
+          },
+          "pot": {
+            "uids_total": 22,
+            "uids_with_usd": 22,
+            "uids_missing_usd": []
+          },
+          "bookshelf": {
+            "uids_total": 37,
+            "uids_with_usd": 37,
+            "uids_missing_usd": []
+          },
+          "coffeemaker": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "curtain": {
+            "uids_total": 93,
+            "uids_with_usd": 93,
+            "uids_missing_usd": []
+          },
+          "cabinet": {
+            "uids_total": 93,
+            "uids_with_usd": 93,
+            "uids_missing_usd": []
+          },
+          "mirror": {
+            "uids_total": 14,
+            "uids_with_usd": 14,
+            "uids_missing_usd": []
+          },
+          "decoration": {
+            "uids_total": 84,
+            "uids_with_usd": 84,
+            "uids_missing_usd": []
+          },
+          "counter": {
+            "uids_total": 22,
+            "uids_with_usd": 22,
+            "uids_missing_usd": []
+          },
+          "lamp": {
+            "uids_total": 9,
+            "uids_with_usd": 9,
+            "uids_missing_usd": []
+          }
+        }
+      }
+    },
+    "scenes": {
+      "exists": true,
+      "total_scene_dirs": 30,
+      "with_any_usd": 30,
+      "missing_any_usd": 0,
+      "details": {
+        "missing": [],
+        "present": [
+          "MVSYCXYKTKJ66AABAAAAADA8_usd",
+          "MVJWVGYKTLDAYAABAAAAAAQ8_usd",
+          "MV5M25QKTKJZ2AABAAAAAAQ8_usd",
+          "MVSGSAIKTKJ66AABAAAAADY8_usd",
+          "MV5M25QKTKJZ2AABAAAAAAI8_usd",
+          "MV4AFHQKTKJZ2AABAAAAADQ8_usd",
+          "MWF4WLIKTIFZIAABAAAAACY8_usd",
+          "MV5M25QKTKJZ2AABAAAAAAY8_usd",
+          "MWF4WLIKTIFZIAABAAAAAEA8_usd",
+          "MWF4WLIKTIFZIAABAAAAADY8_usd",
+          "MV5M25QKTKJZ2AABAAAAAAA8_usd",
+          "MVSYCXYKTKJ66AABAAAAACY8_usd",
+          "MWF4WLIKTIFZIAABAAAAADA8_usd",
+          "MWF4WLIKTIFZIAABAAAAACA8_usd",
+          "MVSYCXYKTKJ66AABAAAAADI8_usd",
+          "MWF4WLIKTIFZIAABAAAAAEI8_usd",
+          "MWF4WLIKTIFZIAABAAAAADI8_usd",
+          "MWF4WLIKTIFZIAABAAAAACI8_usd",
+          "MVSGSAIKTKJ66AABAAAAAEA8_usd",
+          "MWF4WLIKTIFZIAABAAAAABY8_usd",
+          "MV5M25QKTKJZ2AABAAAAAEI8_usd",
+          "MV7J6NIKTKJZ2AABAAAAAAI8_usd",
+          "MWHLEPQKTIFZIAABAAAAAAA8_usd",
+          "MWF4WLIKTIFZIAABAAAAACQ8_usd",
+          "MWF4WLIKTIFZIAABAAAAADQ8_usd",
+          "MV4AFHQKTKJZ2AABAAAAAEA8_usd",
+          "MVSYCXYKTKJ66AABAAAAAAA8_usd",
+          "MV4AFHQKTKJZ2AABAAAAADY8_usd",
+          "MV7J6NIKTKJZ2AABAAAAAAA8_usd",
+          "MV4AFHQKTKJZ2AABAAAAAEI8_usd"
+        ]
+      }
+    }
+  }
+}

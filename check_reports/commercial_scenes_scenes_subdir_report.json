@@ -1,0 +1,46 @@
+{
+  "mode": "scene_only",
+  "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/scenes",
+  "ok": true,
+  "issues": [],
+  "summary": {
+    "total_scene_dirs": 30,
+    "with_any_usd": 30,
+    "missing_any_usd": 0,
+    "details": {
+      "missing": [],
+      "present": [
+        "MVSYCXYKTKJ66AABAAAAADA8_usd",
+        "MVJWVGYKTLDAYAABAAAAAAQ8_usd",
+        "MV5M25QKTKJZ2AABAAAAAAQ8_usd",
+        "MVSGSAIKTKJ66AABAAAAADY8_usd",
+        "MV5M25QKTKJZ2AABAAAAAAI8_usd",
+        "MV4AFHQKTKJZ2AABAAAAADQ8_usd",
+        "MWF4WLIKTIFZIAABAAAAACY8_usd",
+        "MV5M25QKTKJZ2AABAAAAAAY8_usd",
+        "MWF4WLIKTIFZIAABAAAAAEA8_usd",
+        "MWF4WLIKTIFZIAABAAAAADY8_usd",
+        "MV5M25QKTKJZ2AABAAAAAAA8_usd",
+        "MVSYCXYKTKJ66AABAAAAACY8_usd",
+        "MWF4WLIKTIFZIAABAAAAADA8_usd",
+        "MWF4WLIKTIFZIAABAAAAACA8_usd",
+        "MVSYCXYKTKJ66AABAAAAADI8_usd",
+        "MWF4WLIKTIFZIAABAAAAAEI8_usd",
+        "MWF4WLIKTIFZIAABAAAAADI8_usd",
+        "MWF4WLIKTIFZIAABAAAAACI8_usd",
+        "MVSGSAIKTKJ66AABAAAAAEA8_usd",
+        "MWF4WLIKTIFZIAABAAAAABY8_usd",
+        "MV5M25QKTKJZ2AABAAAAAEI8_usd",
+        "MV7J6NIKTKJZ2AABAAAAAAI8_usd",
+        "MWHLEPQKTIFZIAABAAAAAAA8_usd",
+        "MWF4WLIKTIFZIAABAAAAACQ8_usd",
+        "MWF4WLIKTIFZIAABAAAAADQ8_usd",
+        "MV4AFHQKTKJZ2AABAAAAAEA8_usd",
+        "MVSYCXYKTKJ66AABAAAAAAA8_usd",
+        "MV4AFHQKTKJZ2AABAAAAADY8_usd",
+        "MV7J6NIKTKJZ2AABAAAAAAA8_usd",
+        "MV4AFHQKTKJZ2AABAAAAAEI8_usd"
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "mode": "scene_only",
+  "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes",
+  "ok": false,
+  "issues": [
+    "no usd found in any scene dir",
+    "some scene dirs missing usd"
+  ],
+  "summary": {
+    "total_scene_dirs": 3,
+    "with_any_usd": 0,
+    "missing_any_usd": 3,
+    "details": {
+      "missing": [
+        "scenes",
+        "models",
+        "Materials"
+      ],
+      "present": []
+    }
+  }
+}
