@@ -9,17 +9,22 @@
 # 导入标准库与工具函数
 import os
 import json
+import re
 from ..utils.fs import ensure_dir, copy_file
 
 # 选择一个布局文件（优先 fix，无则 new）
 def choose_layout(scene_dir):
-    fixp = os.path.join(scene_dir, "start_result_fix.usd")  # 修复版布局
-    newp = os.path.join(scene_dir, "start_result_new.usd")  # 新版布局
-    if os.path.exists(fixp):                                 # 优先使用修复版
+    fixp = os.path.join(scene_dir, "start_result_fix.usd")
+    newp = os.path.join(scene_dir, "start_result_new.usd")
+    if os.path.exists(fixp):
         return fixp
-    if os.path.exists(newp):                                 # 备选使用新版
+    if os.path.exists(newp):
         return newp
-    return None                                              # 都不存在返回空
+    for f in os.listdir(scene_dir):
+        p = os.path.join(scene_dir, f)
+        if os.path.isfile(p) and f.lower().endswith((".usd", ".usda", ".usdc")):
+            return p
+    return None
 
 # 导出场景到规范结构
 def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations):
@@ -39,7 +44,60 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
             continue
         out_dir = os.path.join(dest_root, sid)                      # 目标场景目录
         ensure_dir(out_dir)
-        copy_file(layout, os.path.join(out_dir, "layout.usd"))     # 复制布局文件
+        copy_file(layout, os.path.join(out_dir, "layout.usd"))
+        for f in os.listdir(sp):
+            srcf = os.path.join(sp, f)
+            if not os.path.isfile(srcf):
+                continue
+            if not f.lower().endswith((".usd", ".usda", ".usdc")):
+                continue
+            if os.path.abspath(srcf) == os.path.abspath(layout):
+                continue
+            copy_file(srcf, os.path.join(out_dir, f))
+        mats_abs = os.path.join(dst_root, "Material", "mdl")
+        candidates = [
+            os.path.join(dst_root, "models"),
+            os.path.join(dst_root, "GRScenes_assets"),
+            os.path.join(dst_root, "MesaTask_assets"),
+        ]
+        models_abs = None
+        for c in candidates:
+            if os.path.isdir(c):
+                models_abs = c
+                break
+        if models_abs is None:
+            models_abs = os.path.join(dst_root, "models")
+        mats_rel = os.path.relpath(mats_abs, out_dir)
+        models_rel = os.path.relpath(models_abs, out_dir)
+        for uf in os.listdir(out_dir):
+            if not uf.lower().endswith((".usda", ".usd")):
+                continue
+            usdf = os.path.join(out_dir, uf)
+            try:
+                with open(usdf, "rb") as f:
+                    head = f.read(64)
+                is_text = b"usda" in head or head.startswith(b"#")
+                if not is_text:
+                    continue
+                with open(usdf, "r", encoding="utf-8", errors="ignore") as f:
+                    txt = f.read()
+                def _sub(m):
+                    p = m.group(1)
+                    if "Materials/" in p:
+                        idx = p.find("Materials/")
+                        rest = p[idx + len("Materials/"):]
+                        return "@" + mats_rel + "/" + rest + "@"
+                    if "models/" in p:
+                        idx = p.find("models/")
+                        rest = p[idx + len("models/"):]
+                        return "@" + models_rel + "/" + rest + "@"
+                    return "@" + p + "@"
+                new_txt = re.sub(r"@([^@]+)@", _sub, txt)
+                if new_txt != txt:
+                    with open(usdf, "w", encoding="utf-8") as f:
+                        f.write(new_txt)
+            except Exception:
+                pass
         if with_annotations:                                        # 可选生成注释
             ann = {"sid": sid}
             if Usd:                                                 # 若 USD 可用则统计 Meshes 子层级

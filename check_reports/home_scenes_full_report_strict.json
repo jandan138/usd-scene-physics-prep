@@ -1,0 +1,709 @@
+{
+  "mode": "full",
+  "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes",
+  "ok": true,
+  "issues": [],
+  "summary": {
+    "materials": {
+      "exists": true,
+      "has_mdl": true,
+      "mdl_count": 1677,
+      "has_textures": true,
+      "textures_dir": "Textures"
+    },
+    "models": {
+      "layout": {
+        "articulated": {
+          "door_9FF38250_3501_47B2_ACD3_90C2444CC5C3": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_C51F6348_77CF_454D_8660_7562FDFB9A73": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_D01D7A53_70AF_4BDE_82D2_6902317E8B6F": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_246C02B0_9CE0_4DDB_9C91_CBE70985B244": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_8F66B469_3510_405A_A950_0A9E68C7F975": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_CD36AE9A_59D7_4B1E_BF16_870855537FD6": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_3E470445_53DC_4A4E_9DF6_3CE15C6816EF": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_7B507244_4BD7_47EE_8BAA_E920BA972B59": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_FFD45E79_3F31_41F8_8241_26849288C0C3": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_961C9DD2_802F_48B1_AE59_A9271C41AC2E": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_60B390DA_9E77_4C51_B319_82B1CF5DA21D": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_2B3656E8_05EA_4885_9289_E02CCDEF2083": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_AD8F1E4B_561E_4952_A9E0_0D370066C5E9": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_8CC63646_CD14_4B4B_97D9_90211E8E9B92": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "window": {
+            "uids_total": 674,
+            "uids_with_usd": 674,
+            "uids_missing_usd": []
+          },
+          "door_D49A7CCB_F248_44CD_802E_5602FCD67C9E": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_455E8FD5_990C_432F_879E_7C3D3DBE8357": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_33956DBE_ADD6_417E_A559_F164C04C8CF8": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door": {
+            "uids_total": 580,
+            "uids_with_usd": 580,
+            "uids_missing_usd": []
+          },
+          "door_A5B26AA7_445D_4AE8_B035_F9E25945C48B": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_F16007CC_39D5_4385_B195_633F7FF6762C": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_07B00D01_236F_4C79_9842_CB2ADF7BFA61": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_28E748F6_EB83_4CB1_B2F4_0B30C3C07DD7": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "cabinet": {
+            "uids_total": 975,
+            "uids_with_usd": 975,
+            "uids_missing_usd": []
+          },
+          "door_B06C8F5C_2E6F_4310_93D2_B0BE1B2C9F34": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_03709DDE_5114_47C3_B930_CC023B19FEEE": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_BDD0C251_4442_416E_A6EC_FEA7E3C07E82": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_38D2F4C3_69C3_4029_8C6F_7345AF68D71C": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "door_E974A83A_3A5E_4658_9B26_3A3DEC5F9A93": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          }
+        },
+        "others": {
+          "other": {
+            "uids_total": 4472,
+            "uids_with_usd": 4472,
+            "uids_missing_usd": []
+          },
+          "ceiling": {
+            "uids_total": 1541,
+            "uids_with_usd": 1541,
+            "uids_missing_usd": []
+          },
+          "wall": {
+            "uids_total": 15226,
+            "uids_with_usd": 15226,
+            "uids_missing_usd": []
+          },
+          "threshold": {
+            "uids_total": 43,
+            "uids_with_usd": 43,
+            "uids_missing_usd": []
+          },
+          "column": {
+            "uids_total": 230,
+            "uids_with_usd": 230,
+            "uids_missing_usd": []
+          },
+          "ground": {
+            "uids_total": 9543,
+            "uids_with_usd": 9543,
+            "uids_missing_usd": []
+          }
+        }
+      },
+      "object": {
+        "articulated": {
+          "other": {
+            "uids_total": 24,
+            "uids_with_usd": 24,
+            "uids_missing_usd": []
+          },
+          "toilet": {
+            "uids_total": 120,
+            "uids_with_usd": 120,
+            "uids_missing_usd": []
+          },
+          "oven": {
+            "uids_total": 68,
+            "uids_with_usd": 68,
+            "uids_missing_usd": []
+          },
+          "shoecabinet": {
+            "uids_total": 32,
+            "uids_with_usd": 32,
+            "uids_missing_usd": []
+          },
+          "sideboardcabinet": {
+            "uids_total": 28,
+            "uids_with_usd": 28,
+            "uids_missing_usd": []
+          },
+          "table": {
+            "uids_total": 25,
+            "uids_with_usd": 25,
+            "uids_missing_usd": []
+          },
+          "hearth": {
+            "uids_total": 69,
+            "uids_with_usd": 69,
+            "uids_missing_usd": []
+          },
+          "faucet": {
+            "uids_total": 245,
+            "uids_with_usd": 245,
+            "uids_missing_usd": []
+          },
+          "washingmachine": {
+            "uids_total": 92,
+            "uids_with_usd": 92,
+            "uids_missing_usd": []
+          },
+          "tvstand": {
+            "uids_total": 33,
+            "uids_with_usd": 33,
+            "uids_missing_usd": []
+          },
+          "teatable": {
+            "uids_total": 30,
+            "uids_with_usd": 30,
+            "uids_missing_usd": []
+          },
+          "nightstand": {
+            "uids_total": 102,
+            "uids_with_usd": 102,
+            "uids_missing_usd": []
+          },
+          "refrigerator": {
+            "uids_total": 70,
+            "uids_with_usd": 70,
+            "uids_missing_usd": []
+          },
+          "electriccooker": {
+            "uids_total": 69,
+            "uids_with_usd": 69,
+            "uids_missing_usd": []
+          },
+          "microwave": {
+            "uids_total": 67,
+            "uids_with_usd": 67,
+            "uids_missing_usd": []
+          },
+          "trashcan": {
+            "uids_total": 162,
+            "uids_with_usd": 162,
+            "uids_missing_usd": []
+          },
+          "desk": {
+            "uids_total": 133,
+            "uids_with_usd": 133,
+            "uids_missing_usd": []
+          },
+          "chestofdrawers": {
+            "uids_total": 30,
+            "uids_with_usd": 30,
+            "uids_missing_usd": []
+          },
+          "dishwasher": {
+            "uids_total": 67,
+            "uids_with_usd": 67,
+            "uids_missing_usd": []
+          },
+          "pot": {
+            "uids_total": 76,
+            "uids_with_usd": 76,
+            "uids_missing_usd": []
+          },
+          "pan": {
+            "uids_total": 102,
+            "uids_with_usd": 102,
+            "uids_missing_usd": []
+          }
+        },
+        "others": {
+          "bowl": {
+            "uids_total": 87,
+            "uids_with_usd": 87,
+            "uids_missing_usd": []
+          },
+          "coffee_maker": {
+            "uids_total": 7,
+            "uids_with_usd": 7,
+            "uids_missing_usd": []
+          },
+          "tv": {
+            "uids_total": 119,
+            "uids_with_usd": 119,
+            "uids_missing_usd": []
+          },
+          "couch": {
+            "uids_total": 77,
+            "uids_with_usd": 77,
+            "uids_missing_usd": []
+          },
+          "cup": {
+            "uids_total": 229,
+            "uids_with_usd": 229,
+            "uids_missing_usd": []
+          },
+          "ceiling_light": {
+            "uids_total": 20,
+            "uids_with_usd": 20,
+            "uids_missing_usd": []
+          },
+          "plate": {
+            "uids_total": 250,
+            "uids_with_usd": 250,
+            "uids_missing_usd": []
+          },
+          "plant": {
+            "uids_total": 474,
+            "uids_with_usd": 474,
+            "uids_missing_usd": []
+          },
+          "basket": {
+            "uids_total": 15,
+            "uids_with_usd": 15,
+            "uids_missing_usd": []
+          },
+          "box": {
+            "uids_total": 47,
+            "uids_with_usd": 47,
+            "uids_missing_usd": []
+          },
+          "other": {
+            "uids_total": 6470,
+            "uids_with_usd": 6470,
+            "uids_missing_usd": []
+          },
+          "blanket": {
+            "uids_total": 313,
+            "uids_with_usd": 313,
+            "uids_missing_usd": []
+          },
+          "chair": {
+            "uids_total": 547,
+            "uids_with_usd": 547,
+            "uids_missing_usd": []
+          },
+          "shoe": {
+            "uids_total": 201,
+            "uids_with_usd": 201,
+            "uids_missing_usd": []
+          },
+          "telephone": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "laptop": {
+            "uids_total": 15,
+            "uids_with_usd": 15,
+            "uids_missing_usd": []
+          },
+          "bottle": {
+            "uids_total": 266,
+            "uids_with_usd": 266,
+            "uids_missing_usd": []
+          },
+          "mouse": {
+            "uids_total": 13,
+            "uids_with_usd": 13,
+            "uids_missing_usd": []
+          },
+          "book": {
+            "uids_total": 2753,
+            "uids_with_usd": 2753,
+            "uids_missing_usd": []
+          },
+          "table": {
+            "uids_total": 211,
+            "uids_with_usd": 211,
+            "uids_missing_usd": []
+          },
+          "keyboard": {
+            "uids_total": 14,
+            "uids_with_usd": 14,
+            "uids_missing_usd": []
+          },
+          "toy": {
+            "uids_total": 45,
+            "uids_with_usd": 45,
+            "uids_missing_usd": []
+          },
+          "backpack": {
+            "uids_total": 6,
+            "uids_with_usd": 6,
+            "uids_missing_usd": []
+          },
+          "towel": {
+            "uids_total": 298,
+            "uids_with_usd": 298,
+            "uids_missing_usd": []
+          },
+          "person": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "piano": {
+            "uids_total": 9,
+            "uids_with_usd": 9,
+            "uids_missing_usd": []
+          },
+          "Musical_instrument": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "stool": {
+            "uids_total": 77,
+            "uids_with_usd": 77,
+            "uids_missing_usd": []
+          },
+          "pen": {
+            "uids_total": 243,
+            "uids_with_usd": 243,
+            "uids_missing_usd": []
+          },
+          "monitor": {
+            "uids_total": 18,
+            "uids_with_usd": 18,
+            "uids_missing_usd": []
+          },
+          "tvstand": {
+            "uids_total": 20,
+            "uids_with_usd": 20,
+            "uids_missing_usd": []
+          },
+          "light": {
+            "uids_total": 233,
+            "uids_with_usd": 233,
+            "uids_missing_usd": []
+          },
+          "bicycle": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "teatable": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "nightstand": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "clock": {
+            "uids_total": 28,
+            "uids_with_usd": 28,
+            "uids_missing_usd": []
+          },
+          "wall": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "shoe_cabinet": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "sofa_chair": {
+            "uids_total": 52,
+            "uids_with_usd": 52,
+            "uids_missing_usd": []
+          },
+          "speaker": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "bed": {
+            "uids_total": 189,
+            "uids_with_usd": 189,
+            "uids_missing_usd": []
+          },
+          "picture": {
+            "uids_total": 266,
+            "uids_with_usd": 266,
+            "uids_missing_usd": []
+          },
+          "fan": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "trashcan": {
+            "uids_total": 2,
+            "uids_with_usd": 2,
+            "uids_missing_usd": []
+          },
+          "door": {
+            "uids_total": 10,
+            "uids_with_usd": 10,
+            "uids_missing_usd": []
+          },
+          "sofachair": {
+            "uids_total": 13,
+            "uids_with_usd": 13,
+            "uids_missing_usd": []
+          },
+          "cart": {
+            "uids_total": 1,
+            "uids_with_usd": 1,
+            "uids_missing_usd": []
+          },
+          "tray": {
+            "uids_total": 35,
+            "uids_with_usd": 35,
+            "uids_missing_usd": []
+          },
+          "clothes": {
+            "uids_total": 84,
+            "uids_with_usd": 84,
+            "uids_missing_usd": []
+          },
+          "sink": {
+            "uids_total": 51,
+            "uids_with_usd": 51,
+            "uids_missing_usd": []
+          },
+          "desk": {
+            "uids_total": 5,
+            "uids_with_usd": 5,
+            "uids_missing_usd": []
+          },
+          "pillow": {
+            "uids_total": 861,
+            "uids_with_usd": 861,
+            "uids_missing_usd": []
+          },
+          "shelf": {
+            "uids_total": 192,
+            "uids_with_usd": 192,
+            "uids_missing_usd": []
+          },
+          "pot": {
+            "uids_total": 11,
+            "uids_with_usd": 11,
+            "uids_missing_usd": []
+          },
+          "bookshelf": {
+            "uids_total": 15,
+            "uids_with_usd": 15,
+            "uids_missing_usd": []
+          },
+          "coffeemaker": {
+            "uids_total": 3,
+            "uids_with_usd": 3,
+            "uids_missing_usd": []
+          },
+          "curtain": {
+            "uids_total": 747,
+            "uids_with_usd": 747,
+            "uids_missing_usd": []
+          },
+          "bathtub": {
+            "uids_total": 13,
+            "uids_with_usd": 13,
+            "uids_missing_usd": []
+          },
+          "tv_stand": {
+            "uids_total": 10,
+            "uids_with_usd": 10,
+            "uids_missing_usd": []
+          },
+          "cabinet": {
+            "uids_total": 250,
+            "uids_with_usd": 250,
+            "uids_missing_usd": []
+          },
+          "mirror": {
+            "uids_total": 131,
+            "uids_with_usd": 131,
+            "uids_missing_usd": []
+          },
+          "decoration": {
+            "uids_total": 487,
+            "uids_with_usd": 487,
+            "uids_missing_usd": []
+          },
+          "counter": {
+            "uids_total": 27,
+            "uids_with_usd": 27,
+            "uids_missing_usd": []
+          },
+          "lamp": {
+            "uids_total": 70,
+            "uids_with_usd": 70,
+            "uids_missing_usd": []
+          }
+        }
+      }
+    },
+    "scenes": {
+      "exists": true,
+      "total_scene_dirs": 69,
+      "with_any_usd": 69,
+      "missing_any_usd": 0,
+      "details": {
+        "missing": [],
+        "present": [
+          "MVUCSQAKTKJ5EAABAAAAADA8_usd",
+          "MWAX5JYKTKJZ2AABAAAAADQ8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAAY8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAAI8_usd",
+          "MV7J6NIKTKJZ2AABAAAAAEI8_usd",
+          "MWAX5JYKTKJZ2AABAAAAABI8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAAY8_usd",
+          "MWAX5JYKTKJZ2AABAAAAADI8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAAQ8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAAQ8_usd",
+          "MVUHLWYKTKJ5EAABAAAAADI8_usd",
+          "MWBGLKQKTKJZ2AABAAAAABI8_usd",
+          "MWBGLKQKTKJZ2AABAAAAAAI8_usd",
+          "MWAX5JYKTKJZ2AABAAAAADA8_usd",
+          "MV7J6NIKTKJZ2AABAAAAADA8_usd",
+          "MWBGLKQKTKJZ2AABAAAAABQ8_usd",
+          "MWAX5JYKTKJZ2AABAAAAABY8_usd",
+          "MWAX5JYKTKJZ2AABAAAAACA8_usd",
+          "MVUHLWYKTKJ5EAABAAAAACY8_usd",
+          "MVUHLWYKTKJ5EAABAAAAACQ8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAEA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAABQ8_usd",
+          "MWBGLKQKTKJZ2AABAAAAABY8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAAA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAACY8_usd",
+          "MVUHLWYKTKJ5EAABAAAAABI8_usd",
+          "MVUCSQAKTKJ5EAABAAAAABI8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAAY8_usd",
+          "MWBGLKQKTKJZ2AABAAAAABA8_usd",
+          "MVUHLWYKTKJ5EAABAAAAABA8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAEI8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAAI8_usd",
+          "MVUHLWYKTKJ5EAABAAAAADY8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAAA8_usd",
+          "MVUHLWYKTKJ5EAABAAAAADA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAADY8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAAA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAEA8_usd",
+          "MVUHL5YKTKJ5EAABAAAAAAI8_usd",
+          "MVUCSQAKTKJ5EAABAAAAAEI8_usd",
+          "MWBGLKQKTKJZ2AABAAAAAAY8_usd",
+          "MVUHL5YKTKJ5EAABAAAAAAQ8_usd",
+          "MV7J6NIKTKJZ2AABAAAAADY8_usd",
+          "MVUCSQAKTKJ5EAABAAAAACI8_usd",
+          "MV7J6NIKTKJZ2AABAAAAAEA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAACA8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAAQ8_usd",
+          "MVUCSQAKTKJ5EAABAAAAACQ8_usd",
+          "MVUHLWYKTKJ5EAABAAAAABY8_usd",
+          "MWAX5JYKTKJZ2AABAAAAAAI8_usd",
+          "MVUCSQAKTKJ5EAABAAAAABA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAABY8_usd",
+          "MWBGLKQKTKJZ2AABAAAAACA8_usd",
+          "MVUHL5YKTKJ5EAABAAAAAAA8_usd",
+          "MWBGLKQKTKJZ2AABAAAAAAQ8_usd",
+          "MWAX5JYKTKJZ2AABAAAAADY8_usd",
+          "MV7J6NIKTKJZ2AABAAAAADI8_usd",
+          "MV7J6NIKTKJZ2AABAAAAADQ8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAEI8_usd",
+          "MVUHLWYKTKJ5EAABAAAAACI8_usd",
+          "MVUHLWYKTKJ5EAABAAAAABQ8_usd",
+          "MVUHLWYKTKJ5EAABAAAAAEA8_usd",
+          "MWAX5JYKTKJZ2AABAAAAABQ8_usd",
+          "MVUCSQAKTKJ5EAABAAAAADQ8_usd",
+          "MWAX5JYKTKJZ2AABAAAAABA8_usd",
+          "MVUHLWYKTKJ5EAABAAAAADQ8_usd",
+          "MVUHLWYKTKJ5EAABAAAAACA8_usd",
+          "MWBGLKQKTKJZ2AABAAAAAAA8_usd",
+          "MVUCSQAKTKJ5EAABAAAAADI8_usd"
+        ]
+      }
+    }
+  }
+}

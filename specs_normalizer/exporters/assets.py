@@ -10,6 +10,7 @@
 import os
 import json
 from ..utils.fs import ensure_dir, copy_file
+import re
 
 # 迭代器：遍历源目录下所有模型实例（返回类别、唯一 id、实例文件路径）
 def iter_model_instances(models_root):
@@ -33,7 +34,7 @@ def iter_model_instances(models_root):
                         yield category, uid, inst                  # 返回元组
 
 # 导出资产到规范结构
-def export_assets(src_root, dst_root, asset_name, with_annotations):
+def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_paths=False):
     models_root = os.path.join(src_root, "models")             # 源模型根目录
     dest_root = os.path.join(dst_root, asset_name)              # 目标资产库顶层
     ensure_dir(dest_root)                                       # 确保存在
@@ -47,7 +48,33 @@ def export_assets(src_root, dst_root, asset_name, with_annotations):
         if key in seen:                                         # 已复制则跳过
             continue
         seen.add(key)
-        copy_file(inst, out_path)                               # 复制实例文件
+        copy_file(inst, out_path)
+        if rewrite_mdl_paths:
+            mats_abs = os.path.join(dst_root, "Material", "mdl")
+            mats_rel = os.path.relpath(mats_abs, cat_dir)
+            try:
+                with open(out_path, "rb") as f:
+                    head = f.read(64)
+                is_text = b"usda" in head or head.startswith(b"#")
+                if is_text:
+                    with open(out_path, "r", encoding="utf-8", errors="ignore") as f:
+                        txt = f.read()
+                    def _sub(m):
+                        p = m.group(1)
+                        if "Materials/" in p:
+                            idx = p.find("Materials/")
+                            rest = p[idx + len("Materials/"):]
+                            return "@" + mats_rel + "/" + rest + "@"
+                        if "::.::Materials::" in p:
+                            name = p.split("::.::Materials::",1)[1]
+                            return "@" + mats_rel + "/" + name + ".mdl@"
+                        return "@" + p + "@"
+                    new_txt = re.sub(r"@([^@]+)@", _sub, txt)
+                    if new_txt != txt:
+                        with open(out_path, "w", encoding="utf-8") as f:
+                            f.write(new_txt)
+            except Exception:
+                pass
         stats.setdefault(category, []).append(uid)              # 记录统计
         if with_annotations:                                    # 可选生成单资产注释
             ann = {"uid": uid, "category": category}
