@@ -11,6 +11,7 @@ import os
 import json
 from ..utils.fs import ensure_dir, copy_file
 import re
+from ..utils.mdl_rewrite import rewrite_usd_mdl_paths
 
 # 迭代器：遍历源目录下所有模型实例（返回类别、唯一 id、实例文件路径）
 def iter_model_instances(models_root):
@@ -51,28 +52,15 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
         copy_file(inst, out_path)
         if rewrite_mdl_paths:
             mats_abs = os.path.join(dst_root, "Material", "mdl")
-            mats_rel = os.path.relpath(mats_abs, cat_dir)
             try:
-                with open(out_path, "rb") as f:
-                    head = f.read(64)
-                is_text = b"usda" in head or head.startswith(b"#")
-                if is_text:
-                    with open(out_path, "r", encoding="utf-8", errors="ignore") as f:
-                        txt = f.read()
-                    def _sub(m):
-                        p = m.group(1)
-                        if "Materials/" in p:
-                            idx = p.find("Materials/")
-                            rest = p[idx + len("Materials/"):]
-                            return "@" + mats_rel + "/" + rest + "@"
-                        if "::.::Materials::" in p:
-                            name = p.split("::.::Materials::",1)[1]
-                            return "@" + mats_rel + "/" + name + ".mdl@"
-                        return "@" + p + "@"
-                    new_txt = re.sub(r"@([^@]+)@", _sub, txt)
-                    if new_txt != txt:
-                        with open(out_path, "w", encoding="utf-8") as f:
-                            f.write(new_txt)
+                rewrite_usd_mdl_paths(
+                    src_usd=out_path,
+                    dst_usd=out_path,
+                    materials_dir=mats_abs,
+                    use_relative=True,
+                    relative_base=cat_dir,
+                    rewrite_module_refs=True,
+                )
             except Exception:
                 pass
         stats.setdefault(category, []).append(uid)              # 记录统计

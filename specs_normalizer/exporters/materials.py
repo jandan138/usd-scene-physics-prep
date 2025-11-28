@@ -20,7 +20,7 @@ def export_materials(src_root, dst_root):
         if os.path.isfile(p) and f.lower().endswith(".mdl"):    # 仅复制 .mdl 文件
             copy_file(p, os.path.join(dst_mdl, f))               # 复制到目标
     tex_src = os.path.join(mats, "Textures")                    # 源贴图目录
-    if os.path.isdir(tex_src):                                   # 若存在贴图目录
-        tex_dst = os.path.join(dst_mdl, "textures")             # 目标贴图目录
-        ensure_dir(tex_dst)                                      # 确保目标贴图目录存在
-        copy_dir(tex_src, tex_dst)                               # 递归复制贴图
+    if os.path.isdir(tex_src):
+        tex_dst = os.path.join(dst_mdl, "Textures")
+        ensure_dir(tex_dst)
+        copy_dir(tex_src, tex_dst)

@@ -34,22 +34,22 @@ def main():
     # 是否生成最小化注释 JSON
     ap.add_argument("--with-annotations", action="store_true")
     ap.add_argument("--compat-links", action="store_true")
+    ap.add_argument("--models-only", action="store_true")
     # 解析命令行参数
     args = ap.parse_args()
-    # 校验源目录结构
-    ok, issues, summary = validate_structure(args.src_target)
-    # 若校验失败，打印问题并退出
-    if not ok:
-        print("invalid structure")
-        for i in issues:
-            print(i)
-        return
-    # 导出材质到规范结构
-    export_materials(args.src_target, args.dst_root)
-    # 导出资产（模型）到规范结构
-    export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
-    # 导出场景到规范结构
-    export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
+    if args.models_only:
+        export_materials(args.src_target, args.dst_root)
+        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
+    else:
+        ok, issues, summary = validate_structure(args.src_target)
+        if not ok:
+            print("invalid structure")
+            for i in issues:
+                print(i)
+            return
+        export_materials(args.src_target, args.dst_root)
+        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
+        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
     if args.compat_links:
         import os
         scenes_root = os.path.join(args.dst_root, args.scene_name, args.scene_category)
