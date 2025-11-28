@@ -11,6 +11,7 @@ import os
 import json
 import re
 from ..utils.fs import ensure_dir, copy_file
+from ..utils.scene_rewrite import rewrite_scene_refs_inplace
 
 # 选择一个布局文件（优先 fix，无则 new）
 def choose_layout(scene_dir):
@@ -70,34 +71,38 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
         mats_rel = os.path.relpath(mats_abs, out_dir)
         models_rel = os.path.relpath(models_abs, out_dir)
         for uf in os.listdir(out_dir):
-            if not uf.lower().endswith((".usda", ".usd")):
+            if not uf.lower().endswith((".usda", ".usd", ".usdc")):
                 continue
             usdf = os.path.join(out_dir, uf)
             try:
-                with open(usdf, "rb") as f:
-                    head = f.read(64)
-                is_text = b"usda" in head or head.startswith(b"#")
-                if not is_text:
-                    continue
-                with open(usdf, "r", encoding="utf-8", errors="ignore") as f:
-                    txt = f.read()
-                def _sub(m):
-                    p = m.group(1)
-                    if "Materials/" in p:
-                        idx = p.find("Materials/")
-                        rest = p[idx + len("Materials/"):]
-                        return "@" + mats_rel + "/" + rest + "@"
-                    if "models/" in p:
-                        idx = p.find("models/")
-                        rest = p[idx + len("models/"):]
-                        return "@" + models_rel + "/" + rest + "@"
-                    return "@" + p + "@"
-                new_txt = re.sub(r"@([^@]+)@", _sub, txt)
-                if new_txt != txt:
-                    with open(usdf, "w", encoding="utf-8") as f:
-                        f.write(new_txt)
+                rewrite_scene_refs_inplace(usdf, mats_abs, models_abs, relative_base=out_dir)
             except Exception:
-                pass
+                # 文本兜底重写
+                try:
+                    with open(usdf, "rb") as f:
+                        head = f.read(64)
+                    is_text = b"usda" in head or head.startswith(b"#")
+                    if not is_text:
+                        continue
+                    with open(usdf, "r", encoding="utf-8", errors="ignore") as f:
+                        txt = f.read()
+                    def _sub(m):
+                        p = m.group(1)
+                        if "Materials/" in p:
+                            idx = p.find("Materials/")
+                            rest = p[idx + len("Materials/"):]
+                            return "@" + mats_rel + "/" + rest + "@"
+                        if "models/" in p:
+                            idx = p.find("models/")
+                            rest = p[idx + len("models/"):]
+                            return "@" + models_rel + "/" + rest + "@"
+                        return "@" + p + "@"
+                    new_txt = re.sub(r"@([^@]+)@", _sub, txt)
+                    if new_txt != txt:
+                        with open(usdf, "w", encoding="utf-8") as f:
+                            f.write(new_txt)
+                except Exception:
+                    pass
         if with_annotations:                                        # 可选生成注释
             ann = {"sid": sid}
             if Usd:                                                 # 若 USD 可用则统计 Meshes 子层级

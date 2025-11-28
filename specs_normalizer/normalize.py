@@ -35,11 +35,14 @@ def main():
     ap.add_argument("--with-annotations", action="store_true")
     ap.add_argument("--compat-links", action="store_true")
     ap.add_argument("--models-only", action="store_true")
+    ap.add_argument("--scenes-only", action="store_true")
     # 解析命令行参数
     args = ap.parse_args()
     if args.models_only:
         export_materials(args.src_target, args.dst_root)
         export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
+    elif args.scenes_only:
+        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
     else:
         ok, issues, summary = validate_structure(args.src_target)
         if not ok:
