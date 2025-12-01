@@ -13,10 +13,13 @@ import re
 from ..utils.fs import ensure_dir, copy_file
 from ..utils.scene_rewrite import rewrite_scene_refs_inplace
 
-# 选择一个布局文件（优先 fix，无则 new）
+# 选择一个布局文件（优先 raw，其次 fix，其次 new，再否则任取一个 USD）
 def choose_layout(scene_dir):
+    rawp = os.path.join(scene_dir, "start_result_raw.usd")
     fixp = os.path.join(scene_dir, "start_result_fix.usd")
     newp = os.path.join(scene_dir, "start_result_new.usd")
+    if os.path.exists(rawp):
+        return rawp
     if os.path.exists(fixp):
         return fixp
     if os.path.exists(newp):
@@ -28,7 +31,7 @@ def choose_layout(scene_dir):
     return None
 
 # 导出场景到规范结构
-def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations):
+def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations, scene_ids=None):
     scenes_root = os.path.join(src_root, "scenes")                  # 源场景根目录
     dest_root = os.path.join(dst_root, scene_name, scene_category)   # 目标场景顶层目录
     ensure_dir(dest_root)                                            # 确保存在
@@ -36,7 +39,9 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
         from pxr import Usd                                        # USD 可选导入用于统计
     except Exception:
         Usd = None                                                  # 未安装则置空
-    for sid in os.listdir(scenes_root):                             # 遍历场景 id
+    for sid in os.listdir(scenes_root):
+        if scene_ids and sid not in scene_ids:
+            continue
         sp = os.path.join(scenes_root, sid)
         if not os.path.isdir(sp):
             continue
