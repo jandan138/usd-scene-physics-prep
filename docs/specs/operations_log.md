@@ -70,3 +70,19 @@
   - `tex_bad_examples=0`
   - `results=[]`（无失败项）
 - 结论：阶段二导出资产完整；所有导出 USD 的 MDL 与贴图引用均指向统一材质库 `export_specs_unified/Material/mdl`（贴图位于其 `textures` 目录）。
+
+## 2025-12-03 第六次操作：阶段三场景导出与检查结论
+- 执行命令：
+  - `bash -c 'set -euo pipefail; export ISAAC_SIM_ROOT=/isaac-sim; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes --dst-root export_specs_unified --scene-name GRScenes100 --scene-category home --scenes-only'`
+  - `bash -c 'set -euo pipefail; export ISAAC_SIM_ROOT=/isaac-sim; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes --dst-root export_specs_unified --scene-name GRScenes100 --scene-category commercial --scenes-only'`
+- 目标输出：`export_specs_unified/GRScenes100/{home|commercial}/{sid}/layout.usd`（并附带该场景目录下其它 USD 文件）
+- 检查命令：
+  - 失败项清单：`python3 scripts/check_phase3_scenes.py --export-root export_specs_unified --fail-only --output check_reports/phase3_scenes_report_failures.json`
+- 检查结果：
+  - `scene_dir_count=99`
+  - `missing_count=0`
+  - `bad_refs_count=0`
+  - `missing=[]`
+  - `bad_refs=[]`
+- 报告路径：`check_reports/phase3_scenes_report_failures.json`
+- 结论：阶段三场景导出完整；所有场景的 `layout.usd` 模型引用指向导出目录 `export_specs_unified/GRScenes100/*`，未发现缺失文件与错误引用。
