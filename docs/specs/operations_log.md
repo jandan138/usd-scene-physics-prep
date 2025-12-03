@@ -53,3 +53,20 @@
   - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/models/.../{category}/{uid}/instance.usd`
 - 计划：按上述来源导出为 `export_specs_unified/GRScenes_assets/{category}/{uid}.usd`，并相对改写 MDL 引用指向 `Material/mdl`。
 - 当前执行状态：环境提示需退出 conda 或设置 ISAAC_SIM_ROOT 以加载 `pxr`，将于执行阶段二时使用 `scripts/isaac_python.sh` 运行。
+
+## 2025-12-03 第五次操作：阶段二资产导出与检查结论
+- 执行命令：
+  - `bash -c 'set -euo pipefail; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only'`
+  - `bash -c 'set -euo pipefail; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only'`
+- 目标输出：`export_specs_unified/GRScenes_assets/{category}/{uid}.usd`
+- 检查命令：
+  - 全量失败清单（仅失败项）：`python3 scripts/check_phase2_assets.py --assets-dir export_specs_unified/GRScenes_assets --materials-dir export_specs_unified/Material/mdl --fail-only --output check_reports/phase2_assets_report_failures.json`
+- 检查结果：
+  - `usd_count=85647`
+  - `zero_size_count=0`
+  - `mdl_ok_count=85647`
+  - `tex_ok_count=85647`
+  - `mdl_bad_examples=0`
+  - `tex_bad_examples=0`
+  - `results=[]`（无失败项）
+- 结论：阶段二导出资产完整；所有导出 USD 的 MDL 与贴图引用均指向统一材质库 `export_specs_unified/Material/mdl`（贴图位于其 `textures` 目录）。
