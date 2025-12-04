@@ -98,3 +98,13 @@
   - `missing_count=0`
   - `bad_refs_count=0`
   - 报告：`check_reports/phase3_strict_refs_failures.json`（为空集，全部通过）
+
+## 2025-12-03 第七次操作：删除大写 Textures 目录与复核
+- 操作：将 `export_specs_unified/Material/mdl/Textures` 删除（仅保留小写 `textures` 作为规范目录）。
+- 复核一：严格引用深检（pxr）
+  - 命令：`ISAAC_SIM_ROOT=... ./scripts/isaac_python.sh scripts/check_phase3_strict_refs.py --export-root export_specs_unified --fail-only --output check_reports/phase3_strict_refs_after_delete.json`
+  - 结论：`scene_dir_count=99`、`missing_count=0`、`bad_refs_count=0`（无异常）
+- 复核二：贴图一致性与引用分布检查（文本扫描）
+  - 命令：`python3 scripts/check_textures_consistency.py --mdl-root export_specs_unified/Material/mdl --scenes-root export_specs_unified/GRScenes100 --assets-root export_specs_unified/GRScenes_assets --output check_reports/textures_consistency_after_delete.json`
+  - 结论：`refs.counts.lower=0`、`upper=0`、`other=0`；`recommend_delete="upper"`，与删除动作一致，且无引用影响。
+- 收尾结论：阶段三完成；材质贴图目录统一为小写 `textures`，所有 USD 引用通过严格（pxr）与文本双重复核，无问题。
