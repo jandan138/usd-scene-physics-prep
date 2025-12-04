@@ -86,3 +86,15 @@
   - `bad_refs=[]`
 - 报告路径：`check_reports/phase3_scenes_report_failures.json`
 - 结论：阶段三场景导出完整；所有场景的 `layout.usd` 模型引用指向导出目录 `export_specs_unified/GRScenes100/*`，未发现缺失文件与错误引用。
+
+### 严格深检（pxr）
+- 工具：`scripts/check_phase3_strict_refs.py`（使用 `pxr.Usd/Sdf` 解析子层、引用、payload 与 Asset 属性，并将相对路径按 `layout.usd` 所在目录展开为绝对路径后校验）
+- 允许前缀：
+  - 场景：`export_specs_unified/GRScenes100`
+  - 资产：`export_specs_unified/GRScenes_assets`
+  - 材质：`export_specs_unified/Material/mdl`（贴图位于其 `textures`）
+- 结论：
+  - `scene_dir_count=99`
+  - `missing_count=0`
+  - `bad_refs_count=0`
+  - 报告：`check_reports/phase3_strict_refs_failures.json`（为空集，全部通过）
