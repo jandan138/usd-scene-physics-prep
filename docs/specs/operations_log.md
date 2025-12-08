@@ -108,3 +108,12 @@
   - 命令：`python3 scripts/check_textures_consistency.py --mdl-root export_specs_unified/Material/mdl --scenes-root export_specs_unified/GRScenes100 --assets-root export_specs_unified/GRScenes_assets --output check_reports/textures_consistency_after_delete.json`
   - 结论：`refs.counts.lower=0`、`upper=0`、`other=0`；`recommend_delete="upper"`，与删除动作一致，且无引用影响。
 - 收尾结论：阶段三完成；材质贴图目录统一为小写 `textures`，所有 USD 引用通过严格（pxr）与文本双重复核，无问题。
+
+## 2025-12-08 第八次操作：修复 MDL 文件中贴图大小写残留
+- 背景：Isaac 打开资产时出现 `rtx.mdltranslator.plugin` 报错，路径残留 `Material/mdl/Textures/...`；严格 USD 检查显示资产指向小写 `textures`，问题来源于 MDL 文本内嵌默认参数。
+- 操作：执行 MDL 文本修复脚本，统一将 `Textures/` 改为 `textures/` 并生成备份。
+  - 干跑（差异清单）：`python3 scripts/fix_mdl_textures_case.py --mdl-root export_specs_unified/Material/mdl --dry-run --output check_reports/fix_mdl_textures_case_report_dry.json`
+  - 实修：`python3 scripts/fix_mdl_textures_case.py --mdl-root export_specs_unified/Material/mdl --output check_reports/fix_mdl_textures_case_report.json`
+  - 复核（再次干跑）：`python3 scripts/fix_mdl_textures_case.py --mdl-root export_specs_unified/Material/mdl --dry-run --output check_reports/fix_mdl_textures_case_report_dry_2.json`
+- 结果：`total=1721`，最终报告显示 `changed=[]`，所有项 `reason=no_uppercase_found`（库内 MDL 已无大写 `Textures/`）。
+- 结论：材质库（MDL 与贴图）大小写已统一；结合之前 USD 严格检查，场景与资产均落在小写 `textures`，可在 Isaac 中正常解析。
