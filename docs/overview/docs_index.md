@@ -52,6 +52,7 @@
 - ../operations/environment_setup.md
 - ../operations/windows_notes.md
 - ../operations/troubleshooting_interaction_preprocess.md
+- ../operations/simbench_interaction_preprocess_field_notes.md
 
 ## 参考
 - ../references/dependencies.md

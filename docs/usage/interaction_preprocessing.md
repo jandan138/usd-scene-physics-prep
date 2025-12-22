@@ -39,6 +39,9 @@
 - 入口脚本：`scripts/prep_interaction_root_scene.py`
 - 排错与参数推荐：`docs/operations/troubleshooting_interaction_preprocess.md`
 
+如果你想快速复用一套“实战稳定策略/踩坑复盘”（包含 task9 的 GLB payload、浮空、消失等现象的处理思路），见：
+- `docs/operations/simbench_interaction_preprocess_field_notes.md`
+
 同时，如果你需要“列出可 Shift+左键拖拽（持续施力能改变位置）的 prim”，可以使用：
 - `scripts/list_draggable_prims.py`
 

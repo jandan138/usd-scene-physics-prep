@@ -46,6 +46,28 @@ def _count_enabled_colliders_in_subtree(root: Usd.Prim) -> int:
     return count
 
 
+def _count_enabled_colliders_with_glb_probe(stage: Usd.Stage, root: Usd.Prim) -> int:
+    """Count colliders under root, with a GLB-payload-friendly fallback.
+
+    In some scenes, GLB payload prims show placeholder child prims as 'over'
+    prims (IsDefined()==False). Those may not be enumerated by GetChildren().
+    We therefore probe a couple of well-known geometry paths used by the
+    SimBench tasks.
+    """
+
+    count = _count_enabled_colliders_in_subtree(root)
+    if count > 0:
+        return count
+
+    base = str(root.GetPath())
+    for suffix in ("/geometry_0/geometry_0", "/geometry_0"):
+        prim = stage.GetPrimAtPath(base + suffix)
+        if prim and prim.IsValid() and _get_bool_attr(prim, "physics:collisionEnabled") is True:
+            count += 1
+
+    return count
+
+
 def list_draggable_prims(stage: Usd.Stage, subtree_root_path: str) -> List[Dict]:
     subtree_root = stage.GetPrimAtPath(subtree_root_path)
     if not subtree_root or not subtree_root.IsValid():
@@ -61,7 +83,7 @@ def list_draggable_prims(stage: Usd.Stage, subtree_root_path: str) -> List[Dict]
         if enabled is not True:
             continue
 
-        collider_count = _count_enabled_colliders_in_subtree(prim)
+        collider_count = _count_enabled_colliders_with_glb_probe(stage, prim)
         item = {
             "path": str(prim.GetPath()),
             "type": prim.GetTypeName(),

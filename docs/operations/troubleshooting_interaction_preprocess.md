@@ -14,6 +14,7 @@
 
 ## 索引
 - [背景](#背景)
+- [补充：实战踩坑汇总（task9/task10）](#补充实战踩坑汇总task9task10)
 - [问题 1：`simready.py` 报 `Materials/` 缺失](#问题-1simreadypy-报-materials-缺失)
 - [问题 2：场景结构不是 `/Root/Meshes`](#问题-2场景结构不是-rootmeshes)
 - [问题 3：Isaac 环境缺少 `pxr.PhysxSchema`](#问题-3isaac-环境缺少-pxrphysxschema)
@@ -24,6 +25,7 @@
 - [问题 8：GLB 导入对象（`__xx` / `_`）拖不动](#问题-8glb-导入对象__xx---_拖不动)
 - [问题 9：新增可交互对象后“无限下落”】【静态环境 cooking 不稳定】](#问题-9新增可交互对象后无限下落静态环境-cooking-不稳定)
 - [问题 10：仅此一次把某个对象设为静态 collider-only（不受重力）](#问题-10仅此一次把某个对象设为静态-collider-only不受重力)
+- [问题 11：对象启用刚体后“消失”（飞走/掉下去）](#问题-11对象启用刚体后消失飞走掉下去)
 - [推荐处理流程（task10 已验证）](#推荐处理流程task10-已验证)
 - [验证与自检](#验证与自检)
 
@@ -34,6 +36,10 @@
 - 场景里存在大量“空 Mesh”（无 points/topology），以及某些子树（如 door 动画）在 PhysX cooking 时失败。
 
 为适配这类数据，本仓库新增了脚本 `scripts/prep_interaction_root_scene.py`，用于直接对 `/root` 结构绑定 collider/rigid。
+
+## 补充：实战踩坑汇总（task9/task10）
+如果你希望以“案例汇总”的形式查看本次实战过程中遇到的典型问题、最终稳定策略、以及 one-off 工具使用方式，见：
+- `docs/operations/simbench_interaction_preprocess_field_notes.md`
 
 ## 问题 1：`simready.py` 报 `Materials/` 缺失
 **现象**
@@ -164,6 +170,23 @@
   --output /shared/smartbot/jiamingda/data_code/simbench/MesaTask-USD/simbench_shared/GRSceneUSD/task10/scene_interaction_dynamic_v6_oneoff_static__04.usd \
   --prim /root/__04
 ```
+
+## 问题 11：对象启用刚体后“消失”（飞走/掉下去）
+**现象**
+- 薄物体（例如眼镜）启用刚体后，看起来“突然不见了”。
+
+**常见原因**
+- **弹飞**：初始姿态与环境/自身穿插，求解器在第一帧做 penetration correction，物体被强力推出视野。
+- **穿透掉落**：碰撞体 cooking 失败或退化，导致实际没有有效 collider，一路穿过地面下落。
+
+**在本仓库当前约束下的处理策略**
+- 由于部分 Isaac 环境无法导入 `pxr.PhysxSchema`（无法稳定启用 CCD/接触偏移等 PhysX 扩展设置），优先用“更稳的近似 + 更干净的 collider”来规避：
+  - 保证每个对象只 author 一个 collider（避免叠加导致异常接触）。
+  - 对该对象切换 `physics:approximation`：优先试 `convexHull`；若仍异常可尝试 `sdf`。
+  - 若确认是弹飞：检查初始 pose 是否与静态环境穿插；必要时在仿真前把物体抬高一点。
+
+**快速 one-off（推荐）**
+- 使用 `scripts/oneoff_force_draggable.py` 对单个对象切换近似（示例见 `docs/operations/simbench_interaction_preprocess_field_notes.md`）。
 
 ## 推荐处理流程（task10 已验证）
 **目标规则**

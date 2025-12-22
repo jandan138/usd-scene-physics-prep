@@ -51,6 +51,7 @@ title: USD Scene Physics Prep 文档主页
   - [Windows 使用注意](operations/windows_notes.md)
   - [环境准备建议](operations/environment_setup.md)
   - [交互预处理排错（SimBench/GRSceneUSD task10）](operations/troubleshooting_interaction_preprocess.md)
+  - [SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总](operations/simbench_interaction_preprocess_field_notes.md)
 - 示例与答疑
   - [工作流示例](examples/workflow_examples.md)
   - [常见问题](faq/faq.md)

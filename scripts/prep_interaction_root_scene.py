@@ -177,6 +177,7 @@ def _iter_descendant_meshes(
     *,
     exclude_prefixes: Sequence[str],
     stats: dict,
+    allow_untyped_payload_geometry: bool = False,
 ) -> List[Usd.Prim]:
     meshes: List[Usd.Prim] = []
 
@@ -193,6 +194,39 @@ def _iter_descendant_meshes(
             recurse(ch)
 
     recurse(root_prim)
+
+    # Some datasets (e.g., GLB payloads) may appear as untyped prims in this
+    # environment (no points / not a Mesh), but Isaac/Kit can still resolve the
+    # payload at runtime. In that case, author the collision APIs/attrs on the
+    # expected geometry prim paths so the object becomes draggable in Isaac.
+    if allow_untyped_payload_geometry and not meshes:
+        # Important: in some stages these placeholder prims exist as 'over'
+        # prims (IsDefined() == False), which means GetChildren()/PrimRange()
+        # won't enumerate them. We therefore probe well-known paths directly.
+        if root_prim.HasPayload() and (not _prim_path_starts_with_any(root_prim, exclude_prefixes)):
+            stage = root_prim.GetStage()
+            base = str(root_prim.GetPath())
+            candidate_paths = (
+                base + "/geometry_0/geometry_0",
+                base + "/geometry_0",
+            )
+
+            # Prefer the deepest prim path to avoid authoring *multiple* enabled
+            # colliders for the same payload object (which can inflate the
+            # effective collision volume and cause visible "floating").
+            forced: List[Usd.Prim] = []
+            for pth in candidate_paths:
+                prim = stage.GetPrimAtPath(pth)
+                if prim and prim.IsValid() and prim.GetTypeName() in {"", "Mesh"}:
+                    forced = [prim]
+                    break
+
+            if forced:
+                stats.setdefault("forced_untyped_colliders", [])
+                for p in forced:
+                    stats["forced_untyped_colliders"].append(str(p.GetPath()))
+                meshes.extend(forced)
+
     return meshes
 
 
@@ -202,7 +236,10 @@ def _set_collider_with_approx(prim: Usd.Prim, approx: str) -> None:
 
     # In this Isaac Sim build, pxr.PhysxSchema isn't available. We still can set
     # collision via UsdPhysics and rely on the approximation token.
-    if prim.GetTypeName() != "Mesh":
+    # In some environments, GLB payload geometry resolves as untyped prims.
+    # Authoring the applied APIs/attrs on these prims can still help Isaac once
+    # the payload is resolved.
+    if prim.GetTypeName() not in {"Mesh", ""}:
         return
 
     collider = UsdPhysics.CollisionAPI.Apply(prim)
@@ -212,8 +249,11 @@ def _set_collider_with_approx(prim: Usd.Prim, approx: str) -> None:
 
 
 def _set_rigidbody(prim: Usd.Prim, enabled: bool = True) -> None:
-    # Keep rigid bodies on Xforms only; applying on Mesh often isn't desired.
-    if prim.GetTypeName() != "Xform":
+    # Prefer rigid bodies on Xforms; for GLB payload roots we may only see an
+    # untyped prim (typeName == ''). Avoid applying on Mesh.
+    if prim.GetTypeName() == "Mesh":
+        return
+    if prim.GetTypeName() not in {"Xform", ""}:
         return
     api = UsdPhysics.RigidBodyAPI.Apply(prim)
     api.GetRigidBodyEnabledAttr().Set(bool(enabled))
@@ -226,7 +266,12 @@ def _bind_static(
     exclude_prefixes: Sequence[str],
     stats: dict,
 ) -> None:
-    for mesh in _iter_descendant_meshes(prim, exclude_prefixes=exclude_prefixes, stats=stats):
+    for mesh in _iter_descendant_meshes(
+        prim,
+        exclude_prefixes=exclude_prefixes,
+        stats=stats,
+        allow_untyped_payload_geometry=False,
+    ):
         _set_collider_with_approx(mesh, approx)
 
 
@@ -240,7 +285,12 @@ def _bind_rigid(
     _clear_mass_properties(prim)
     _set_rigidbody(prim, enabled=True)
     _force_positive_mass(prim, mass_value=1.0)
-    for mesh in _iter_descendant_meshes(prim, exclude_prefixes=exclude_prefixes, stats=stats):
+    for mesh in _iter_descendant_meshes(
+        prim,
+        exclude_prefixes=exclude_prefixes,
+        stats=stats,
+        allow_untyped_payload_geometry=True,
+    ):
         _set_collider_with_approx(mesh, approx)
 
 
@@ -405,6 +455,12 @@ def main() -> int:
         print(f"skipped_meshes ({len(stats['skipped_meshes'])}) [showing up to 20]:")
         for item in stats["skipped_meshes"][:20]:
             print("  -", item)
+
+    if stats.get("forced_untyped_colliders"):
+        forced = stats["forced_untyped_colliders"]
+        print(f"forced_untyped_colliders ({len(forced)}) [showing up to 20]:")
+        for p in forced[:20]:
+            print("  -", p)
 
     return 0
 

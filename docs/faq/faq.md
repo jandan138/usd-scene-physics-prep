@@ -38,6 +38,7 @@
 - 如果输入场景根节点是 `/root`（例如 SimBench GRSceneUSD/task10），并且 `simready.py` 因 `Materials/` 缺失或目录结构不匹配而失败：
 	- 直接使用 `scripts/prep_interaction_root_scene.py` 在原始 USD 上绑定 collider/rigid。
 	- 参数推荐与常见坑位见：`docs/operations/troubleshooting_interaction_preprocess.md`。
+	- 实战踩坑汇总（task9/task10）见：`docs/operations/simbench_interaction_preprocess_field_notes.md`。
 
 ## 如何判断哪些对象可 Shift+左键拖拽？
 - 经验上需要：刚体启用（`physics:rigidBodyEnabled=True`）且子树里存在 collider（`physics:collisionEnabled=True`）。
