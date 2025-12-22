@@ -1,5 +1,17 @@
 # 目录结构
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../clean_data.py
+> - ../../set_physics/pxr_utils/data_clean.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [源目录（示例）](#源目录示例)
+- [目标目录（生成）](#目标目录生成)
+
 ## 源目录（示例）
 ```
 home_scenes/

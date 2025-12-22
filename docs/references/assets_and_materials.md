@@ -1,5 +1,19 @@
 # 资产与材质引用
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/get_all_references.py
+> - ../../set_physics/export_scene.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [资产路径处理](#资产路径处理)
+- [材质复制](#材质复制)
+- [引用收集](#引用收集)
+
 ## 资产路径处理
 - 相对路径资产去除父级 `..` 前缀，复制到 `target` 并更新属性引用（`set_physics/pxr_utils/data_clean.py:367-397`）。
 

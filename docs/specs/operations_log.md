@@ -1,5 +1,21 @@
 # 操作记录（Materials / Assets / Scenes）
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../specs_normalizer/normalize.py
+> - ../../scripts/check_phase2_assets.py
+> - ../../scripts/check_phase3_scenes.py
+> - ../../scripts/fix_mdl_textures_case.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [2025-12-02 第一次操作：合并两来源的 Materials 到统一目录](#2025-12-02-第一次操作合并两来源的-materials-到统一目录)
+- [2025-12-03 第五次操作：阶段二资产导出与检查结论](#2025-12-03-第五次操作阶段二资产导出与检查结论)
+- [2025-12-03 第六次操作：阶段三场景导出与检查结论](#2025-12-03-第六次操作阶段三场景导出与检查结论)
+- [2025-12-08 第八次操作：修复 MDL 文件中贴图大小写残留](#2025-12-08-第八次操作修复-mdl-文件中贴图大小写残留)
+
 ## 2025-12-02 第一次操作：合并两来源的 Materials 到统一目录
 - 来源目录：
   - /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/scenes

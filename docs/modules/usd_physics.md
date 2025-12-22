@@ -1,5 +1,17 @@
 # 模块说明：usd_physics
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/usd_physics.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [碰撞体](#碰撞体)
+- [刚体](#刚体)
+- [说明](#说明)
+
 ## 碰撞体
 - 单 mesh 绑定：`set_collider_`（`set_physics/pxr_utils/usd_physics.py:60-89`）。
 - 递归绑定：`set_collider`（`set_physics/pxr_utils/usd_physics.py:92-101`）。

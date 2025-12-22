@@ -1,5 +1,27 @@
 # 规范化导出工具使用说明（specs_normalizer）
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../specs_normalizer/__main__.py
+> - ../../specs_normalizer/normalize.py
+> - ../../specs_normalizer/exporters/materials.py
+> - ../../specs_normalizer/exporters/assets.py
+> - ../../specs_normalizer/exporters/scenes.py
+> - ../../specs_normalizer/validators/structure.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [工具概览](#工具概览)
+- [参数](#参数)
+- [校验](#校验)
+- [导出映射](#导出映射)
+- [执行示例](#执行示例)
+- [输出结构示例](#输出结构示例)
+- [运行环境与注意](#运行环境与注意)
+- [入口编排](#入口编排)
+
 ## 工具概览
 - 作用：将现有处理结果（如 `target/`）导出为规范结构（Materials / Assets / Scenes），不改动原始输出主干。
 - 入口：`python -m specs_normalizer`

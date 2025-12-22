@@ -1,5 +1,21 @@
 # 导出统一结构对齐报告（阶段一至三）
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../scripts/check_phase2_assets.py
+> - ../../scripts/check_phase3_scenes.py
+> - ../../scripts/fix_mdl_textures_case.py
+> - ../../specs_normalizer/normalize.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [输出结构概览](#输出结构概览)
+- [合规性验证摘要](#合规性验证摘要)
+- [与规范文档的差距](#与规范文档的差距)
+- [结论](#结论)
+
 ## 输出结构概览
 - 材质库 `Material/mdl`
   - 目录：`Material/mdl` 与小写 `textures/`

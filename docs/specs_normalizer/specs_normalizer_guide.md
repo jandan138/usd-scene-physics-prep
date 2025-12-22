@@ -1,5 +1,27 @@
 # specs_normalizer 使用指南
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../specs_normalizer/__main__.py
+> - ../../specs_normalizer/normalize.py
+> - ../../specs_normalizer/utils/mdl_rewrite.py
+> - ../../specs_normalizer/exporters/materials.py
+> - ../../specs_normalizer/exporters/assets.py
+> - ../../specs_normalizer/exporters/scenes.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [名称含义](#名称含义)
+- [新目录结构](#新目录结构)
+- [环境要求](#环境要求)
+- [快速开始](#快速开始)
+- [功能要点](#功能要点)
+- [验证示例](#验证示例)
+- [常见问题](#常见问题)
+- [示例场景](#示例场景)
+
 ## 名称含义
 - “spec”指规范化的目录与引用结构，目的是把来源目录（包含`Materials`、`models`、`scenes`）整理为统一、可移植、无软链接依赖的结构，保证单资产或场景在独立打开时也能正确找到材质与贴图。
 

@@ -1,5 +1,18 @@
 # 导航预处理
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../set_physics/scripts/main_door_prim_path_new.json
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [目标](#目标)
+- [关键函数](#关键函数)
+- [输出](#输出)
+
 ## 目标
 - 将场景处理为适合导航仿真的静态版本：禁用非主门、对象采用静态三角网格近似、写语义标签。
 

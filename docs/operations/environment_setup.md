@@ -1,5 +1,20 @@
 # 环境准备建议
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../clean_data.py
+> - ../../set_physics/simready.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [Python 环境](#python-环境)
+- [Isaac Sim](#isaac-sim)
+- [验证](#验证)
+
 ## Python 环境
 - 建议使用 Conda/venv，安装：`usd-core`、`numpy`、`pandas`。
 

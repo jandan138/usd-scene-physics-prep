@@ -1,5 +1,18 @@
 # Windows 使用注意
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/pxr_utils/usd_physics.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [文件复制](#文件复制)
+- [软链接](#软链接)
+- [路径分隔符](#路径分隔符)
+
 ## 文件复制
 - 代码中有 `os.system("cp …")`（如 `set_physics/pxr_utils/data_clean.py:37`、`set_physics/pxr_utils/usd_physics.py:47`）。在 Windows 环境建议替换为 `shutil.copyfile` 或等效 Python API。
 

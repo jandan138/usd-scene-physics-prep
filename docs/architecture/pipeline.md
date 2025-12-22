@@ -1,5 +1,21 @@
 # 处理流水线
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../clean_data.py
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../set_physics/get_all_references.py
+> - ../../set_physics/export_scene.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [总览](#总览)
+- [关键步骤详解](#关键步骤详解)
+
 ## 总览
 1. 场景拆分与重组（`clean_data.py:5-24` → `set_physics/pxr_utils/data_clean.py:517-705`）
 2. 基础资产规范化（变换、材质、贴图、引用）（`set_physics/pxr_utils/data_clean.py:121-149,367-397`）

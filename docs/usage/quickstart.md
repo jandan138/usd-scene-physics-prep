@@ -1,5 +1,21 @@
 # 快速开始
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../clean_data.py
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../set_physics/get_all_references.py
+> - ../../set_physics/export_scene.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [依赖](#依赖)
+- [步骤](#步骤)
+
 ## 依赖
 - Python 包：`usd-core`（pxr）、`numpy`、`pandas`（可选，读取 CSV）。
 - 交互/导航预处理：需要 Omniverse Isaac Sim 与 `omni.*` SDK。

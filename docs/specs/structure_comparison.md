@@ -1,5 +1,25 @@
 # 目录结构对比：原始输出 vs 规范结构
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../specs_normalizer/normalize.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [概述](#概述)
+- [原始输出结构（当前）](#原始输出结构当前)
+- [规范结构（提案）](#规范结构提案)
+- [一一映射关系](#一一映射关系)
+- [关键差异点](#关键差异点)
+- [迁移建议（不改代码前提）](#迁移建议不改代码前提)
+- [风险与兼容性](#风险与兼容性)
+- [结论](#结论)
+
 ## 概述
 - 本文对比当前项目在处理后生成的目录结构（`target/Materials | target/models | target/scenes`）与规范化结构提案（`docs/specs/dataset_structure_interpretation.md` 中的 Materials/Assets/Scenes）。
 - 目标是明确一一映射关系、差异点与迁移建议，便于后续发布与数据集化。

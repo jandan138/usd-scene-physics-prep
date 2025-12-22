@@ -1,5 +1,18 @@
 # 模块说明：preprocess_for_interaction
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/pxr_utils/usd_physics.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [近似选项](#近似选项)
+- [关键能力](#关键能力)
+- [可拾取对象](#可拾取对象)
+
 ## 近似选项
 - SDF、ConvexHull、ConvexDecomposition、MeshSimplification、TriangleMesh（`set_physics/preprocess_for_interaction.py:18-24`）。
 

@@ -1,5 +1,22 @@
 # 常见问题
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../set_physics/simready.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [Windows 下 `cp` 命令不可用](#windows-下-cp-命令不可用)
+- [软链接创建失败](#软链接创建失败)
+- [贴图或材质路径失效](#贴图或材质路径失效)
+- [Isaac Sim 模块未找到](#isaac-sim-模块未找到)
+- [碰撞近似计算慢](#碰撞近似计算慢)
+
 ## Windows 下 `cp` 命令不可用
 - 替换为 Python 的 `shutil.copyfile`，或使用 PowerShell 的 `Copy-Item`，并在代码中统一封装复制函数。
 

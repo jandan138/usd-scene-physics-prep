@@ -1,5 +1,25 @@
 # 数据目录结构规范解读（Materials / Assets / Scenes）
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../set_physics/pxr_utils/data_clean.py
+> - ../../set_physics/preprocess_for_interaction.py
+> - ../../set_physics/preprocess_for_navigation.py
+> - ../../set_physics/tools/thumb_img.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [目标](#目标)
+- [Materials](#materials)
+- [Assets](#assets)
+- [Scenes](#scenes)
+- [命名示例与对话结论](#命名示例与对话结论)
+- [占位符命名规范](#占位符命名规范)
+- [与现有流程的契合点](#与现有流程的契合点)
+- [后续落地建议](#后续落地建议)
+
 ## 目标
 - 将现有项目的资产与场景组织规范化为“Materials / Assets / Scenes”三大板块，提升可分发性、可检索性与可扩展性。
 - 对图示结构的各层级与占位符进行逐条解释，并给出与当前仓库输出的对齐映射。

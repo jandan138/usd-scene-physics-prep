@@ -1,5 +1,20 @@
 # 模块说明：data_clean
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../clean_data.py
+> - ../../set_physics/pxr_utils/data_clean.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [入口](#入口)
+- [parse_scene](#parse_scene)
+- [recursive_copy](#recursive_copy)
+- [create_instance](#create_instance)
+- [其他](#其他)
+
 ## 入口
 - `clean_data.py:5-24`：遍历 `home_scenes/<scene_id>`，寻找 `start_result_fix.usd` 或 `start_result_new.usd`，调用 `parse_scene`（`set_physics/pxr_utils/data_clean.py:517-705`）。
 

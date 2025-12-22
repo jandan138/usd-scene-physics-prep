@@ -1,5 +1,22 @@
 # 统一导出流水线（三阶段说明与预期）
 
+> 最后更新：2025-12-22
+>
+> 相关代码：
+> - ../../specs_normalizer/normalize.py
+> - ../../specs_normalizer/exporters/materials.py
+> - ../../specs_normalizer/exporters/assets.py
+> - ../../specs_normalizer/exporters/scenes.py
+>
+> 总索引：../overview/docs_index.md
+
+## 索引
+- [总目标](#总目标)
+- [阶段一：合并并规范化材质库（Materials → Material/mdl）](#阶段一合并并规范化材质库materials-materialmdl)
+- [阶段二：导出资产库并改写 MDL 引用](#阶段二导出资产库并改写-mdl-引用)
+- [阶段三：导出场景并重写引用指向新库](#阶段三导出场景并重写引用指向新库)
+- [验证与检查](#验证与检查)
+
 ## 总目标
 - 将现有 `target/` 输出规范化为可分发结构：`Material/mdl`、`<Asset_name>/...`、`<Scene_name>/<Scene_category>/{sid}`。
 - 所有 USD 内的 MDL 与模型引用统一改写为“相对路径”，仓库内自足，无需软链接。
