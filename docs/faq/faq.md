@@ -16,6 +16,8 @@
 - [贴图或材质路径失效](#贴图或材质路径失效)
 - [Isaac Sim 模块未找到](#isaac-sim-模块未找到)
 - [碰撞近似计算慢](#碰撞近似计算慢)
+- [外部数据集（`/root` 结构）如何做交互预处理？](#外部数据集root-结构如何做交互预处理)
+- [如何判断哪些对象可 Shift+左键拖拽？](#如何判断哪些对象可-shift左键拖拽)
 
 ## Windows 下 `cp` 命令不可用
 - 替换为 Python 的 `shutil.copyfile`，或使用 PowerShell 的 `Copy-Item`，并在代码中统一封装复制函数。
@@ -31,4 +33,13 @@
 
 ## 碰撞近似计算慢
 - 减少复杂近似（如将 `convexDecomposition` 改为 `convexHull` 或 `none`），或对大对象采用静态三角网格近似。
+
+## 外部数据集（`/root` 结构）如何做交互预处理？
+- 如果输入场景根节点是 `/root`（例如 SimBench GRSceneUSD/task10），并且 `simready.py` 因 `Materials/` 缺失或目录结构不匹配而失败：
+	- 直接使用 `scripts/prep_interaction_root_scene.py` 在原始 USD 上绑定 collider/rigid。
+	- 参数推荐与常见坑位见：`docs/operations/troubleshooting_interaction_preprocess.md`。
+
+## 如何判断哪些对象可 Shift+左键拖拽？
+- 经验上需要：刚体启用（`physics:rigidBodyEnabled=True`）且子树里存在 collider（`physics:collisionEnabled=True`）。
+- 可以直接运行：`scripts/list_draggable_prims.py`（输出“可拖拽候选”以及“刚体但无 collider”的对象）。
 

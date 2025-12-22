@@ -5,6 +5,8 @@
 > 相关代码：
 > - ../../set_physics/preprocess_for_interaction.py
 > - ../../set_physics/pxr_utils/usd_physics.py
+> - ../../scripts/prep_interaction_root_scene.py
+> - ../../scripts/list_draggable_prims.py
 >
 > 总索引：../overview/docs_index.md
 
@@ -12,6 +14,7 @@
 - [目标](#目标)
 - [关键函数](#关键函数)
 - [处理逻辑](#处理逻辑)
+- [外部数据集（`/root` 结构）](#外部数据集root-结构)
 - [可拾取对象列表](#可拾取对象列表)
 
 ## 目标
@@ -30,6 +33,14 @@
   - Base：静态三角网格近似（`TRIANGLE_MESH`），并纳入基础碰撞组（`set_physics/preprocess_for_interaction.py:360-377`）。
   - BaseAnimation/Animation：按 `PICKABLE_OBJECTS` 决定是否刚体，启用关节（`set_physics/preprocess_for_interaction.py:258-284,335-371`）。
 - 输出：保存为 `start_result_dynamic.usd`（`set_physics/preprocess_for_interaction.py:321-323,379-386`）。
+
+## 外部数据集（`/root` 结构）
+本仓库默认的交互预处理（`set_physics/preprocess_for_interaction.py`）主要面向规范化后的 GRScenes 输出结构；如果你的输入场景根节点是 `/root`（例如 SimBench GRSceneUSD/task10），并且没有 `Materials/` 目录，建议走专用脚本：
+- 入口脚本：`scripts/prep_interaction_root_scene.py`
+- 排错与参数推荐：`docs/operations/troubleshooting_interaction_preprocess.md`
+
+同时，如果你需要“列出可 Shift+左键拖拽（持续施力能改变位置）的 prim”，可以使用：
+- `scripts/list_draggable_prims.py`
 
 ## 可拾取对象列表
 - 列表定义见 `set_physics/preprocess_for_interaction.py:258-284`。

@@ -51,6 +51,7 @@
 ## 运维
 - ../operations/environment_setup.md
 - ../operations/windows_notes.md
+- ../operations/troubleshooting_interaction_preprocess.md
 
 ## 参考
 - ../references/dependencies.md

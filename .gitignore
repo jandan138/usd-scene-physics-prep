@@ -1,3 +1,14 @@
 export_specs/
 export_specs_no_links/
 export_specs_unified/
+
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
