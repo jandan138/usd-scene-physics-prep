@@ -52,6 +52,7 @@ title: USD Scene Physics Prep 文档主页
   - [环境准备建议](operations/environment_setup.md)
   - [交互预处理排错（SimBench/GRSceneUSD task10）](operations/troubleshooting_interaction_preprocess.md)
   - [SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总](operations/simbench_interaction_preprocess_field_notes.md)
+  - [排错：GLB payload 多 Mesh（geometry_01 等）未绑定 collider 导致穿透](operations/troubleshooting_glb_payload_multimesh.md)
 - 示例与答疑
   - [工作流示例](examples/workflow_examples.md)
   - [常见问题](faq/faq.md)

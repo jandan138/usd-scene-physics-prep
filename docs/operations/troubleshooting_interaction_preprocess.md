@@ -23,6 +23,7 @@
 - [问题 6：负质量/无效惯性（negative mass / invalid inertia）](#问题-6负质量无效惯性negative-mass--invalid-inertia)
 - [问题 7：引用层已经启用 physics flag，简单 RemoveAPI 不生效](#问题-7引用层已经启用-physics-flag简单-removeapi-不生效)
 - [问题 8：GLB 导入对象（`__xx` / `_`）拖不动](#问题-8glb-导入对象__xx---_拖不动)
+- [问题 8.1：GLB payload 多 Mesh（`geometry_01` 等）未绑定 collider 导致穿透](#问题-81glb-payload-多-meshgeometry_01-等未绑定-collider-导致穿透)
 - [问题 9：新增可交互对象后“无限下落”】【静态环境 cooking 不稳定】](#问题-9新增可交互对象后无限下落静态环境-cooking-不稳定)
 - [问题 10：仅此一次把某个对象设为静态 collider-only（不受重力）](#问题-10仅此一次把某个对象设为静态-collider-only不受重力)
 - [问题 11：对象启用刚体后“消失”（飞走/掉下去）](#问题-11对象启用刚体后消失飞走掉下去)
@@ -141,6 +142,16 @@
 - 在 `scripts/prep_interaction_root_scene.py` 中扩展动态匹配规则：
   - 动态前缀：默认包含 `obj_` + `__`（覆盖 `/root/__01..__10` 这类）
   - 动态精确名字：默认包含 `_`（覆盖 `/root/_`）
+
+## 问题 8.1：GLB payload 多 Mesh（`geometry_01` 等）未绑定 collider 导致穿透
+**现象**
+- 场景里同一 payload 对象下可能出现多个 sibling Mesh（例如两本书）：
+  - `/root/__08/geometry_0/geometry_0`
+  - `/root/__08/geometry_0/geometry_01`
+- 如果只给其中一个 Mesh author 了 collider，动态物体下落时会穿过另一个没有 collider 的 Mesh。
+
+**处理方式**
+- 详见独立页面：`docs/operations/troubleshooting_glb_payload_multimesh.md`
 
 ## 问题 9：新增可交互对象后“无限下落”】【静态环境 cooking 不稳定】
 **现象**

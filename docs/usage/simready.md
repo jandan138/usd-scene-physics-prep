@@ -11,6 +11,7 @@
 
 ## 索引
 - [适用场景](#适用场景)
+- [不适用场景与替代方案（外部 `/root` 结构）](#不适用场景与替代方案外部-root-结构)
 - [运行环境](#运行环境)
 - [快速开始](#快速开始)
 - [参数说明](#参数说明)
@@ -30,6 +31,29 @@
   - 同时生成所需的 `Materials/`、`models/` 等依赖目录（由拆分阶段创建）
 
 它相当于把你原先需要“改脚本路径 + 分别跑 clean_data / preprocess_*”的工作，收敛成一个命令行入口。
+
+## 不适用场景与替代方案（外部 `/root` 结构）
+当输入 USD **不是本仓库规范化后的 `/Root/Meshes` 结构**，而是外部数据集常见的 `/root`（小写）结构（并且可能缺失 `Materials/`），`set_physics/simready.py` 往往会因为目录结构与引用假设不匹配而失败。
+
+此类场景推荐使用“`/root` 专用交互预处理脚本”，直接在原始 stage 上 author 刚体/碰撞：
+- 入口脚本：`scripts/prep_interaction_root_scene.py`
+
+示例：对 `/root` 场景在同目录生成一个“sim-ready（交互）”输出 USD：
+```bash
+cd /shared/smartbot/zzh/my_dev/usd-scene-physics-prep
+
+./scripts/isaac_python.sh scripts/prep_interaction_root_scene.py \
+  --input  /abs/path/to/scene.usd \
+  --output /abs/path/to/scene_simready.usd \
+  --root /root \
+  --approx-static none \
+  --approx-dynamic convexHull
+```
+
+相关排错与案例：
+- `docs/operations/troubleshooting_interaction_preprocess.md`
+- `docs/operations/simbench_interaction_preprocess_field_notes.md`
+- `docs/operations/troubleshooting_glb_payload_multimesh.md`
 
 ## 运行环境
 - **必须**在 Omniverse Isaac Sim 的 Python 环境运行（脚本内部会用 `isaacsim.SimulationApp`，导航模式还会用 `omni.isaac.core.utils.semantics`）。

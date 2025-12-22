@@ -60,8 +60,19 @@ def _count_enabled_colliders_with_glb_probe(stage: Usd.Stage, root: Usd.Prim) ->
         return count
 
     base = str(root.GetPath())
-    for suffix in ("/geometry_0/geometry_0", "/geometry_0"):
+
+    # Probe common leaf mesh paths used by SimBench GLB payloads.
+    probe_suffixes = ["/geometry_0/geometry_0"]
+    probe_suffixes.extend(f"/geometry_0/geometry_{i:02d}" for i in range(1, 10))
+
+    for suffix in probe_suffixes:
         prim = stage.GetPrimAtPath(base + suffix)
+        if prim and prim.IsValid() and _get_bool_attr(prim, "physics:collisionEnabled") is True:
+            count += 1
+
+    # If no leaf colliders are found, fall back to the parent geometry prim.
+    if count == 0:
+        prim = stage.GetPrimAtPath(base + "/geometry_0")
         if prim and prim.IsValid() and _get_bool_attr(prim, "physics:collisionEnabled") is True:
             count += 1
 

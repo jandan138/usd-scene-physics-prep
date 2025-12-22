@@ -206,20 +206,30 @@ def _iter_descendant_meshes(
         if root_prim.HasPayload() and (not _prim_path_starts_with_any(root_prim, exclude_prefixes)):
             stage = root_prim.GetStage()
             base = str(root_prim.GetPath())
-            candidate_paths = (
+            # Probe well-known leaf mesh prim paths used by SimBench GLB payloads.
+            # We prefer authoring colliders on leaf meshes (e.g. geometry_0,
+            # geometry_01) and only fall back to the parent `/geometry_0` when
+            # no leaf mesh prims are present. This avoids accidentally authoring
+            # duplicate colliders on both parent and child, while still handling
+            # payloads that expose only a single geometry prim.
+            leaf_candidate_paths: List[str] = [
                 base + "/geometry_0/geometry_0",
-                base + "/geometry_0",
+            ]
+            # Common sibling meshes: geometry_01, geometry_02, ...
+            leaf_candidate_paths.extend(
+                base + f"/geometry_0/geometry_{i:02d}" for i in range(1, 10)
             )
 
-            # Prefer the deepest prim path to avoid authoring *multiple* enabled
-            # colliders for the same payload object (which can inflate the
-            # effective collision volume and cause visible "floating").
             forced: List[Usd.Prim] = []
-            for pth in candidate_paths:
+            for pth in leaf_candidate_paths:
                 prim = stage.GetPrimAtPath(pth)
                 if prim and prim.IsValid() and prim.GetTypeName() in {"", "Mesh"}:
-                    forced = [prim]
-                    break
+                    forced.append(prim)
+
+            if not forced:
+                parent = stage.GetPrimAtPath(base + "/geometry_0")
+                if parent and parent.IsValid() and parent.GetTypeName() in {"", "Mesh"}:
+                    forced = [parent]
 
             if forced:
                 stats.setdefault("forced_untyped_colliders", [])

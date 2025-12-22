@@ -12,6 +12,7 @@
 
 ## 索引
 - [设计目标](#设计目标)
+- [适用范围与前置假设](#适用范围与前置假设)
 - [整体流程](#整体流程)
 - [拆分与规范化（parse_scene）](#拆分与规范化parse_scene)
 - [物理处理：interaction 模式](#物理处理interaction-模式)
@@ -23,6 +24,19 @@
 `set_physics/simready.py` 把仓库里两段核心能力合并成一个“可复用的一次性入口”：
 1. 通过 `parse_scene` 把“原始场景”整理成可复用的 `Materials/models/scenes` 结构（类似 `target/`）。
 2. 在规范化后的场景上写入 PhysX/UsdPhysics schema（碰撞、刚体、关节启用/禁用）以及（可选）语义标签，使场景在 Isaac Sim 内可直接用于交互或导航仿真。
+
+## 适用范围与前置假设
+`simready.py` 的设计核心是“先规范化到仓库的统一结构，再做 physics”。因此它隐含了几条前置假设：
+- 输入要么能被 `parse_scene` 规范化（通常意味着资源引用能解析、同级或可定位到 `Materials/`），要么你使用 `--skip-clean` 并确保输入已经是规范化结构。
+- interaction 处理逻辑默认按 `/Root/Meshes` 的层级遍历实例与 scope。
+
+如果你的输入属于外部数据集（常见根为 `/root` 小写、可能缺失 `Materials/`、或存在 GLB payload 在无头环境不可加载），更推荐使用专用脚本：
+- `scripts/prep_interaction_root_scene.py`
+
+相关排错与案例：
+- `docs/operations/troubleshooting_interaction_preprocess.md`
+- `docs/operations/simbench_interaction_preprocess_field_notes.md`
+- `docs/operations/troubleshooting_glb_payload_multimesh.md`
 
 ## 整体流程
 - CLI 解析参数后走两条路径：
@@ -69,7 +83,7 @@
 
 ## 关键实现细节
 - 变换规范化：`_transform_to_trs()` 将 `xformOp:transform` 拆为 `translate/orient/scale`，以更稳定地配合 rigid body。
-- MeshMergeCollision：通过 `PhysxSchema.PhysxMeshMergeCollisionAPI` 把一个 Xform 下的 leaf meshes 作为碰撞集合，提高碰撞绑定一致性。
+- MeshMergeCollision：在支持 `pxr.PhysxSchema` 的 Isaac 环境中，可通过 `PhysxSchema.PhysxMeshMergeCollisionAPI` 把一个 Xform 下的 leaf meshes 作为碰撞集合，提高碰撞绑定一致性。
 - 碰撞近似：通过 `UsdPhysics.MeshCollisionAPI.approximation` 选择 `convexDecomposition/none/...`，并按类型附加 PhysX schema（SDF/ConvexDecomposition 等）。
 - 清理逻辑：在每次写 physics 前递归移除相关 schema 和属性，避免重复运行造成叠加。
 

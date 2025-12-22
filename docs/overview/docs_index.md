@@ -53,6 +53,7 @@
 - ../operations/windows_notes.md
 - ../operations/troubleshooting_interaction_preprocess.md
 - ../operations/simbench_interaction_preprocess_field_notes.md
+- ../operations/troubleshooting_glb_payload_multimesh.md
 
 ## 参考
 - ../references/dependencies.md
