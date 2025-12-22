@@ -38,6 +38,7 @@
 本仓库默认的交互预处理（`set_physics/preprocess_for_interaction.py`）主要面向规范化后的 GRScenes 输出结构；如果你的输入场景根节点是 `/root`（例如 SimBench GRSceneUSD/task10），并且没有 `Materials/` 目录，建议走专用脚本：
 - 入口脚本：`scripts/prep_interaction_root_scene.py`
 - 排错与参数推荐：`docs/operations/troubleshooting_interaction_preprocess.md`
+ - 更完整用法（命令模板/参数说明）：`docs/usage/prep_interaction_root_scene.md`
 
 如果你想快速复用一套“实战稳定策略/踩坑复盘”（包含 task9 的 GLB payload、浮空、消失等现象的处理思路），见：
 - `docs/operations/simbench_interaction_preprocess_field_notes.md`

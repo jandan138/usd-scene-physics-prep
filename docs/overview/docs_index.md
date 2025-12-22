@@ -26,6 +26,7 @@
 ## 使用
 - ../usage/quickstart.md
 - ../usage/interaction_preprocessing.md
+- ../usage/prep_interaction_root_scene.md
 - ../usage/navigation_preprocessing.md
 - ../usage/export_scenes.md
 - ../usage/simready.md
@@ -36,6 +37,7 @@
 - ../modules/preprocess_interaction.md
 - ../modules/preprocess_navigation.md
 - ../modules/simready.md
+- ../modules/prep_interaction_root_scene.md
 
 ## 规格
 - ../specs/dataset_structure_interpretation.md
@@ -54,6 +56,7 @@
 - ../operations/troubleshooting_interaction_preprocess.md
 - ../operations/simbench_interaction_preprocess_field_notes.md
 - ../operations/troubleshooting_glb_payload_multimesh.md
+- ../operations/prep_interaction_root_scene_checklist.md
 
 ## 参考
 - ../references/dependencies.md

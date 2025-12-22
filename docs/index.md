@@ -31,6 +31,7 @@ title: USD Scene Physics Prep 文档主页
 - 使用
   - [快速开始](usage/quickstart.md)
   - [交互预处理](usage/interaction_preprocessing.md)
+  - [`/root` 场景交互 sim-ready（prep_interaction_root_scene.py）](usage/prep_interaction_root_scene.md)
   - [导航预处理](usage/navigation_preprocessing.md)
   - [场景打包与导出](usage/export_scenes.md)
   - [simready（一键生成可仿真 USD）](usage/simready.md)
@@ -40,6 +41,7 @@ title: USD Scene Physics Prep 文档主页
   - [preprocess_for_interaction](modules/preprocess_interaction.md)
   - [preprocess_for_navigation](modules/preprocess_navigation.md)
   - [simready（原理）](modules/simready.md)
+  - [prep_interaction_root_scene（原理）](modules/prep_interaction_root_scene.md)
 - 引用与依赖
   - [资产与材质引用](references/assets_and_materials.md)
   - [环境与依赖](references/dependencies.md)
@@ -53,6 +55,7 @@ title: USD Scene Physics Prep 文档主页
   - [交互预处理排错（SimBench/GRSceneUSD task10）](operations/troubleshooting_interaction_preprocess.md)
   - [SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总](operations/simbench_interaction_preprocess_field_notes.md)
   - [排错：GLB payload 多 Mesh（geometry_01 等）未绑定 collider 导致穿透](operations/troubleshooting_glb_payload_multimesh.md)
+  - [`/root` 交互预处理：自检与排错清单](operations/prep_interaction_root_scene_checklist.md)
 - 示例与答疑
   - [工作流示例](examples/workflow_examples.md)
   - [常见问题](faq/faq.md)
