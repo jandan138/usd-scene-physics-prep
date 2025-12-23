@@ -27,3 +27,15 @@
 4. 导航预处理：在 `set_physics/preprocess_for_navigation.py` 中修改路径，运行后生成 `start_result_navigation.usd`（`set_physics/preprocess_for_navigation.py:234-253,389-425`）。
 5. 打包导出：使用 `set_physics/get_all_references.py` 生成依赖清单，再运行 `set_physics/export_scene.py` 将场景与依赖复制到目标目录（`set_physics/get_all_references.py:64-72`，`set_physics/export_scene.py:21-54`）。
 
+## 常见问题：贴图路径指向 /tmp 导致另一台机器丢贴图
+如果 USD 里的贴图引用是机器相关的绝对路径（例如 `/tmp/<hash>/textures/xxx.png`），在另一台机器/容器里打开时会因为文件不存在而丢贴图。
+
+可以用脚本把所有“不在 `./textures/` 下”的贴图统一复制到输出 USD 同级目录的 `textures/`，并将 USD 内路径改写为 `./textures/...`：
+
+```bash
+./scripts/isaac_python.sh scripts/collect_textures_to_local_textures.py \
+	--input  /abs/path/to/scene.usd \
+	--output /abs/path/to/scene_textures_fixed.usd \
+	--report /abs/path/to/texture_rewrite_report.json
+```
+

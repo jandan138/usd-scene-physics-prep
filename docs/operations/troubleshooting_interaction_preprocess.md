@@ -1,6 +1,6 @@
 # 交互预处理排错（SimBench/GRSceneUSD task10）
 
-> 最后更新：2025-12-22
+> 最后更新：2025-12-23
 >
 > 相关代码：
 > - ../../set_physics/simready.py
@@ -9,6 +9,8 @@
 > - ../../scripts/prep_interaction_root_scene.py
 > - ../../scripts/list_draggable_prims.py
 > - ../../scripts/oneoff_make_static_collider_only.py
+> - ../../scripts/inspect_usd_physics_props.py
+> - ../../scripts/oneoff_stabilize_contact_ccd_damping.py
 >
 > 总索引：../overview/docs_index.md
 
@@ -77,6 +79,15 @@
   - `UsdPhysics.CollisionAPI` + `UsdPhysics.MeshCollisionAPI(approximation=convexDecomposition)`
   - `UsdPhysics.RigidBodyAPI`
 - 不依赖 `PhysxSchema` 的 mesh-merge collision / convex decomposition 参数扩展。
+
+**补充（实战可用的折中方案）**
+- 即使无法 `import pxr.PhysxSchema`，也可以在 USD 中直接 author 常用 PhysX 扩展属性（命名空间属性），例如：
+  - `physxRigidBody:enableCCD`
+  - `physxRigidBody:maxDepenetrationVelocity`
+  - `physxCollision:contactOffset`
+  - `physxCollision:restOffset`
+- Isaac/PhysX 在运行时通常会读取这些属性（前提：对应扩展启用）。
+- 相关 one-off：`scripts/oneoff_stabilize_contact_ccd_damping.py`。
 
 ## 问题 4：启用物理后报 `Mesh ... does not have points`
 **现象**
@@ -195,6 +206,10 @@
   - 保证每个对象只 author 一个 collider（避免叠加导致异常接触）。
   - 对该对象切换 `physics:approximation`：优先试 `convexHull`；若仍异常可尝试 `sdf`。
   - 若确认是弹飞：检查初始 pose 是否与静态环境穿插；必要时在仿真前把物体抬高一点。
+
+**补充：如果表现为“接触后乱弹/被顶飞”**
+- 优先参考案例记录（包含多轮 one-off 与仍存问题）：
+  - `docs/operations/simbench_interaction_preprocess_field_notes.md` 的 “案例：勺子接触桌面后乱弹/弹起特别大”。
 
 **快速 one-off（推荐）**
 - 使用 `scripts/oneoff_force_draggable.py` 对单个对象切换近似（示例见 `docs/operations/simbench_interaction_preprocess_field_notes.md`）。

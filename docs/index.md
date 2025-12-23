@@ -4,7 +4,7 @@ title: USD Scene Physics Prep 文档主页
 
 # USD Scene Physics Prep
 
-> 最后更新：2025-12-22
+> 最后更新：2025-12-23
 >
 > 相关代码：
 > - ../clean_data.py

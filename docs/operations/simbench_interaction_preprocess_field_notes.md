@@ -1,6 +1,6 @@
 # SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总
 
-> 最后更新：2025-12-22
+> 最后更新：2025-12-23
 >
 > 相关代码：
 > - ../../scripts/isaac_python.sh
@@ -8,6 +8,13 @@
 > - ../../scripts/list_draggable_prims.py
 > - ../../scripts/oneoff_force_draggable.py
 > - ../../scripts/oneoff_make_static_collider_only.py
+> - ../../scripts/inspect_usd_physics_props.py
+> - ../../scripts/check_usd_external_assets.py
+> - ../../scripts/oneoff_fix_mass_invalid_values.py
+> - ../../scripts/oneoff_bind_physics_material.py
+> - ../../scripts/oneoff_add_proxy_box_collider.py
+> - ../../scripts/oneoff_stabilize_contact_ccd_damping.py
+> - ../../scripts/oneoff_add_spoon_multi_box_proxy.py
 > - ../../set_physics/simready.py
 > - ../../set_physics/preprocess_for_interaction.py
 >
@@ -50,7 +57,11 @@
 ### 3) Isaac 环境缺少 `pxr.PhysxSchema`
 - **现象**：`ImportError: cannot import name 'PhysxSchema' from 'pxr'`。
 - **影响**：无法通过 PhysX 扩展 schema 设置 CCD/接触偏移等更细的物理参数。
-- **策略**：脚本仅使用 `UsdPhysics.*`（CollisionAPI/MeshCollisionAPI/RigidBodyAPI/MassAPI），并通过更稳的近似与过滤规则规避 cooking 风险。
+- **策略**：
+  - 仍以 `UsdPhysics.*`（CollisionAPI/MeshCollisionAPI/RigidBodyAPI/MassAPI）为主。
+  - 若需要 CCD / contactOffset / depenetration clamp 等 PhysX 扩展字段：即使没有 `pxr.PhysxSchema` Python 绑定，也可以在 USD 中直接 author 对应的命名空间属性（例如 `physxRigidBody:enableCCD`、`physxCollision:contactOffset`）。
+    - Isaac/PhysX 在运行时通常会读取这些属性（前提是对应扩展启用）。
+    - 相关 one-off：`scripts/oneoff_stabilize_contact_ccd_damping.py`。
 
 ### 4) PhysX 报 `Mesh ... does not have points`
 - **原因**：场景中存在无 points 或拓扑不一致的 Mesh；给它绑定 collider 会触发 PhysX 报错。
@@ -92,6 +103,78 @@
   - 若是穿透：优先换更稳近似（convexHull）或简化碰撞。
 
 > 相关 one-off：`scripts/oneoff_force_draggable.py` 可对单个对象快速切换 approximation（见下方命令模板）。
+
+### 10) 案例：勺子接触桌面后“乱弹/弹起特别大”（flex_task1_cookie）
+
+> 目标：记录一次“多轮 one-off 仍无法稳定”的排查全过程，便于后续复用与定位。
+
+#### 场景与症状
+- 场景：`flex_task1_cookie`（Collected_scene 目录下的 simready USD）。
+- 症状：勺子与桌面接触后出现明显“穿透→被顶飞/弹起特别大/持续抖动”，即使把 `restitution=0` 也不明显收敛。
+
+#### 核心结论（本次案例）
+- **“弹很大”不一定是 restitution**：常见是**接触穿透较深**后，求解器使用 depenetration（分离修正）把物体推出去，视觉上像“被弹飞”。
+- **双边材质必须绑在“真正参与碰撞的 collider”上**：如果替换了桌面 collider（proxy box），但忘记绑定 physics material，会回退到默认材质/默认 combine 行为，表现依然可能“很弹”。
+- **凸分解并不总是更稳**：对薄表面+小物体接触，复杂/碎片化 collider 更容易抖；少量 primitive proxy（box/capsule）往往更稳定。
+- **仅靠 USD author 仍可能不够**：如果依然“乱弹”，下一步通常需要 Isaac/PhysX 运行时参数（substeps/solver iterations/contact offsets/CCD 配置）配合。
+
+#### 过程记录：每轮修改、输出与仍存问题
+
+1) 物理属性检查（定位对象与关键 prim path）
+- 工具：`scripts/inspect_usd_physics_props.py`
+- 目的：确认刚体 prim、实际 collider prim、`approximation`、质量属性、physics material 绑定是否生效。
+- 发现：勺子刚体与桌面 collider 的实际“参与碰撞的 prim”需要逐层确认（mesh vs 父级 xform vs proxy prim）。
+
+2) 修复勺子质量属性异常（MassAPI 强制 override）
+- 工具：`scripts/oneoff_fix_mass_invalid_values.py`
+- 动机：发现勺子存在无效 MassAPI 值（例如 COM / principalAxes / inertia 不合法），可能导致求解不稳定。
+- 输出：生成 `*_massfixed.usd` 变体。
+- 仍存问题：接触时仍可能出现明显弹起（说明并非仅质量属性导致）。
+
+3) 绑定 Physics Material（restitution=0）但不影响渲染材质
+- 工具：`scripts/oneoff_bind_physics_material.py`
+- 做法：创建/复用 `/_PhysicsMaterials/pmat_no_bounce`，通过 `material:binding:physics` 绑定到目标 collider prim。
+- 输出：生成 `*_physmat.usd` 变体。
+- 仍存问题：弹起仍较大（说明“顶飞/穿透修正”占比可能更高）。
+
+4) 桌面替换为 proxy box collider（禁用原三角网格碰撞）
+- 工具：`scripts/oneoff_add_proxy_box_collider.py`
+- 做法：根据桌面 world AABB 建 proxy Cube collider，并将原桌面 mesh `physics:collisionEnabled=False`，避免双 collider。
+- 关键修复：父级存在缩放时，需把 world AABB 转回 parent-local（通过 world AABB 角点做 world→local 变换）确保 proxy 尺寸正确。
+- 输出：生成 `*_box.usd` 变体。
+- 仍存问题：弹起仍大。
+
+5) 发现并修复：桌面 proxy collider 未绑定 physics material
+- 发现方式：用 `scripts/inspect_usd_physics_props.py` 检查 `material:binding:physics`。
+- 修复：把同一 `pmat_no_bounce` 绑定到桌面 proxy collider。
+- 输出：生成 `*_box_physmat.usd` 变体。
+- 仍存问题：仍有“乱弹”。
+
+6) CCD + 阻尼 + depenetration clamp + contactOffset（不依赖 PhysxSchema 绑定）
+- 工具：`scripts/oneoff_stabilize_contact_ccd_damping.py`
+- 做法（示例）：
+  - 在刚体 prim 上 author：
+    - `physxRigidBody:enableCCD=True`
+    - `physics:linearDamping/physics:angularDamping`
+    - `physxRigidBody:maxDepenetrationVelocity=<较小值>`
+  - 在 collider prim 上 author：
+    - `physxCollision:contactOffset` / `physxCollision:restOffset`
+- 输出：生成 `*_stable.usd`、`*_strongdamp.usd` 变体。
+- 仍存问题：用户侧反馈仍“乱弹”（说明仅靠这些 USD author 仍不足，或运行时参数/初始姿态/接触几何仍在触发强 depenetration）。
+
+7) 勺子替换为多 Box proxy collider（柄/头两段）
+- 工具：`scripts/oneoff_add_spoon_multi_box_proxy.py`
+- 做法：
+  - 基于 mesh 在刚体局部空间的 relative AABB，沿最长轴切成两段，创建 2 个 Cube collider。
+  - 关闭原 mesh 碰撞（避免 mesh 的 convexDecomposition 继续参与）。
+  - 把 `pmat_no_bounce` 绑定到新 proxy colliders。
+- 输出：生成 `*_spoonproxy2box.usd` 变体。
+- 仍存问题：用户侧反馈该 box 方案仍不满足预期（可能需要更贴合的 capsule/多段 convexHull，或直接调运行时 substeps/solver）。
+
+#### 建议的后续动作（超出纯 USD author 的部分）
+- 在 Isaac/PhysX 运行时提高 substeps / solver iterations（比继续叠加碰撞体更有效）。
+- 检查初始姿态是否与桌面存在穿插（穿插越大，第一帧 depenetration 越“顶飞”）。
+- 若仍需 proxy：优先考虑 `Capsule`（接触最平滑）或 3 段以上 primitive 组合；同时控制 contactOffset/restOffset 和 depenetration clamp。
 
 ## 推荐命令模板
 
