@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""
+Documentation Manager Script
+
+Features:
+1. Validate Docs: Check for required metadata headers (YAML front matter).
+2. Generate Index: Auto-generate docs/INDEX.md based on metadata.
+"""
+
+import os
+import glob
+import yaml
+import datetime
+from typing import Dict, List, Optional
+
+DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs")
+INDEX_FILE = os.path.join(DOCS_DIR, "INDEX.md")
+
+REQUIRED_FIELDS = ["title", "created_at", "updated_at", "maintainer"]
+
+def parse_front_matter(file_path: str) -> Optional[Dict]:
+    """Extract and parse YAML front matter from a markdown file."""
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    if not content.startswith("---\n"):
+        return None
+    
+    try:
+        parts = content.split("---\n", 2)
+        if len(parts) < 3:
+            return None
+        return yaml.safe_load(parts[1])
+    except yaml.YAMLError:
+        return None
+
+def validate_docs():
+    """Validate all markdown files in docs/ directory."""
+    print("Validating documentation...")
+    md_files = glob.glob(os.path.join(DOCS_DIR, "**/*.md"), recursive=True)
+    
+    issues = []
+    
+    for file_path in md_files:
+        if os.path.basename(file_path) in ["INDEX.md", "README.md", "index.md"]:
+            continue
+            
+        rel_path = os.path.relpath(file_path, DOCS_DIR)
+        meta = parse_front_matter(file_path)
+        
+        if not meta:
+            issues.append(f"[MISSING HEADER] {rel_path}")
+            continue
+            
+        missing_fields = [f for f in REQUIRED_FIELDS if f not in meta]
+        if missing_fields:
+            issues.append(f"[INCOMPLETE HEADER] {rel_path}: Missing {missing_fields}")
+            
+    if issues:
+        print(f"Found {len(issues)} issues:")
+        for issue in issues:
+            print(issue)
+    else:
+        print("All documents look good!")
+
+def find_references(target_file: str):
+    """Find all docs that reference the given code file."""
+    print(f"Searching for references to: {target_file}")
+    md_files = glob.glob(os.path.join(DOCS_DIR, "**/*.md"), recursive=True)
+    found = []
+
+    # Normalize target path for comparison (basic normalization)
+    target_base = os.path.basename(target_file)
+    
+    for file_path in md_files:
+        meta = parse_front_matter(file_path)
+        if not meta:
+            continue
+            
+        code_ref = meta.get("code_reference", "")
+        if not code_ref:
+            continue
+            
+        # Check for exact match or basename match
+        # Ideally, we should resolve paths, but simple string matching is a good start
+        if target_file in code_ref or target_base == os.path.basename(code_ref):
+            rel_path = os.path.relpath(file_path, DOCS_DIR)
+            found.append((rel_path, meta.get("title", "Untitled")))
+            
+    if found:
+        print(f"Found {len(found)} documents referencing '{target_file}':")
+        for path, title in found:
+            print(f"- {path} ({title})")
+    else:
+        print(f"No documents found referencing '{target_file}'.")
+
+def generate_index():
+    """Generate docs/INDEX.md based on metadata."""
+    print("Generating INDEX.md...")
+    md_files = glob.glob(os.path.join(DOCS_DIR, "**/*.md"), recursive=True)
+    
+    categories = {
+        "overview": [],
+        "architecture": [],
+        "usage": [],
+        "modules": [],
+        "specs": [],
+        "operations": [],
+        "references": [],
+        "others": []
+    }
+    
+    for file_path in md_files:
+        filename = os.path.basename(file_path)
+        if filename in ["INDEX.md", "index.md", "README.md"]:
+            continue
+            
+        rel_path = os.path.relpath(file_path, DOCS_DIR)
+        category = rel_path.split(os.sep)[0]
+        if category not in categories:
+            category = "others"
+            
+        meta = parse_front_matter(file_path)
+        title = meta.get("title", filename) if meta else filename
+        status = meta.get("status", "Active") if meta else "Unknown"
+        updated = meta.get("updated_at", "N/A") if meta else "N/A"
+        code_ref = meta.get("code_reference", "") if meta else ""
+        
+        entry = {
+            "title": title,
+            "path": rel_path.replace("\\", "/"),
+            "status": status,
+            "updated": updated,
+            "code_ref": code_ref
+        }
+        categories[category].append(entry)
+        
+    with open(INDEX_FILE, 'w', encoding='utf-8') as f:
+        f.write("# Project Documentation Index\n\n")
+        f.write(f"> Generated at: {datetime.date.today()}\n\n")
+        
+        for cat, entries in categories.items():
+            if not entries:
+                continue
+            
+            f.write(f"## {cat.capitalize()}\n\n")
+            f.write("| Document | Status | Last Updated | Related Code |\n")
+            f.write("| :--- | :--- | :--- | :--- |\n")
+            
+            # Sort by title
+            entries.sort(key=lambda x: x["title"])
+            
+            for entry in entries:
+                code_link = f"[`{os.path.basename(entry['code_ref'])}`]({entry['code_ref']})" if entry['code_ref'] else "-"
+                f.write(f"| [{entry['title']}]({entry['path']}) | {entry['status']} | {entry['updated']} | {code_link} |\n")
+            f.write("\n")
+            
+    print(f"Index generated at {INDEX_FILE}")
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--validate", action="store_true", help="Validate docs metadata")
+    parser.add_argument("--gen-index", action="store_true", help="Generate INDEX.md")
+    parser.add_argument("--find-refs", help="Find docs referencing a specific code file")
+    args = parser.parse_args()
+    
+    if args.validate:
+        validate_docs()
+    
+    if args.gen_index:
+        generate_index()
+
+    if args.find_refs:
+        find_references(args.find_refs)
+    
+    if not any([args.validate, args.gen_index, args.find_refs]):
+        # Default behavior: run validation and index generation
+        validate_docs()
+        generate_index()

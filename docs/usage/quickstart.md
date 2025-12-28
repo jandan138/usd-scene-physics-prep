@@ -1,3 +1,12 @@
+---
+title: Quickstart Guide
+code_reference: clean_data.py
+created_at: 2025-12-20
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
 # 快速开始
 
 > 最后更新：2025-12-22

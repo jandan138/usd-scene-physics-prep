@@ -1,3 +1,12 @@
+---
+title: Directory Structure
+code_reference: set_physics/pxr_utils/data_clean.py
+created_at: 2025-12-19
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
 # 目录结构
 
 > 最后更新：2025-12-22

@@ -1,4 +1,13 @@
-# specs_normalizer 使用指南
+---
+title: Specs Normalizer Guide
+code_reference: specs_normalizer/normalize.py
+created_at: 2025-12-19
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
+# 规范化导出工具（specs_normalizer）使用指南
 
 > 最后更新：2025-12-22
 >

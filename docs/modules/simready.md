@@ -1,4 +1,13 @@
-# simready：一键生成可仿真 USD（原理）
+---
+title: SimReady Module
+code_reference: set_physics/simready.py
+created_at: 2025-12-20
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
+# 模块：SimReady (simready.py)
 
 > 最后更新：2025-12-22
 > 

@@ -1,4 +1,13 @@
-# 导航预处理
+---
+title: Navigation Preprocessing Usage
+code_reference: set_physics/preprocess_for_navigation.py
+created_at: 2025-12-19
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
+# 使用指南：Navigation Preprocessing
 
 > 最后更新：2025-12-22
 >

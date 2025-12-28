@@ -1,65 +1,79 @@
----
-title: USD Scene Physics Prep 文档主页
----
+# Project Documentation Index
 
-# USD Scene Physics Prep
+> Generated at: 2025-12-28
 
-> 最后更新：2025-12-23
->
-> 相关代码：
-> - ../clean_data.py
-> - ../set_physics/simready.py
-> - ../set_physics/pxr_utils/data_clean.py
-> - ../set_physics/preprocess_for_interaction.py
-> - ../set_physics/preprocess_for_navigation.py
-> - ../specs_normalizer/normalize.py
->
-> 总索引：overview/docs_index.md
+## Overview
 
-## 索引
-- [文档索引](#文档索引)
-- [快速链接](#快速链接)
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [Project Overview](overview/project_overview.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
 
-一个用于 USD 场景的资产拆分与物理仿真预处理工具集，支持将原始场景规范为统一的模型/材质库与场景引用结构，并批量为对象绑定碰撞体、刚体、关节等物理属性，适配 Omniverse Isaac Sim 的交互与导航仿真。
+## Architecture
 
-## 文档索引
-- 概述
-  - [项目概述](overview/project_overview.md)
-- 架构
-  - [处理流水线](architecture/pipeline.md)
-  - [目录结构](architecture/directory_structure.md)
-- 使用
-  - [快速开始](usage/quickstart.md)
-  - [交互预处理](usage/interaction_preprocessing.md)
-  - [`/root` 场景交互 sim-ready（prep_interaction_root_scene.py）](usage/prep_interaction_root_scene.md)
-  - [导航预处理](usage/navigation_preprocessing.md)
-  - [场景打包与导出](usage/export_scenes.md)
-  - [simready（一键生成可仿真 USD）](usage/simready.md)
-- 模块说明
-  - [data_clean](modules/data_clean.md)
-  - [usd_physics](modules/usd_physics.md)
-  - [preprocess_for_interaction](modules/preprocess_interaction.md)
-  - [preprocess_for_navigation](modules/preprocess_navigation.md)
-  - [simready（原理）](modules/simready.md)
-  - [prep_interaction_root_scene（原理）](modules/prep_interaction_root_scene.md)
-- 引用与依赖
-  - [资产与材质引用](references/assets_and_materials.md)
-  - [环境与依赖](references/dependencies.md)
-- 规格说明
-  - [数据目录结构规范解读](specs/dataset_structure_interpretation.md)
-  - [目录结构对比：原始输出 vs 规范结构](specs/structure_comparison.md)
-  - [规范化导出工具使用说明](specs/normalizer_usage.md)
-- 运维
-  - [Windows 使用注意](operations/windows_notes.md)
-  - [环境准备建议](operations/environment_setup.md)
-  - [交互预处理排错（SimBench/GRSceneUSD task10）](operations/troubleshooting_interaction_preprocess.md)
-  - [SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总](operations/simbench_interaction_preprocess_field_notes.md)
-  - [排错：GLB payload 多 Mesh（geometry_01 等）未绑定 collider 导致穿透](operations/troubleshooting_glb_payload_multimesh.md)
-  - [`/root` 交互预处理：自检与排错清单](operations/prep_interaction_root_scene_checklist.md)
-- 示例与答疑
-  - [工作流示例](examples/workflow_examples.md)
-  - [常见问题](faq/faq.md)
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [Directory Structure](architecture/directory_structure.md) | Active | 2025-12-22 | [`data_clean.py`](set_physics/pxr_utils/data_clean.py) |
+| [Processing Pipeline](architecture/pipeline.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
+| [project_deep_analysis.md](architecture/project_deep_analysis.md) | Unknown | N/A | - |
 
-## 快速链接
-- 仓库主页：`https://github.com/jandan138/usd-scene-physics-prep`
-- Pages（启用后）：`https://jandan138.github.io/usd-scene-physics-prep/`
+## Usage
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [Interaction Preprocessing Usage](usage/interaction_preprocessing.md) | Active | 2025-12-22 | [`preprocess_for_interaction.py`](set_physics/preprocess_for_interaction.py) |
+| [Navigation Preprocessing Usage](usage/navigation_preprocessing.md) | Active | 2025-12-22 | [`preprocess_for_navigation.py`](set_physics/preprocess_for_navigation.py) |
+| [Quickstart Guide](usage/quickstart.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
+| [Scene Export Usage](usage/export_scenes.md) | Active | 2025-12-22 | [`export_scene.py`](set_physics/export_scene.py) |
+| [SimReady CLI Usage](usage/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |
+| [prep_interaction_root_scene.md](usage/prep_interaction_root_scene.md) | Unknown | N/A | - |
+
+## Modules
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [Data Clean Module](modules/data_clean.md) | Active | 2025-12-22 | [`data_clean.py`](set_physics/pxr_utils/data_clean.py) |
+| [Interaction Preprocessing Module](modules/preprocess_interaction.md) | Active | 2025-12-22 | [`preprocess_for_interaction.py`](set_physics/preprocess_for_interaction.py) |
+| [Navigation Preprocessing Module](modules/preprocess_navigation.md) | Active | 2025-12-22 | [`preprocess_for_navigation.py`](set_physics/preprocess_for_navigation.py) |
+| [SimReady Module](modules/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |
+| [USD Physics Module](modules/usd_physics.md) | Active | 2025-12-22 | [`usd_physics.py`](set_physics/pxr_utils/usd_physics.py) |
+| [physics_principles.md](modules/physics_principles.md) | Unknown | N/A | - |
+| [prep_interaction_root_scene.md](modules/prep_interaction_root_scene.md) | Unknown | N/A | - |
+
+## Specs
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [dataset_structure_interpretation.md](specs/dataset_structure_interpretation.md) | Unknown | N/A | - |
+| [export_specs_unified_alignment.md](specs/export_specs_unified_alignment.md) | Unknown | N/A | - |
+| [normalizer_usage.md](specs/normalizer_usage.md) | Unknown | N/A | - |
+| [operations_log.md](specs/operations_log.md) | Unknown | N/A | - |
+| [pipeline_phases_overview.md](specs/pipeline_phases_overview.md) | Unknown | N/A | - |
+| [structure_comparison.md](specs/structure_comparison.md) | Unknown | N/A | - |
+
+## Operations
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [environment_setup.md](operations/environment_setup.md) | Unknown | N/A | - |
+| [prep_interaction_root_scene_checklist.md](operations/prep_interaction_root_scene_checklist.md) | Unknown | N/A | - |
+| [simbench_interaction_preprocess_field_notes.md](operations/simbench_interaction_preprocess_field_notes.md) | Unknown | N/A | - |
+| [troubleshooting_glb_payload_multimesh.md](operations/troubleshooting_glb_payload_multimesh.md) | Unknown | N/A | - |
+| [troubleshooting_interaction_preprocess.md](operations/troubleshooting_interaction_preprocess.md) | Unknown | N/A | - |
+| [windows_notes.md](operations/windows_notes.md) | Unknown | N/A | - |
+
+## References
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [Assets and Materials Reference](references/assets_and_materials.md) | Active | 2025-12-22 | [`data_clean.py`](set_physics/pxr_utils/data_clean.py) |
+| [Dependencies and Environment](references/dependencies.md) | Active | 2025-12-22 | [`requirements.txt`](requirements.txt) |
+
+## Others
+
+| Document | Status | Last Updated | Related Code |
+| :--- | :--- | :--- | :--- |
+| [2025-12-20_simready_cli.md](changes/2025-12-20_simready_cli.md) | Unknown | N/A | - |
+| [Specs Normalizer Guide](specs_normalizer/specs_normalizer_guide.md) | Active | 2025-12-22 | [`normalize.py`](specs_normalizer/normalize.py) |
+| [faq.md](faq/faq.md) | Unknown | N/A | - |
+| [workflow_examples.md](examples/workflow_examples.md) | Unknown | N/A | - |
+

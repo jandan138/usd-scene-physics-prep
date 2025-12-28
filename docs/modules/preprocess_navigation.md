@@ -1,4 +1,13 @@
-# 模块说明：preprocess_for_navigation
+---
+title: Navigation Preprocessing Module
+code_reference: set_physics/preprocess_for_navigation.py
+created_at: 2025-12-19
+updated_at: 2025-12-22
+maintainer: Project Team
+status: Active
+---
+
+# 模块：Preprocess for Navigation
 
 > 最后更新：2025-12-22
 >
