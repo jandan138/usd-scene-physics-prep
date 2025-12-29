@@ -37,6 +37,27 @@
 - 发布页（启用 GitHub Pages 后）：`https://jandan138.github.io/usd-scene-physics-prep/`
 
 ## 使用提要
+
+### SimReady 方案选择 (SimReady Options)
+
+本项目提供三种 SimReady 实现，请根据您的数据源和需求选择：
+
+1.  **方案 A：标准流水线 (Pipeline)**
+    *   **适用场景**: 项目内部标准化数据，需要批量处理和精细控制（先拆分，再物理绑定）。
+    *   **入口**: `set_physics/preprocess_for_interaction.py`
+    *   **文档**: [交互预处理指南](docs/usage/interaction_preprocessing.md)
+
+2.  **方案 B：一键工具 (CLI)**
+    *   **适用场景**: 快速上手，无需关心中间步骤，直接从原始 USD 生成 SimReady 结果。
+    *   **入口**: `set_physics/simready.py`
+    *   **文档**: [SimReady CLI 使用说明](docs/usage/simready.md)
+
+3.  **方案 C：外部适配器 (External Adapter)**
+    *   **适用场景**: 处理非标准结构（如 SimBench/GRScene 的 `/root` 结构）的外部数据集。
+    *   **入口**: `scripts/prep_interaction_root_scene.py`
+    *   **文档**: [外部场景适配指南](docs/usage/prep_interaction_root_scene.md)
+
+### 核心工作流 (Standard Pipeline Steps)
 - 拆分：运行 `python clean_data.py` 生成 `target/`。
 - 交互：修改并运行 `set_physics/preprocess_for_interaction.py` 生成 `start_result_dynamic.usd`。
 - 导航：修改并运行 `set_physics/preprocess_for_navigation.py` 生成 `start_result_navigation.usd`。
