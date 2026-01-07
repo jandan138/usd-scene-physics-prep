@@ -1,6 +1,9 @@
 export_specs/
 export_specs_no_links/
 export_specs_unified/
+export_specs_commercial/
+sandbox/
+.trae/
 
 # Python bytecode / cache
 __pycache__/
