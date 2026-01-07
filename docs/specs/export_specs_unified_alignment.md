@@ -23,7 +23,7 @@
   - 大小写统一：已将所有引用中的 `Textures/` 统一为 `textures/`
   - 相关修复：`scripts/fix_mdl_textures_case.py`（文本级修复）；严格引用检查均通过
 - 资产库 `GRScenes_assets`
-  - 结构：`GRScenes_assets/{category}/{uid}.usd`
+  - 结构：`GRScenes_assets/{category}/{uid}/{uid}.usd`
   - 数量统计：USD 85647
   - 引用规范：资产中的 MDL 与贴图引用均指向 `Material/mdl`（贴图位于其 `textures/`）
 - 场景集 `GRScenes100`
@@ -54,7 +54,7 @@
   - 规范含 `README.txt` 与 `LICENSE`；当前未提供
   - 目录结构对齐（`Material/mdl` 与小写 `textures`）已完成
 - Assets 差距
-  - 规范含 `{uid}_annotation.json`（单资产注释）与 `Asset_annotation.json`（汇总）；当前未提供
+  - 规范含 `{uid}_annotation.json`（单资产注释）与 `Asset_annotation.json`（汇总）；当前已支持生成（含 `asset_type` 字段）
   - 规范可选 `Asset_features`；当前未提供
   - 规范含 `README.txt` 与 `LICENSE`；当前未提供
   - 文件格式允许 `glb/usd`；当前为 `usd`

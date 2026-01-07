@@ -36,7 +36,7 @@ status: Active
 
 ## 新目录结构
 - `Material/mdl` 存放所有`.mdl`材质文件与贴图目录：`Material/mdl/Textures`
-- `models/<category>/<uid>.usd` 统一模型输出位置，每个`usd`内的`mdl:sourceAsset`会改写为相对`Material/mdl`的路径
+- `models/<category>/<uid>/<uid>.usd` 统一模型输出位置，每个`usd`内的`mdl:sourceAsset`会改写为相对`Material/mdl`的路径
 - `Scenes/<category>/...` 场景输出位置（可选），按类别聚合
 
 ## 环境要求
@@ -82,7 +82,7 @@ status: Active
 ## 验证示例
 - 检查模型`usd`内的`.mdl`是否已相对到`Material/mdl`：
   ```bash
-  ./scripts/isaac_python.sh -c 'from pxr import Usd,Sdf; p="/abs/output/models/<category>/<uid>.usd"; s=Usd.Stage.Open(p); c=0
+  ./scripts/isaac_python.sh -c 'from pxr import Usd,Sdf; p="/abs/output/models/<category>/<uid>/<uid>.usd"; s=Usd.Stage.Open(p); c=0
   
   for prim in s.Traverse():
     for attr in prim.GetAttributes():

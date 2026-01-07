@@ -11,7 +11,7 @@ import os
 import json
 import re
 from ..utils.fs import ensure_dir, copy_file
-from ..utils.scene_rewrite import rewrite_scene_refs_inplace
+from ..utils.scene_rewrite import rewrite_scene_refs_inplace, _remap_model_path
 
 # 选择一个布局文件（优先 raw，其次 fix，其次 new，再否则任取一个 USD）
 def choose_layout(scene_dir):
@@ -98,6 +98,10 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                             rest = p[idx + len("Materials/"):]
                             return "@" + mats_rel + "/" + rest + "@"
                         if "models/" in p:
+                            remapped = _remap_model_path(p)
+                            if remapped:
+                                return "@" + models_rel + "/" + remapped + "@"
+                            # Fallback logic if _remap returns None (shouldn't happen if "models/" in p)
                             idx = p.find("models/")
                             rest = p[idx + len("models/"):]
                             return "@" + models_rel + "/" + rest + "@"

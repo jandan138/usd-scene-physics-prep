@@ -39,24 +39,25 @@
   - 遍历来源：
     - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/models/.../{category}/{uid}/instance.usd`
     - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/models/.../{category}/{uid}/instance.usd`
-    - 复制为 `{asset_name}/{category}/{uid}.usd`。
+    - 复制为 `{asset_name}/{category}/{uid}/{uid}.usd`。
   - 将 USD 中所有 MDL 引用改写为相对指向 `export_specs_unified/Material/mdl`。
-  - 可选生成 `{uid}_annotation.json` 与 `Asset_annotation.json`。
+  - 必须生成 `{uid}_annotation.json`（含 `asset_type`），可选生成 `Asset_annotation.json`。
 - 命令示例：
   - 使用 Isaac Sim Python（确保 `ISAAC_SIM_ROOT` 配置或退出conda）：
     - `./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only`
     - `./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only`
   - 加注释：在上述命令末尾追加 `--with-annotations`
 - 预期结果：
-  - `export_specs_unified/GRScenes_assets/{category}/{uid}.usd` 成立，数量与类别分布与源数据一致（去重后）。
+  - `export_specs_unified/GRScenes_assets/{category}/{uid}/{uid}.usd` 成立，数量与类别分布与源数据一致（去重后）。
   - 任意资产 USD 的 MDL 引用改写为相对路径（形如 `@../../Material/mdl/<mdl_name>.mdl@`），贴图引用解析到 `Material/mdl/textures/...`。
-  - 若启用注释，生成单资产与类别聚合注释文件。
+  - 必定生成单资产注释 `{uid}_annotation.json`，其中 `asset_type` 字段正确填充（`articulation` 或 `rigid`）。
 
 ## 阶段三：导出场景并重写引用指向新库
 - 操作内容：
   - 对 `target/scenes/<sid>/` 选择布局文件（优先 `start_result_raw.usd`，其次 `fix`/`new` 或任意 USD）。
   - 复制为 `export_specs_unified/<Scene_name>/<Scene_category>/<sid>/layout.usd`，同级复制其它 USD。
   - 将场景内对材质与模型的引用改写为相对路径：`Material/mdl` 与 `<Asset_name>`。
+  - 智能解析旧的模型引用（`.../models/...`），重映射到新的深层资产路径（`../../<Asset_name>/{category}/{uid}/{uid}.usd`）。
   - 可选生成 `{sid}_annotation.json`（若 `pxr` 可用，统计 `/Root/Meshes` 子层级）。
 - 命令示例：
   - 全量：`python -m specs_normalizer --src-target target --dst-root export_specs_unified --scene-name GRScenes100 --scene-category home`
@@ -64,7 +65,7 @@
   - 加注释：在上述命令末尾追加 `--with-annotations`
 - 预期结果：
   - `export_specs_unified/GRScenes100/home/{sid}/layout.usd` 建立；同级保留其它 USD 以便复核。
-  - 场景内的引用改写为相对路径，模型指向 `<Asset_name>/{category}/{uid}.usd`，材质指向 `Material/mdl/<mdl_name>.mdl`。
+  - 场景内的引用改写为相对路径，模型指向 `<Asset_name>/{category}/{uid}/{uid}.usd`，材质指向 `Material/mdl/<mdl_name>.mdl`。
   - 若启用注释，生成 `{sid}_annotation.json`，含基本统计信息。
 
 ## 验证与检查

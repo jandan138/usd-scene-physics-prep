@@ -47,8 +47,11 @@ Material/
 ```
 Asset_name/
 ├─ Asset_category/
-│  ├─ {uid}.glb/usd              # 单资产文件（GLB 或 USD）
-│  ├─ [optional] {uid}_annotation.json  # 单资产注释
+│  ├─ {uid}/
+│  │  ├─ {uid}.glb/usd              # 单资产文件（GLB 或 USD）
+│  │  ├─ {uid}_annotation.json      # 单资产注释（含 asset_type）
+│  │  ├─ front.png                  # 正视图预览
+│  │  └─ [optional] rendering.mp4   # 演示视频
 │  └─ ...
 ├─ Asset_annotation.json         # 该 Asset_name 下所有资产的汇总注释
 ├─ [optional] Asset_features     # 资产级特征（统计/向量等）
@@ -58,8 +61,11 @@ Asset_name/
 -- 说明
   - 顶层 `Asset_name`：资产大类或数据集资产库名（如 `GRScenes_assets`、`MesaTask_assets`，也可为通用 `models`）。
   - 二级 `Asset_category`：具体类别（如 `cabinet`、`plant`）。
-  - `{uid}.glb/usd`：具体的资产文件，GLB 或 USD 二选一；`{uid}_annotation.json` 为该资产的标注（例如尺寸、可交互性、物理近似等）。
-  - `Asset_annotation.json`：该类别下所有资产的聚合注释（方便批量检索与统计）。
+  - 三级 `{uid}`：单资产专属目录。
+  - `{uid}.glb/usd`：具体的资产文件。
+  - `{uid}_annotation.json`：该资产的标注。**必须包含字段 `asset_type`**，取值为 `{'rigid', 'soft', 'part_aware', 'articulation'}` 之一。
+  - `front.png`：资产正视图缩略图。
+  - `Asset_annotation.json`：该类别下所有资产的聚合注释。
   - `Asset_features`：可选的特征目录，存储类别级或资产级的数值特征。
 - 与现有结构的映射
   - 现有模型输出：`target/models/<scope>/<articulated|others>/<category>/<model_hash>/instance.usd`（`set_physics/pxr_utils/data_clean.py:586-597,642-666`）。
@@ -67,8 +73,8 @@ Asset_name/
     - `Asset_name = models`，或按数据集命名为 `GRScenes_assets`、`MesaTask_assets` 等
     - `Asset_category = <category>`（如 `cabinet`、`plant`）
     - `{uid} = <model_hash>`（`set_physics/pxr_utils/data_clean.py:612-616` 的 MD5）
-    - 文件：`{uid}.usd = instance.usd`
-    - 单资产标注：`{uid}_annotation.json` 可记录语义、物理属性（碰撞近似/刚体）、引用材质等。
+    - 文件：`{uid}/{uid}.usd` (对应源 `instance.usd`)
+    - 单资产标注：`{uid}/{uid}_annotation.json`，其中 `asset_type` 字段根据源路径 (`articulated`/`others`) 自动填充。
     - 汇总标注：`Asset_annotation.json` 可引用 `get_inst_model_mapping` 或自建聚合（`set_physics/pxr_utils/data_clean.py:706-725`）。
 
 ## Scenes

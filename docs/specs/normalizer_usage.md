@@ -50,8 +50,8 @@
   - 贴图：`target/Materials/Textures/**` → `Material/mdl/textures/**`（`specs_normalizer/exporters/materials.py:12-16`）
 - 资产
   - 迭代器：`specs_normalizer/exporters/assets.py:5-23`
-  - 导出：`target/models/.../<category>/<model_hash>/instance.usd` → `Asset_name/<category>/<model_hash>.usd`（`specs_normalizer/exporters/assets.py:25-40`）
-  - 注释：`{uid}_annotation.json` 与 `Asset_annotation.json`（`specs_normalizer/exporters/assets.py:41-49`）
+  - 导出：`target/models/.../<category>/<model_hash>/instance.usd` → `Asset_name/<category>/<model_hash>/<model_hash>.usd`（`specs_normalizer/exporters/assets.py:25-40`）
+  - 注释：`{uid}_annotation.json` (含 asset_type) 与 `Asset_annotation.json`（`specs_normalizer/exporters/assets.py:41-49`）
 - 场景
   - 选择布局：`specs_normalizer/exporters/scenes.py:5-12`
   - 导出：`Scene_name/Scene_category/{sid}/layout.usd`（`specs_normalizer/exporters/scenes.py:14-31`）
@@ -70,7 +70,10 @@ export_specs/
 │  ├─ textures/
 │  └─ *.mdl
 ├─ GRScenes_assets/
-│  └─ <category>/<model_hash>.usd
+│  └─ <category>/
+│     └─ <model_hash>/
+│        ├─ <model_hash>.usd
+│        └─ <model_hash>_annotation.json
 └─ GRScenes100/home/
    └─ <scene_id>/
       ├─ layout.usd

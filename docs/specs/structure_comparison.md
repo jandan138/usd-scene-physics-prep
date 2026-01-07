@@ -65,8 +65,10 @@ Material/
 
 Asset_name/
 ├─ Asset_category/
-│  ├─ {uid}.glb/usd
-│  ├─ [optional] {uid}_annotation.json
+│  ├─ {uid}/
+│  │  ├─ {uid}.glb/usd
+│  │  ├─ [optional] {uid}_annotation.json
+│  │  └─ ...
 │  └─ ...
 ├─ Asset_annotation.json
 ├─ [optional] Asset_features
@@ -96,12 +98,12 @@ Scene_name/
   - `.mdl` 文件对应 `{mid}.mdl`；贴图目录对应 `textures/`
 - Assets
   - 原始：`target/models/<scope>/<articulated|others>/<category>/<model_hash>/instance.usd`
-  - 规范：`Asset_name/Asset_category/{uid}.usd`
+  - 规范：`Asset_name/Asset_category/{uid}/{uid}.usd`
   - 对应规则：
     - `Asset_name = models` 或数据集名（如 `GRScenes_assets`）
     - `Asset_category = <category>`（例如 `cabinet`、`plant`）
     - `{uid} = <model_hash>`；文件名 `{uid}.usd = instance.usd`
-    - 单资产注释 `{uid}_annotation.json`：当前未生成；可由预处理脚本或统计流程补充
+    - 单资产注释 `{uid}_annotation.json`：由导出工具自动生成，根据源路径自动推断 `asset_type` (`articulation` vs `rigid`)。
     - 汇总注释 `Asset_annotation.json`：可依据 `get_inst_model_mapping`（`set_physics/pxr_utils/data_clean.py:706-725`）或生成流程聚合
 - Scenes
   - 原始：`target/scenes/<scene_id>/start_result_new.usd | start_result_fix.usd`
