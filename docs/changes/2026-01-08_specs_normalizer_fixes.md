@@ -1,0 +1,16 @@
+# Specs Normalizer Enhancements and Fixes (2026-01-08)
+
+## 1. Features
+- **Resume Capability (Skip Existing)**: 
+  - `specs_normalizer` now checks if the destination file exists before exporting. If it does, the export is skipped, allowing for faster recovery from interrupted runs.
+  - This is particularly useful for large-scale exports on networked file systems (e.g., DLC).
+
+## 2. Bug Fixes
+- **MDL Path Normalization**:
+  - Fixed an issue where texture paths in MDL files were case-sensitive (`Textures` vs `textures`), causing missing textures on Linux. The normalizer now enforces lowercase `textures`.
+  - Fixed a path duplication bug where `Material/mdl/` was being appended redundantly (e.g., `.../Material/mdl/mdl/...`). The rewriter now correctly strips the prefix from the source path before joining with the base.
+
+## 3. Scripts
+- **New Utility Scripts**:
+  - `scripts/inspect_single_usd.py`: Diagnostic tool to inspect USD prim structure and references.
+  - `scripts/fix_usd_textures_case.py`: Batch repair tool to apply MDL path fixes (case sensitivity and deduplication) to already exported USD files in place.

@@ -27,6 +27,6 @@ def copy_dir(src, dst):
         target = os.path.join(dst, rel) if rel != "." else dst
         # 确保目标子目录存在
         ensure_dir(target)
-        # 逐个复制文件
+        # 逐个复制文件（直接使用 shutil.copy2，跳过 copy_file 中的 ensure_dir 检查）
         for f in files:
-            copy_file(os.path.join(root, f), os.path.join(target, f))
+            shutil.copy2(os.path.join(root, f), os.path.join(target, f))

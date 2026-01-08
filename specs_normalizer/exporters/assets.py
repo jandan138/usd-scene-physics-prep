@@ -55,16 +55,23 @@ def generate_asset_annotation(uid, category, subcat):
     }
 
 # 导出资产到规范结构
-def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_paths=False):
+def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_paths=False, limit=0):
     models_root = os.path.join(src_root, "models")             # 源模型根目录
     dest_root = os.path.join(dst_root, asset_name)              # 目标资产库顶层
     ensure_dir(dest_root)                                       # 确保存在
     stats = {}                                                  # 类别统计
     seen = set()                                                # 去重集合
+    count = 0                                                   # 处理计数
+    
+    print(f"Starting asset export to {dest_root}...")
     
     # 遍历所有模型实例
     # 注意：iter_model_instances 现在返回 4 个值
     for category, uid, inst, subcat in iter_model_instances(models_root):
+        if limit > 0 and count >= limit:
+            print(f"Limit reached ({limit}), stopping asset export.")
+            break
+
         cat_dir = os.path.join(dest_root, category)             # 目标类别目录
         ensure_dir(cat_dir)
         
@@ -78,7 +85,17 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
             continue
         seen.add(key)
         
+        # 检查目标文件是否已存在（断点续传逻辑）
+        if os.path.exists(out_path):
+            count += 1
+            # print(f"[{count}] Skipped existing asset: {category}/{uid}") # 可选：减少日志噪音
+            # 即使跳过文件复制，我们仍需确保统计信息 stats 被更新，以便生成聚合注释
+            stats.setdefault(category, []).append(uid)
+            continue
+
         copy_file(inst, out_path)
+        count += 1
+        print(f"[{count}] Exported asset: {category}/{uid}")
         
         if rewrite_mdl_paths:
             mats_abs = os.path.join(dst_root, "Material", "mdl")
@@ -114,3 +131,5 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
             out = {"category": category, "count": len(uids), "uids": uids}
             with open(os.path.join(dest_root, category, "Asset_annotation.json"), "w", encoding="utf-8") as f:
                 json.dump(out, f, ensure_ascii=False, indent=2)
+    
+    print(f"Asset export completed. Total exported: {count}")

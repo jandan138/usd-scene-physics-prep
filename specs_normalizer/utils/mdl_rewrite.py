@@ -21,8 +21,13 @@ from pxr import Usd, Sdf
 def _posix_join(base: str, rest: str) -> str:
     """
     将路径拼接并统一为 POSIX 斜杠形式（USD 推荐使用 `/`）。
+    同时强制将路径中的 '/Textures/' 替换为 '/textures/' 以解决大小写敏感问题。
     """
-    return os.path.join(base, rest).replace("\\", "/")
+    path = os.path.join(base, rest).replace("\\", "/")
+    # 强制将 Textures 目录转换为小写 textures
+    if "/Textures/" in path:
+        path = path.replace("/Textures/", "/textures/")
+    return path
 
 
 def rewrite_usd_mdl_paths(
@@ -74,10 +79,42 @@ def rewrite_usd_mdl_paths(
                 path = val.path
                 if not path:
                     continue
-                # 统一识别出 'Materials/' 子串，并提取其后缀（rest）
-                idx = path.find("Materials/")
+                # 统一识别出 'Materials/' 或 'Material/' 子串，并提取其后缀（rest）
+                # 优先处理包含 'mdl/' 的长路径以避免重复拼接
+                idx = -1
+                prefix_len = 0
+                
+                # 策略1：如果是纹理路径（包含 Textures 或 textures），直接提取文件名并重组
+                # 这能最稳健地修复路径重复问题（如 mdl/mdl/textures）和大小写问题
+                tex_idx_lower = path.lower().rfind("/textures/")
+                if tex_idx_lower >= 0:
+                    filename = path[tex_idx_lower + len("/textures/") :]
+                    # 直接构造目标路径：materials_base/textures/filename
+                    # 注意：materials_base 通常指向 .../Material/mdl
+                    newp = _posix_join(materials_base, "textures/" + filename)
+                    if newp != path:
+                        attr.Set(Sdf.AssetPath(newp))
+                        updated += 1
+                    continue # 处理完毕，跳过后续逻辑
+
+                # 策略2：非纹理路径（如 .mdl 引用），按原有前缀截断逻辑
+                if "Material/mdl/" in path:
+                    idx = path.find("Material/mdl/")
+                    prefix_len = len("Material/mdl/")
+                elif "Materials/" in path:
+                    idx = path.find("Materials/")
+                    prefix_len = len("Materials/")
+                elif "Material/" in path:
+                    idx = path.find("Material/")
+                    prefix_len = len("Material/")
+                
                 if idx >= 0:
-                    rest = path[idx + len("Materials/") :]
+                    rest = path[idx + prefix_len :]
+                    
+                    # [修复] 移除剩余路径中可能存在的 mdl/ 前缀，避免与 materials_base 中的 mdl 目录重复
+                    if rest.startswith("mdl/"):
+                        rest = rest[4:]
+                    
                     newp = _posix_join(materials_base, rest)
                     if newp != path:
                         attr.Set(Sdf.AssetPath(newp))

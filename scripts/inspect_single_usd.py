@@ -1,84 +1,58 @@
-import os
-import argparse
-import sys
 from pxr import Usd, Sdf
 
-def inspect_usd(usd_path: str):
-    print(f"Inspecting: {usd_path}")
-    
-    if not os.path.exists(usd_path):
-        print(f"Error: File not found: {usd_path}")
-        return
-
+def inspect_usd(path):
+    print(f"Inspecting: {path}")
     try:
-        stage = Usd.Stage.Open(usd_path)
+        stage = Usd.Stage.Open(path)
         if not stage:
-            print("Error: Failed to open stage")
+            print("  FAILED to open stage.")
             return
 
-        usd_dir = os.path.dirname(os.path.abspath(usd_path))
-        print(f"Base Directory: {usd_dir}")
-        print("-" * 60)
-        print(f"{'Property':<40} | {'Path':<40} | {'Status'}")
-        print("-" * 60)
-
-        found_issues = False
+        print("  Stage opened successfully.")
         
+        # Traverse all prims
+        count = 0
+        mesh_count = 0
         for prim in stage.Traverse():
-            for attr in prim.GetAttributes():
-                val = attr.Get()
-                if isinstance(val, Sdf.AssetPath):
-                    path = val.path
-                    if not path:
-                        continue
-                        
-                    # Resolve absolute path
-                    if os.path.isabs(path):
-                        abs_path = path
-                    else:
-                        abs_path = os.path.normpath(os.path.join(usd_dir, path))
-                    
-                    exists = os.path.exists(abs_path)
-                    status = "[OK]" if exists else "[MISSING]"
-                    
-                    # Shorten property name for display
-                    prop_name = f"{prim.GetName()}:{attr.GetName()}"
-                    if len(prop_name) > 38:
-                        prop_name = prop_name[:35] + "..."
-                        
-                    print(f"{prop_name:<40} | {path:<40} | {status}")
-                    
-                    if not exists:
-                        found_issues = True
-                        print(f"  -> Resolved to: {abs_path}")
-                        # Check if it might be in textures subdir
-                        filename = os.path.basename(path)
-                        # Assuming standard structure ../../Material/mdl/textures/
-                        # If path is ../../Material/mdl/foo.png
-                        potential_tex = os.path.normpath(os.path.join(usd_dir, "../../Material/mdl/textures", filename))
-                        if os.path.exists(potential_tex):
-                             print(f"  -> HINT: Found at {potential_tex}")
-                        else:
-                             # Try root mdl
-                             potential_mdl = os.path.normpath(os.path.join(usd_dir, "../../Material/mdl", filename))
-                             if os.path.exists(potential_mdl):
-                                 print(f"  -> HINT: Found at {potential_mdl}")
+            count += 1
+            if prim.GetTypeName() == "Mesh":
+                mesh_count += 1
+            
+            # Check references and payloads
+            if prim.HasAuthoredReferences():
+                refs = prim.GetMetadata("references")
+                if refs:
+                    print(f"    Prim {prim.GetPath()} has references: {refs}")
+            
+            if prim.HasAuthoredPayloads():
+                payloads = prim.GetMetadata("payloads")
+                if payloads:
+                    print(f"    Prim {prim.GetPath()} has payloads: {payloads}")
 
-        print("-" * 60)
-        if found_issues:
-            print("Issues found! Some assets are missing.")
+        print(f"  Total Prims: {count}")
+        print(f"  Mesh Prims: {mesh_count}")
+        
+        # Check specific structure
+        root = stage.GetPrimAtPath("/Root")
+        if root.IsValid():
+            inst = stage.GetPrimAtPath("/Root/Instance")
+            if inst.IsValid():
+                children = inst.GetChildren()
+                print(f"  /Root/Instance children count: {len(children)}")
+                for child in children:
+                    print(f"    - {child.GetName()} ({child.GetTypeName()})")
+            else:
+                print("  /Root/Instance NOT found.")
         else:
-            print("All assets resolved successfully.")
+            print("  /Root NOT found.")
 
     except Exception as e:
-        print(f"Exception: {e}")
-
-def main():
-    parser = argparse.ArgumentParser(description="Inspect a single USD file for asset references.")
-    parser.add_argument("usd_path", help="Path to the USD file")
-    args = parser.parse_args()
-    
-    inspect_usd(args.usd_path)
+        print(f"  Error: {e}")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: ./isaac_python.sh scripts/inspect_single_usd.py <usd_path>")
+        sys.exit(1)
+    
+    inspect_usd(sys.argv[1])

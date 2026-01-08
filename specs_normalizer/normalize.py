@@ -36,11 +36,13 @@ def main():
     ap.add_argument("--compat-links", action="store_true")
     ap.add_argument("--models-only", action="store_true")
     ap.add_argument("--scenes-only", action="store_true")
+    # 限制处理数量（用于快速验证，0表示不限制）
+    ap.add_argument("--limit", type=int, default=0)
     # 解析命令行参数
     args = ap.parse_args()
     if args.models_only:
         export_materials(args.src_target, args.dst_root)
-        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
+        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True, limit=args.limit)
     elif args.scenes_only:
         export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
     else:
@@ -51,7 +53,7 @@ def main():
                 print(i)
             return
         export_materials(args.src_target, args.dst_root)
-        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True)
+        export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True, limit=args.limit)
         export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
     if args.compat_links:
         import os
