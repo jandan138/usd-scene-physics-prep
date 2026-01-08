@@ -4,6 +4,8 @@
 - **Resume Capability (Skip Existing)**: 
   - `specs_normalizer` now checks if the destination file exists before exporting. If it does, the export is skipped, allowing for faster recovery from interrupted runs.
   - This is particularly useful for large-scale exports on networked file systems (e.g., DLC).
+- **Centralized Asset Annotation**:
+  - Modified `specs_normalizer` to generate a single, top-level `Asset_annotation.json` at the asset root (e.g., `GRScenes_assets/Asset_annotation.json`) instead of redundant files in each category subdirectory. This aligns with the dataset structure specification.
 
 ## 2. Bug Fixes
 - **MDL Path Normalization**:

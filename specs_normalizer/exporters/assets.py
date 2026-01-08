@@ -127,9 +127,20 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
                 json.dump(ann, f, ensure_ascii=False, indent=2)
                 
     if with_annotations:                                        # 类别聚合注释
+        # 生成单一的顶层 Asset_annotation.json
+        top_level_annotation = {
+            "asset_name": asset_name,
+            "total_count": count,
+            "categories": {}
+        }
+        
         for category, uids in stats.items():
-            out = {"category": category, "count": len(uids), "uids": uids}
-            with open(os.path.join(dest_root, category, "Asset_annotation.json"), "w", encoding="utf-8") as f:
-                json.dump(out, f, ensure_ascii=False, indent=2)
+            top_level_annotation["categories"][category] = {
+                "count": len(uids),
+                "uids": uids
+            }
+            
+        with open(os.path.join(dest_root, "Asset_annotation.json"), "w", encoding="utf-8") as f:
+            json.dump(top_level_annotation, f, ensure_ascii=False, indent=2)
     
     print(f"Asset export completed. Total exported: {count}")
