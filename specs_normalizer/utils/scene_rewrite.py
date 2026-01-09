@@ -70,6 +70,15 @@ def rewrite_scene_refs_inplace(scene_usd: str, materials_dir: str, models_dir: s
         if "Materials/" in p:
             idx = p.find("Materials/")
             rest = p[idx + len("Materials/"):]
+            
+            # [Fix] 移除多余的 mdl/ 前缀
+            if rest.startswith("mdl/"):
+                rest = rest[4:]
+            
+            # [Fix] 强制 Textures -> textures 小写
+            if "/Textures/" in rest:
+                rest = rest.replace("/Textures/", "/textures/")
+                
             return f"{mats_rel}/{rest}"
         elif p.endswith(".mdl"):
             # 兼容旧逻辑：如果只是 .mdl 结尾但没 Materials/，也指向材质库？

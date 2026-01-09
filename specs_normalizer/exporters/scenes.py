@@ -96,6 +96,15 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                         if "Materials/" in p:
                             idx = p.find("Materials/")
                             rest = p[idx + len("Materials/"):]
+                            
+                            # [Fix] 移除多余的 mdl/ 前缀
+                            if rest.startswith("mdl/"):
+                                rest = rest[4:]
+                            
+                            # [Fix] 强制 Textures -> textures 小写
+                            if "/Textures/" in rest:
+                                rest = rest.replace("/Textures/", "/textures/")
+                            
                             return "@" + mats_rel + "/" + rest + "@"
                         if "models/" in p:
                             remapped = _remap_model_path(p)
