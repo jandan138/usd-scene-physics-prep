@@ -87,12 +87,40 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                     with open(usdf, "rb") as f:
                         head = f.read(64)
                     is_text = b"usda" in head or head.startswith(b"#")
+                    
+                    # 如果是二进制文件，尝试使用 pxr.Sdf 将其导出为文本
                     if not is_text:
-                        continue
-                    with open(usdf, "r", encoding="utf-8", errors="ignore") as f:
-                        txt = f.read()
+                        print(f"Converting binary USD to text for rewriting: {usdf}")
+                        try:
+                            from pxr import Sdf
+                            layer = Sdf.Layer.FindOrOpen(usdf)
+                            if layer:
+                                tmp_usda = usdf + ".tmp.usda"
+                                layer.Export(tmp_usda)
+                                # 读取转换后的文本
+                                with open(tmp_usda, "r", encoding="utf-8", errors="ignore") as f:
+                                    txt = f.read()
+                            else:
+                                print(f"Failed to open layer for conversion: {usdf}")
+                                continue
+                        except ImportError:
+                            print("pxr module not found, cannot convert binary USD.")
+                            continue
+                        except Exception as e:
+                            print(f"Error converting binary USD: {e}")
+                            continue
+                    else:
+                        with open(usdf, "r", encoding="utf-8", errors="ignore") as f:
+                            txt = f.read()
+                            
                     def _sub(m):
                         p = m.group(1)
+                        
+                        # [Fix] Global fix for Textures -> textures case sensitivity
+                        # This must run before other checks to ensure the path is normalized
+                        if "/Textures/" in p:
+                            p = p.replace("/Textures/", "/textures/")
+                            
                         if "Materials/" in p:
                             idx = p.find("Materials/")
                             rest = p[idx + len("Materials/"):]
@@ -101,11 +129,17 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                             if rest.startswith("mdl/"):
                                 rest = rest[4:]
                             
-                            # [Fix] 强制 Textures -> textures 小写
-                            if "/Textures/" in rest:
-                                rest = rest.replace("/Textures/", "/textures/")
-                            
                             return "@" + mats_rel + "/" + rest + "@"
+                        
+                        # Handle cases where path is already rewritten to Material/ (singular) or similar
+                        # but still needs relative path adjustment if it's pointing to the old structure
+                        if "Material/mdl/" in p:
+                             # This might happen if the file was partially processed or has different structure
+                             # We assume it should point to mats_rel
+                             idx = p.find("Material/mdl/")
+                             rest = p[idx + len("Material/mdl/"):]
+                             return "@" + mats_rel + "/" + rest + "@"
+
                         if "models/" in p:
                             remapped = _remap_model_path(p)
                             if remapped:
@@ -116,10 +150,40 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                             return "@" + models_rel + "/" + rest + "@"
                         return "@" + p + "@"
                     new_txt = re.sub(r"@([^@]+)@", _sub, txt)
+                    
                     if new_txt != txt:
-                        with open(usdf, "w", encoding="utf-8") as f:
-                            f.write(new_txt)
-                except Exception:
+                        # 如果是原本的文本文件，直接覆盖；如果是二进制转换来的，先写回文本再转回二进制
+                        if is_text:
+                            with open(usdf, "w", encoding="utf-8") as f:
+                                f.write(new_txt)
+                        else:
+                            # 写入修改后的临时文本
+                            with open(tmp_usda, "w", encoding="utf-8") as f:
+                                f.write(new_txt)
+                            # 转回二进制覆盖原文件
+                            # 使用 Sdf.Layer 重新导入并保存为 USDC
+                            try:
+                                layer = Sdf.Layer.FindOrOpen(tmp_usda)
+                                if layer:
+                                    layer.Export(usdf) # Sdf.Layer.Export 会根据扩展名自动决定格式，这里 usdf 是 .usd (通常默认 crate)
+                                    # 但为了保险，我们可以显式指定 args? Sdf.Layer.Export 不支持 args
+                                    # 通常 .usd 后缀在 Isaac Sim 环境下默认是二进制
+                                    # 或者我们可以先删掉原文件
+                                    pass
+                                else:
+                                    print(f"Failed to reload tmp text layer: {tmp_usda}")
+                            except Exception as e:
+                                print(f"Failed to convert back to binary: {e}")
+                            
+                            if os.path.exists(tmp_usda):
+                                os.remove(tmp_usda)
+                    elif not is_text:
+                        # 没变化，清理临时文件
+                        if os.path.exists(tmp_usda):
+                            os.remove(tmp_usda)
+                            
+                except Exception as e:
+                    print(f"Fallback rewrite failed for {usdf}: {e}")
                     pass
         if with_annotations:                                        # 可选生成注释
             ann = {"sid": sid}
