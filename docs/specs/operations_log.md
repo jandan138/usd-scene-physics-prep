@@ -1,6 +1,6 @@
 # 操作记录（Materials / Assets / Scenes）
 
-> 最后更新：2025-12-22
+> 最后更新：2026-01-13
 >
 > 相关代码：
 > - ../../specs_normalizer/normalize.py
@@ -11,10 +11,21 @@
 > 总索引：../overview/docs_index.md
 
 ## 索引
+- [2026-01-13 结构更新：Assets/Scenes 子目录与 per-USD textures 软链接（后置生成）](#2026-01-13-结构更新assets-scenes-子目录与-per-usd-textures-软链接后置生成)
 - [2025-12-02 第一次操作：合并两来源的 Materials 到统一目录](#2025-12-02-第一次操作合并两来源的-materials-到统一目录)
 - [2025-12-03 第五次操作：阶段二资产导出与检查结论](#2025-12-03-第五次操作阶段二资产导出与检查结论)
 - [2025-12-03 第六次操作：阶段三场景导出与检查结论](#2025-12-03-第六次操作阶段三场景导出与检查结论)
 - [2025-12-08 第八次操作：修复 MDL 文件中贴图大小写残留](#2025-12-08-第八次操作修复-mdl-文件中贴图大小写残留)
+
+## 2026-01-13 结构更新：Assets/Scenes 子目录与 per-USD textures 软链接（后置生成）
+- 背景：规范目录结构更新（Materials/Assets/Scenes 仍然成立），资产与场景目录补充更明确的子目录与媒体文件约定：
+  - Assets：`glb/`、`usd/`、`urdf/` 分目录；缩略图文件名推荐 `front.png`。
+  - Scenes：缩略图文件名推荐 `front.png`；可选 `rendering.mp4`、`StructureMesh`、`Scene_features`。
+- 新增软链接约定（发布包可选）：每个 `.usd` 文件同目录可存在一个 `textures` 软链接，指向顶层统一材质库：`Material/mdl/textures`。
+  - 资产 USD：`.../<uid>/usd/textures -> ../../../Material/mdl/textures`
+  - 场景 USD：`.../<sid>/textures -> ../../../Material/mdl/textures`
+- 执行策略：该 `textures` 软链接不在目录导出第一步生成（specs_normalizer 导出阶段忽略软链接），后续通过独立 scripts 批量创建。
+- 文档同步：已更新 `docs/specs/*` 与 `docs/specs_normalizer/*` 中的结构示例与说明。
 
 ## 2025-12-02 第一次操作：合并两来源的 Materials 到统一目录
 - 来源目录：
@@ -67,14 +78,14 @@
 - 来源确认：
   - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/models/.../{category}/{uid}/instance.usd`
   - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/models/.../{category}/{uid}/instance.usd`
-- 计划：按上述来源导出为 `export_specs_unified/GRScenes_assets/{category}/{uid}.usd`，并相对改写 MDL 引用指向 `Material/mdl`。
+- 计划：按上述来源导出为 `export_specs_unified/GRScenes_assets/{category}/{uid}/{uid}.usd`，并相对改写 MDL 引用指向 `Material/mdl`。
 - 当前执行状态：环境提示需退出 conda 或设置 ISAAC_SIM_ROOT 以加载 `pxr`，将于执行阶段二时使用 `scripts/isaac_python.sh` 运行。
 
 ## 2025-12-03 第五次操作：阶段二资产导出与检查结论
 - 执行命令：
   - `bash -c 'set -euo pipefail; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only'`
   - `bash -c 'set -euo pipefail; cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep; ./scripts/isaac_python.sh -c "from specs_normalizer.normalize import main; main()" --src-target /cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes --dst-root export_specs_unified --asset-name GRScenes_assets --models-only'`
-- 目标输出：`export_specs_unified/GRScenes_assets/{category}/{uid}.usd`
+- 目标输出：`export_specs_unified/GRScenes_assets/{category}/{uid}/{uid}.usd`
 - 检查命令：
   - 全量失败清单（仅失败项）：`python3 scripts/check_phase2_assets.py --assets-dir export_specs_unified/GRScenes_assets --materials-dir export_specs_unified/Material/mdl --fail-only --output check_reports/phase2_assets_report_failures.json`
 - 检查结果：

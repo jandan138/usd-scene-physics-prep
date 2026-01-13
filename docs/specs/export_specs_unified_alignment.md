@@ -1,6 +1,6 @@
 # 导出统一结构对齐报告（阶段一至三）
 
-> 最后更新：2025-12-22
+> 最后更新：2026-01-13
 >
 > 相关代码：
 > - ../../scripts/check_phase2_assets.py
@@ -23,11 +23,13 @@
   - 大小写统一：已将所有引用中的 `Textures/` 统一为 `textures/`
   - 相关修复：`scripts/fix_mdl_textures_case.py`（文本级修复）；严格引用检查均通过
 - 资产库 `GRScenes_assets`
-  - 结构：`GRScenes_assets/{category}/{uid}/{uid}.usd`
+  - 当前导出结构（2025-12-22）：`GRScenes_assets/{category}/{uid}/{uid}.usd`
+  - 目标发布结构（2026-01-13）：`GRScenes_assets/{category}/{uid}/usd/{uid}.usd`，并在 `usd/` 下创建 `textures -> ../../../Material/mdl/textures`（后置脚本生成）
   - 数量统计：USD 85647
   - 引用规范：资产中的 MDL 与贴图引用均指向 `Material/mdl`（贴图位于其 `textures/`）
 - 场景集 `GRScenes100`
-  - 结构：`GRScenes100/{home|commercial}/{sid}/layout.usd`（并附带该场景目录下其它 USD）
+  - 当前导出结构（2025-12-22）：`GRScenes100/{home|commercial}/{sid}/layout.usd`（并附带该场景目录下其它 USD）
+  - 目标发布结构（2026-01-13）：同目录可选创建 `textures -> ../../../Material/mdl/textures`（后置脚本生成），缩略图文件名推荐为 `front.png`
   - 数量统计：`scene_dir_count=99`
   - 引用规范：场景 `layout.usd` 中模型引用指向导出目录 `GRScenes100/*`，材质与贴图指向顶层材质库
 
@@ -59,7 +61,8 @@
   - 规范含 `README.txt` 与 `LICENSE`；当前未提供
   - 文件格式允许 `glb/usd`；当前为 `usd`
 - Scenes 差距
-  - 规范含 `rendering.png`（缩略图）、`{sid}_annotation.json`（场景注释）、可选 `StructureMesh` 与 `Scene_features`；当前未提供
+  - 规范含 `front.png`（缩略图）、`{sid}_annotation.json`（场景注释）、可选 `StructureMesh` 与 `Scene_features`；当前未提供
+  - 规范允许每个 USD 同目录创建 `textures` 软链接指向 `Material/mdl/textures`；该软链接将由后置脚本生成（导出第一步不生成）
   - 规范含 `README.txt` 与 `LICENSE`；当前未提供
   - 目录命名与分类（`Scene_name=GRScenes100`，`Scene_category=home|commercial`）已对齐
 

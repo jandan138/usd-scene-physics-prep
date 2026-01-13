@@ -1,6 +1,6 @@
 # 规范化导出工具使用说明（specs_normalizer）
 
-> 最后更新：2025-12-22
+> 最后更新：2026-01-13
 >
 > 相关代码：
 > - ../../specs_normalizer/__main__.py
@@ -50,7 +50,8 @@
   - 贴图：`target/Materials/Textures/**` → `Material/mdl/textures/**`（`specs_normalizer/exporters/materials.py:12-16`）
 - 资产
   - 迭代器：`specs_normalizer/exporters/assets.py:5-23`
-  - 导出：`target/models/.../<category>/<model_hash>/instance.usd` → `Asset_name/<category>/<model_hash>/<model_hash>.usd`（`specs_normalizer/exporters/assets.py:25-40`）
+  - 导出：`target/models/.../<category>/<model_hash>/instance.usd` → `Asset_name/<category>/<model_hash>/usd/<model_hash>.usd`
+  - 软链接（后置生成）：`Asset_name/<category>/<uid>/usd/textures -> ../../../Material/mdl/textures`
   - 注释：`{uid}_annotation.json` (含 asset_type) 与 `Asset_annotation.json`（`specs_normalizer/exporters/assets.py:41-49`）
 - 场景
   - 选择布局：`specs_normalizer/exporters/scenes.py:5-12`
@@ -72,16 +73,24 @@ export_specs/
 ├─ GRScenes_assets/
 │  └─ <category>/
 │     └─ <model_hash>/
-│        ├─ <model_hash>.usd
+│        ├─ usd/
+│        │  ├─ <model_hash>.usd
+│        │  └─ textures -> ../../../Material/mdl/textures
+│        ├─ [optional] glb/<model_hash>.glb
+│        ├─ [optional] urdf/<model_hash>.urdf
 │        └─ <model_hash>_annotation.json
 └─ GRScenes100/home/
    └─ <scene_id>/
       ├─ layout.usd
+      ├─ textures -> ../../../Material/mdl/textures
       └─ <scene_id>_annotation.json  # 可选
 ```
 
 ## 运行环境与注意
-- 纯复制与重排：不修改 USD 内容、不创建软链接。
+- 不改动源目录：所有改写均发生在导出的副本上。
+- 引用改写：会在导出的 USD 上改写材质/模型引用（以相对路径指向顶层材质库与资产库），以减少对软链接的依赖。
+- 软链接策略：导出阶段默认不创建软链接；每个 USD 同目录的 `textures` 软链接由后续脚本统一生成。
+- 兼容软链接：`--compat-links` 仅用于旧工具过渡（在场景目录内创建 legacy `Materials`/`models` 软链接），与上述 `textures` 软链接不是同一件事。
 - Windows 兼容：使用 `shutil` 复制，避免 `cp`；参考 `docs/operations/windows_notes.md`。
 - 注释生成：若未安装 `pxr.Usd`，场景注释的计数将为空结构。
 

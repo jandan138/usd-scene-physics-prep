@@ -1,6 +1,6 @@
 # 数据目录结构规范解读（Materials / Assets / Scenes）
 
-> 最后更新：2025-12-22
+> 最后更新：2026-01-13
 >
 > 相关代码：
 > - ../../set_physics/pxr_utils/data_clean.py
@@ -23,6 +23,10 @@
 ## 目标
 - 将现有项目的资产与场景组织规范化为“Materials / Assets / Scenes”三大板块，提升可分发性、可检索性与可扩展性。
 - 对图示结构的各层级与占位符进行逐条解释，并给出与当前仓库输出的对齐映射。
+
+> 重要约定（textures 软链接）：
+> - 最终发布包中，**每个 `.usd` 文件的同目录下**可以存在一个 `textures` 软链接，指向顶层统一材质库：`Material/mdl/textures`。
+> - 该软链接**不在目录导出第一步生成**（specs_normalizer 导出阶段忽略软链接），后续由独立脚本统一创建。
 
 ## Materials
 ```
@@ -48,9 +52,17 @@ Material/
 Asset_name/
 ├─ Asset_category/
 │  ├─ {uid}/
-│  │  ├─ {uid}.glb/usd              # 单资产文件（GLB 或 USD）
+│  │  ├─ glb/
+│  │  │  └─ {uid}.glb               # 可选：单资产文件（GLB）
+│  │  ├─ usd/
+│  │  │  ├─ {uid}.usd               # 单资产文件（USD）
+│  │  │  └─ textures -> ../../../Material/mdl/textures  # 软链接：每个 USD 同目录 textures
+│  │  ├─ urdf/
+│  │  │  ├─ {uid}.urdf              # 可选：单资产文件（URDF）
+│  │  │  └─ parts/                  # 可选：URDF 子部件资源
 │  │  ├─ {uid}_annotation.json      # 单资产注释（含 asset_type）
-│  │  ├─ front.png                  # 正视图预览
+│  │  ├─ front.png                  # 正视图预览（推荐）
+│  │  ├─ [optional] left/right/back.png
 │  │  └─ [optional] rendering.mp4   # 演示视频
 │  └─ ...
 ├─ Asset_annotation.json         # 该 Asset_name 下所有资产的汇总注释
@@ -62,9 +74,10 @@ Asset_name/
   - 顶层 `Asset_name`：资产大类或数据集资产库名（如 `GRScenes_assets`、`MesaTask_assets`，也可为通用 `models`）。
   - 二级 `Asset_category`：具体类别（如 `cabinet`、`plant`）。
   - 三级 `{uid}`：单资产专属目录。
-  - `{uid}.glb/usd`：具体的资产文件。
+  - `glb/`、`usd/`、`urdf/`：按格式分子目录；最低要求为存在 `usd/{uid}.usd`。
+  - `usd/textures`：软链接，指向顶层 `Material/mdl/textures`，方便在资产目录内独立打开 USD。
   - `{uid}_annotation.json`：该资产的标注。**必须包含字段 `asset_type`**，取值为 `{'rigid', 'soft', 'part_aware', 'articulation'}` 之一。
-  - `front.png`：资产正视图缩略图。
+  - `front.png`：资产正视图缩略图（推荐）。
   - `Asset_annotation.json`：该类别下所有资产的聚合注释。
   - `Asset_features`：可选的特征目录，存储类别级或资产级的数值特征。
 - 与现有结构的映射
@@ -73,7 +86,8 @@ Asset_name/
     - `Asset_name = models`，或按数据集命名为 `GRScenes_assets`、`MesaTask_assets` 等
     - `Asset_category = <category>`（如 `cabinet`、`plant`）
     - `{uid} = <model_hash>`（`set_physics/pxr_utils/data_clean.py:612-616` 的 MD5）
-    - 文件：`{uid}/{uid}.usd` (对应源 `instance.usd`)
+    - 文件：`{uid}/usd/{uid}.usd` (对应源 `instance.usd`)
+    - 软链接：`{uid}/usd/textures -> ../../../Material/mdl/textures`（由后续脚本生成；导出第一步不生成）
     - 单资产标注：`{uid}/{uid}_annotation.json`，其中 `asset_type` 字段根据源路径 (`articulated`/`others`) 自动填充。
     - 汇总标注：`Asset_annotation.json` 可引用 `get_inst_model_mapping` 或自建聚合（`set_physics/pxr_utils/data_clean.py:706-725`）。
 
@@ -83,7 +97,9 @@ Scene_name/
 ├─ Scene_category/
 │  ├─ {sid}/
 │  │  ├─ layout.json/usd          # 场景布局（JSON 或 USD）
-│  │  ├─ rendering.png            # 渲染缩略图（单视角或少量视角）
+│  │  ├─ front.png                # 缩略图（推荐）
+│  │  ├─ [optional] rendering.mp4 # 视角演示
+│  │  ├─ textures -> ../../../Material/mdl/textures  # 软链接：若存在 layout.usd，则同目录可放 textures
 │  │  ├─ {sid}_annotation.json    # 场景标注（语义/物理/统计等）
 │  │  └─ [optional] StructureMesh # 结构网格（如墙体、地面）
 │  └─ ...
@@ -96,7 +112,8 @@ Scene_name/
   - 二级 `Scene_category`：场景类别（如 `home` 或 `commercial`；也可按更细粒度如 `bedroom`，视数据集而定）。
   - `{sid}`：场景唯一 ID 文件夹，包含布局、缩略图、标注与可选结构网格。
   - `layout.json/usd`：场景结构描述；USD 可直接用于 Isaac Sim，JSON 可用于外部工具链。
-  - `rendering.png`：缩略图，可由 `set_physics/tools/thumb_img.py` 生成。
+  - `front.png`：缩略图，可由 `set_physics/tools/thumb_img.py` 生成（文件名在规范中为 `front.png`）。
+  - `textures`：软链接（可选），指向顶层 `Material/mdl/textures`，用于场景目录内独立打开 `layout.usd`。
   - `StructureMesh`：将墙体、地面等结构单独输出，便于导航/碰撞分析。
 - 与现有结构的映射
   - 现有场景输出：`target/scenes/<scene_id>/start_result_new.usd|start_result_fix.usd`（`set_physics/pxr_utils/data_clean.py:551-566,703-705`）。
@@ -105,7 +122,7 @@ Scene_name/
     - MesaTask：`Scene_name = MesaTask`；`Scene_category = office_table | dinning_table`
     - `{sid} = <scene_id>`（目录名，如 `MV7J6NIKTKJZ2AABAAAAADA8_usd`）
     - `layout.usd = start_result_new.usd | start_result_fix.usd`
-    - `rendering.png` 可通过渲染工具生成并放置在同级目录。
+    - `front.png` 可通过渲染工具生成并放置在同级目录。
     - `{sid}_annotation.json` 可记录场景级统计、物理对象数量、语义分布等（可参考 `preprocess_for_interaction.py:335-387` 的语义与物理绑定逻辑）。
 
 ## 命名示例与对话结论
@@ -131,7 +148,8 @@ Scene_name/
 - 目录生成：现有脚本已生成 `target/Materials`、`target/models`、`target/scenes`（`set_physics/pxr_utils/data_clean.py:527-542,551-566`）。
 - 模型实例化：`instance.usd` 与引用关系已建立（`set_physics/pxr_utils/data_clean.py:652-666`）。
 - 语义与物理：交互/导航预处理可为后续标注文件提供信息来源（`set_physics/preprocess_for_interaction.py:335-387`，`set_physics/preprocess_for_navigation.py:198-231,389-425`）。
-- 缩略图：`set_physics/tools/thumb_img.py` 可批量生成 `rendering.png`。
+- 缩略图：`set_physics/tools/thumb_img.py` 可批量生成 `front.png`。
+
 
 ## 后续落地建议
 - 在不改代码的前提下，可先新增导出脚本，将现有 `target/` 组织映射到本规范目录，并产出空的注释/特征占位文件，逐步填充。

@@ -1,6 +1,6 @@
 # 目录结构对比：原始输出 vs 规范结构
 
-> 最后更新：2025-12-22
+> 最后更新：2026-01-13
 >
 > 相关代码：
 > - ../../set_physics/pxr_utils/data_clean.py
@@ -66,9 +66,14 @@ Material/
 Asset_name/
 ├─ Asset_category/
 │  ├─ {uid}/
-│  │  ├─ {uid}.glb/usd
-│  │  ├─ [optional] {uid}_annotation.json
-│  │  └─ ...
+│  │  ├─ glb/{uid}.glb
+│  │  ├─ usd/{uid}.usd
+│  │  ├─ usd/textures -> ../../../Material/mdl/textures
+│  │  ├─ urdf/{uid}.urdf
+│  │  ├─ urdf/parts/
+│  │  ├─ {uid}_annotation.json
+│  │  ├─ front.png
+│  │  └─ [optional] rendering.mp4
 │  └─ ...
 ├─ Asset_annotation.json
 ├─ [optional] Asset_features
@@ -79,7 +84,9 @@ Scene_name/
 ├─ Scene_category/
 │  ├─ {sid}/
 │  │  ├─ layout.json/usd
-│  │  ├─ rendering.png
+│  │  ├─ front.png
+│  │  ├─ [optional] rendering.mp4
+│  │  ├─ textures -> ../../../Material/mdl/textures
 │  │  ├─ {sid}_annotation.json
 │  │  └─ [optional] StructureMesh
 │  └─ ...
@@ -98,17 +105,18 @@ Scene_name/
   - `.mdl` 文件对应 `{mid}.mdl`；贴图目录对应 `textures/`
 - Assets
   - 原始：`target/models/<scope>/<articulated|others>/<category>/<model_hash>/instance.usd`
-  - 规范：`Asset_name/Asset_category/{uid}/{uid}.usd`
+  - 规范：`Asset_name/Asset_category/{uid}/usd/{uid}.usd`
   - 对应规则：
     - `Asset_name = models` 或数据集名（如 `GRScenes_assets`）
     - `Asset_category = <category>`（例如 `cabinet`、`plant`）
-    - `{uid} = <model_hash>`；文件名 `{uid}.usd = instance.usd`
+    - `{uid} = <model_hash>`；导出为 `usd/{uid}.usd`（对应源 `instance.usd`）
+    - 每个 USD 同目录可选 `textures -> ../../../Material/mdl/textures`（后续脚本生成；导出第一步不生成）
     - 单资产注释 `{uid}_annotation.json`：由导出工具自动生成，根据源路径自动推断 `asset_type` (`articulation` vs `rigid`)。
     - 汇总注释 `Asset_annotation.json`：可依据 `get_inst_model_mapping`（`set_physics/pxr_utils/data_clean.py:706-725`）或生成流程聚合
 - Scenes
   - 原始：`target/scenes/<scene_id>/start_result_new.usd | start_result_fix.usd`
   - 交互/导航：`start_result_dynamic.usd`、`start_result_navigation.usd`
-  - 规范：`Scene_name/Scene_category/{sid}/layout.usd | layout.json` + `rendering.png` + 注释 JSON
+  - 规范：`Scene_name/Scene_category/{sid}/layout.usd | layout.json` + `front.png` + 注释 JSON
   - 对应规则：
     - `Scene_name = GRScenes100 | MesaTask`
     - `Scene_category = home | commercial | office_table | dinning_table`
@@ -122,6 +130,9 @@ Scene_name/
   - 原始结构无 `{uid}_annotation.json`、`Asset_annotation.json`、`{sid}_annotation.json`、`Scene_features` 等；规范化结构预留了系统性的标注与特征位置。
 - 资源引用方式
   - 原始结构大量使用软链接（`Materials`、`models`），规范化结构将材质与资产位于固定位置，场景按需引用。
+- textures 软链接（发布包）
+  - 规范结构允许为每个 `.usd` 在同目录创建 `textures` 软链接，指向顶层 `Material/mdl/textures`。
+  - 该软链接不在目录导出第一步生成，后续通过独立脚本批量创建。
 - 结构网格
   - 规范结构中 `StructureMesh` 为可选；原始结构未单独导出墙体/地面等静态结构，相关元素混在 `Base` 范围（可由脚本提取）。
 - 文件类型
@@ -131,9 +142,11 @@ Scene_name/
 - 材质
   - 将 `target/Materials` 拷贝/映射到 `Material/mdl`，贴图至 `Material/mdl/textures`；增补 `README.txt` 与 `LICENSE`。
 - 资产
-  - 将 `target/models/.../<category>/<model_hash>/instance.usd` 映射为 `Asset_name/Asset_category/{uid}.usd`；生成 `{uid}_annotation.json`（语义、物理近似、材质引用等）；按类别生成 `Asset_annotation.json`。
+  - 将 `target/models/.../<category>/<model_hash>/instance.usd` 映射为 `Asset_name/Asset_category/{uid}/usd/{uid}.usd`；生成 `{uid}_annotation.json`；按类别生成 `Asset_annotation.json`。
+  - （可选）后处理：为 `Asset_name/.../{uid}/usd/` 下创建 `textures -> ../../../Material/mdl/textures`。
 - 场景
-  - 将 `target/scenes/<scene_id>/start_result_*.usd` 映射为 `Scene_name/Scene_category/{sid}/layout.usd`；生成 `rendering.png`（参考 `set_physics/tools/thumb_img.py`）；生成 `{sid}_annotation.json`（对象统计/语义分布/物理对象计数）。
+  - 将 `target/scenes/<scene_id>/start_result_*.usd` 映射为 `Scene_name/Scene_category/{sid}/layout.usd`；生成 `front.png`（参考 `set_physics/tools/thumb_img.py`）；生成 `{sid}_annotation.json`。
+  - （可选）后处理：为 `Scene_name/.../{sid}/` 下创建 `textures -> ../../../Material/mdl/textures`。
 - 结构网格
   - 依据 `Meshes/Base` 提取墙体与地面，输出为 `StructureMesh`。
 - Windows 注意

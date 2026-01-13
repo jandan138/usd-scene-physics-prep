@@ -41,6 +41,10 @@ status: Active
 
 可以用脚本把所有“不在 `./textures/` 下”的贴图统一复制到输出 USD 同级目录的 `textures/`，并将 USD 内路径改写为 `./textures/...`：
 
+> 注：这是一种“让单个 USD 自带贴图”的便携修复方式。
+> - 对于规范化数据集发布结构，推荐使用顶层统一材质库 `Material/mdl/textures`。
+> - 发布包中可选为每个 `.usd` 同目录创建 `textures` 软链接指向顶层材质库；该软链接不在导出第一步生成，后续通过独立脚本批量创建。
+
 ```bash
 ./scripts/isaac_python.sh scripts/collect_textures_to_local_textures.py \
 	--input  /abs/path/to/scene.usd \
