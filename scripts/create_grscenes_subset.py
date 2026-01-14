@@ -22,18 +22,26 @@ def scan_assets(assets_root: str) -> Dict[str, List[str]]:
         cat_dir = os.path.join(assets_root, category)
         if not os.path.isdir(cat_dir):
             continue
-            
-        for f in os.listdir(cat_dir):
-            if f.endswith("_annotation.json"):
-                uid = f.replace("_annotation.json", "")
-                json_path = os.path.join(cat_dir, f)
+
+        # Support both layouts:
+        # - Old: <assets_root>/<category>/<uid>_annotation.json
+        # - New: <assets_root>/<category>/<uid>/<uid>_annotation.json
+        for root, _, files in os.walk(cat_dir):
+            for fn in files:
+                if not fn.endswith("_annotation.json"):
+                    continue
+                json_path = os.path.join(root, fn)
+
+                # Derive uid from filename (preferred) or parent folder name.
+                uid = fn[: -len("_annotation.json")]
+                if not uid:
+                    uid = os.path.basename(root)
+
                 try:
-                    with open(json_path, 'r') as jf:
+                    with open(json_path, "r") as jf:
                         data = json.load(jf)
-                        if "description" in data and data["description"].strip():
-                            if category not in valid_assets:
-                                valid_assets[category] = []
-                            valid_assets[category].append(uid)
+                    if "description" in data and str(data["description"]).strip():
+                        valid_assets.setdefault(category, []).append(uid)
                 except Exception as e:
                     print(f"Error reading {json_path}: {e}")
                     
@@ -171,11 +179,17 @@ def copy_assets_and_materials(selected: List[tuple], src_root: str, dst_root: st
     print(f"Copying {len(selected)} assets...")
     
     for cat, uid in selected:
-        # Copy USD
-        src_usd = os.path.join(src_assets, cat, f"{uid}.usd")
-        dst_usd_dir = os.path.join(dst_assets, cat)
+        # Copy USD (new layout)
+        src_usd_candidates = [
+            os.path.join(src_assets, cat, uid, "usd", f"{uid}.usd"),
+            os.path.join(src_assets, cat, f"{uid}.usd"),  # backward-compatible
+        ]
+        src_usd = next((p for p in src_usd_candidates if os.path.exists(p)), src_usd_candidates[0])
+
+        dst_asset_dir = os.path.join(dst_assets, cat, uid)
+        dst_usd_dir = os.path.join(dst_asset_dir, "usd")
         dst_usd = os.path.join(dst_usd_dir, f"{uid}.usd")
-        
+
         os.makedirs(dst_usd_dir, exist_ok=True)
         if os.path.exists(src_usd):
             shutil.copy2(src_usd, dst_usd)
@@ -190,6 +204,8 @@ def copy_assets_and_materials(selected: List[tuple], src_root: str, dst_root: st
 
                 modified = False
                 src_usd_dir = os.path.dirname(src_usd)
+                dst_usd_dir_abs = os.path.dirname(dst_usd)
+                rel_mdl = os.path.relpath(dst_material, dst_usd_dir_abs).replace(os.sep, "/")
                 
                 # Recursive function to traverse PrimSpecs
                 def traverse_prim_spec(prim_spec):
@@ -209,7 +225,7 @@ def copy_assets_and_materials(selected: List[tuple], src_root: str, dst_root: st
                                 
                                 # Handle MDL
                                 if "mdl" in path.lower() and path.lower().endswith('.mdl'):
-                                    new_path = f"../../Material/mdl/{filename}"
+                                    new_path = f"{rel_mdl}/{filename}"
                                     initial_mdls.add(filename)
                                 
                                 # Handle Textures
@@ -245,7 +261,7 @@ def copy_assets_and_materials(selected: List[tuple], src_root: str, dst_root: st
                                     else:
                                         print(f"DEBUG: Could not resolve texture {filename}")
                                         
-                                    new_path = f"../../Material/mdl/textures/{filename}"
+                                    new_path = f"{rel_mdl}/textures/{filename}"
 
                                 # Apply rewrite
                                 if new_path and path != new_path:
@@ -276,9 +292,13 @@ def copy_assets_and_materials(selected: List[tuple], src_root: str, dst_root: st
         else:
             print(f"Error: USD not found {src_usd}")
 
-        # Copy Annotation
-        src_anno = os.path.join(src_assets, cat, f"{uid}_annotation.json")
-        dst_anno = os.path.join(dst_usd_dir, f"{uid}_annotation.json")
+        # Copy Annotation (new layout: under <uid>/)
+        src_anno_candidates = [
+            os.path.join(src_assets, cat, uid, f"{uid}_annotation.json"),
+            os.path.join(src_assets, cat, f"{uid}_annotation.json"),  # backward-compatible
+        ]
+        src_anno = next((p for p in src_anno_candidates if os.path.exists(p)), src_anno_candidates[0])
+        dst_anno = os.path.join(dst_asset_dir, f"{uid}_annotation.json")
         if os.path.exists(src_anno):
             shutil.copy2(src_anno, dst_anno)
             

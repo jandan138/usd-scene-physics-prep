@@ -4,7 +4,8 @@
 整体介绍：
 - 从源目录（通常为 `target/`）校验原始输出结构是否符合预期；
 - 调用材质/资产/场景导出器，将数据复制并重排到规范结构目录（Materials / Assets / Scenes）；
-- 不修改 USD 内容，不创建软链接，仅做文件复制与最小化注释生成，保证原处理主干不变。
+- 会在“导出副本”上改写 USD 内引用（材质/模型）为相对路径；不修改源目录中的 USD。
+- 不创建 per-USD 的 `textures` 软链接（该步骤由后续 scripts 统一创建）。
 """
 
 # 解析命令行参数
@@ -44,7 +45,7 @@ def main():
         export_materials(args.src_target, args.dst_root)
         export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True, limit=args.limit)
     elif args.scenes_only:
-        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
+        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations, asset_name=args.asset_name)
     else:
         ok, issues, summary = validate_structure(args.src_target)
         if not ok:
@@ -54,7 +55,7 @@ def main():
             return
         export_materials(args.src_target, args.dst_root)
         export_assets(args.src_target, args.dst_root, args.asset_name, args.with_annotations, rewrite_mdl_paths=True, limit=args.limit)
-        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations)
+        export_scenes(args.src_target, args.dst_root, args.scene_name, args.scene_category, args.with_annotations, asset_name=args.asset_name)
     if args.compat_links:
         import os
         scenes_root = os.path.join(args.dst_root, args.scene_name, args.scene_category)

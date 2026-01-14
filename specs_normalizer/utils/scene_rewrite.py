@@ -8,7 +8,7 @@ def _remap_model_path(path_str: str) -> Optional[str]:
     """
     智能解析模型路径，将其从源结构映射到新规范结构。
     源结构示例：.../models/layout/articulated/<category>/<uid>/instance.usd
-    新结构：<category>/<uid>/<uid>.usd
+    新结构：<category>/<uid>/usd/<uid>.usd
     """
     p = _posix(path_str)
     if "models/" not in p:
@@ -30,7 +30,7 @@ def _remap_model_path(path_str: str) -> Optional[str]:
         if idx >= 2:
             uid = parts[idx-1]
             category = parts[idx-2]
-            return f"{category}/{uid}/{uid}.usd"
+            return f"{category}/{uid}/usd/{uid}.usd"
     except Exception:
         pass
 
@@ -40,13 +40,17 @@ def _remap_model_path(path_str: str) -> Optional[str]:
     # 为了安全，如果匹配不到 instance.usd，我们尝试保留原有逻辑（截取 models/ 之后的部分），
     # 但考虑到 export_assets 做了扁平化，保留 layout/articulated 肯定是不对的。
     # 我们尝试提取倒数第二、三层作为 uid, category
-    if len(parts) >= 3 and p.endswith(".usd"):
-        # 假设 .../<category>/<uid>/<filename>.usd
-        # 如果 filename 等于 uid.usd (已经是新结构?) -> 保持
-        # 如果 filename 是别的 -> 假设它是主文件，重命名为 uid.usd
+    if len(parts) >= 3 and p.lower().endswith((".usd", ".usda", ".usdc")):
+        # 情况 A：已经是新结构 .../<category>/<uid>/usd/<something>.usd
+        if len(parts) >= 4 and parts[-2] == "usd":
+            uid = parts[-3]
+            category = parts[-4]
+            return f"{category}/{uid}/usd/{uid}.usd"
+
+        # 情况 B：源路径可能是 .../<category>/<uid>/<filename>.usd
         uid = parts[-2]
         category = parts[-3]
-        return f"{category}/{uid}/{uid}.usd"
+        return f"{category}/{uid}/usd/{uid}.usd"
 
     # 兜底：截取 models/ 之后的部分 (兼容旧逻辑，虽然可能是错的)
     idx = p.find("models/")

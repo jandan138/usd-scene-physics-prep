@@ -1,9 +1,12 @@
-"""
-资产导出模块 assets
+"""specs_normalizer.exporters.assets
 
 整体介绍：
-- 遍历源目录 `models/<scope>/<articulated|others>/<category>/<uid>/instance.usd`，复制为规范结构 `Asset_name/<category>/<uid>/<uid>.usd`。
-- 必须生成最小化注释：单资产 `{uid}_annotation.json`（含 asset_type）与类别聚合 `Asset_annotation.json`。
+- 遍历源目录 `models/<scope>/<articulated|others>/<category>/<uid>/instance.usd`。
+- 复制为规范结构 `<Asset_name>/<category>/<uid>/usd/<uid>.usd`。
+- 可选生成最小化注释：单资产 `{uid}_annotation.json`（含 asset_type）与类别聚合 `Asset_annotation.json`。
+
+注意：
+- 导出阶段不会创建 per-USD 的 `textures` 软链接（该步骤由后续 scripts 统一创建）。
 """
 
 # 导入标准库与工具函数
@@ -75,10 +78,12 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
         cat_dir = os.path.join(dest_root, category)             # 目标类别目录
         ensure_dir(cat_dir)
         
-        # 新结构：Category/UID/UID.usd
+        # 新结构：<Asset_name>/<category>/<uid>/usd/<uid>.usd
         asset_dir = os.path.join(cat_dir, uid)
         ensure_dir(asset_dir)
-        out_path = os.path.join(asset_dir, uid + ".usd")       # 目标文件路径
+        usd_dir = os.path.join(asset_dir, "usd")
+        ensure_dir(usd_dir)
+        out_path = os.path.join(usd_dir, uid + ".usd")       # 目标文件路径
         
         key = (category, uid)
         if key in seen:                                         # 已复制则跳过
@@ -91,6 +96,14 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
             # print(f"[{count}] Skipped existing asset: {category}/{uid}") # 可选：减少日志噪音
             # 即使跳过文件复制，我们仍需确保统计信息 stats 被更新，以便生成聚合注释
             stats.setdefault(category, []).append(uid)
+
+            # 断点续跑：若 USD 已存在但注释缺失，则补写单资产注释
+            if with_annotations:
+                ann_path = os.path.join(asset_dir, uid + "_annotation.json")
+                if not os.path.exists(ann_path):
+                    ann = generate_asset_annotation(uid, category, subcat)
+                    with open(ann_path, "w", encoding="utf-8") as f:
+                        json.dump(ann, f, ensure_ascii=False, indent=2)
             continue
 
         copy_file(inst, out_path)
@@ -105,7 +118,7 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
                     dst_usd=out_path,
                     materials_dir=mats_abs,
                     use_relative=True,
-                    relative_base=asset_dir,  # 相对路径基准改为 UID 目录
+                    relative_base=usd_dir,  # 相对路径基准：USD 所在目录（.../<uid>/usd）
                     rewrite_module_refs=True,
                 )
             except Exception:

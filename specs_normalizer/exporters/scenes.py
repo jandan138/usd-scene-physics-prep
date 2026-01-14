@@ -31,7 +31,7 @@ def choose_layout(scene_dir):
     return None
 
 # 导出场景到规范结构
-def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations, scene_ids=None):
+def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations, scene_ids=None, asset_name=None):
     scenes_root = os.path.join(src_root, "scenes")                  # 源场景根目录
     dest_root = os.path.join(dst_root, scene_name, scene_category)   # 目标场景顶层目录
     ensure_dir(dest_root)                                            # 确保存在
@@ -61,11 +61,14 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                 continue
             copy_file(srcf, os.path.join(out_dir, f))
         mats_abs = os.path.join(dst_root, "Material", "mdl")
-        candidates = [
+        candidates = []
+        if asset_name:
+            candidates.append(os.path.join(dst_root, asset_name))
+        candidates.extend([
             os.path.join(dst_root, "models"),
             os.path.join(dst_root, "GRScenes_assets"),
             os.path.join(dst_root, "MesaTask_assets"),
-        ]
+        ])
         models_abs = None
         for c in candidates:
             if os.path.isdir(c):
