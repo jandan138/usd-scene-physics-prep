@@ -97,6 +97,22 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
             # 即使跳过文件复制，我们仍需确保统计信息 stats 被更新，以便生成聚合注释
             stats.setdefault(category, []).append(uid)
 
+            # 断点续跑：若要求改写 MDL 路径，则对已存在的 USD 也执行一次（幂等）。
+            # 这样可覆盖“上一次导出在改写阶段被中断”的情况。
+            if rewrite_mdl_paths:
+                mats_abs = os.path.join(dst_root, "Material", "mdl")
+                try:
+                    rewrite_usd_mdl_paths(
+                        src_usd=out_path,
+                        dst_usd=out_path,
+                        materials_dir=mats_abs,
+                        use_relative=True,
+                        relative_base=usd_dir,
+                        rewrite_module_refs=True,
+                    )
+                except Exception:
+                    pass
+
             # 断点续跑：若 USD 已存在但注释缺失，则补写单资产注释
             if with_annotations:
                 ann_path = os.path.join(asset_dir, uid + "_annotation.json")

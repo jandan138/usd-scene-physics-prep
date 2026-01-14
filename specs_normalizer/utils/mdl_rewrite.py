@@ -73,9 +73,14 @@ def rewrite_usd_mdl_paths(
     # 遍历所有 Prim 的所有属性，查找并改写材质引用
     for prim in stage.Traverse():
         for attr in prim.GetAttributes():
-            val = attr.Get()
+            # 性能优化：先按类型过滤，避免对所有属性调用 attr.Get()
+            t = attr.GetTypeName()
+
             # 1) 处理 AssetPath（文件路径型）
-            if isinstance(val, Sdf.AssetPath):
+            if t == Sdf.ValueTypeNames.Asset:
+                val = attr.Get()
+                if not isinstance(val, Sdf.AssetPath):
+                    continue
                 path = val.path
                 if not path:
                     continue
@@ -122,13 +127,70 @@ def rewrite_usd_mdl_paths(
                 else:
                     # 对于不含 'Materials/' 的路径，保留原值（避免误改其它资产引用）
                     pass
+            elif t == Sdf.ValueTypeNames.AssetArray:
+                val = attr.Get()
+                if not val:
+                    continue
+                changed = False
+                new_vals = []
+                for ap in val:
+                    if not isinstance(ap, Sdf.AssetPath) or not ap.path:
+                        new_vals.append(ap)
+                        continue
+
+                    path = ap.path
+
+                    tex_idx_lower = path.lower().rfind("/textures/")
+                    if tex_idx_lower >= 0:
+                        filename = path[tex_idx_lower + len("/textures/") :]
+                        newp = _posix_join(materials_base, "textures/" + filename)
+                        if newp != path:
+                            changed = True
+                            new_vals.append(Sdf.AssetPath(newp))
+                        else:
+                            new_vals.append(ap)
+                        continue
+
+                    idx = -1
+                    prefix_len = 0
+                    if "Material/mdl/" in path:
+                        idx = path.find("Material/mdl/")
+                        prefix_len = len("Material/mdl/")
+                    elif "Materials/" in path:
+                        idx = path.find("Materials/")
+                        prefix_len = len("Materials/")
+                    elif "Material/" in path:
+                        idx = path.find("Material/")
+                        prefix_len = len("Material/")
+
+                    if idx >= 0:
+                        rest = path[idx + prefix_len :]
+                        if rest.startswith("mdl/"):
+                            rest = rest[4:]
+                        newp = _posix_join(materials_base, rest)
+                        if newp != path:
+                            changed = True
+                            new_vals.append(Sdf.AssetPath(newp))
+                        else:
+                            new_vals.append(ap)
+                    else:
+                        new_vals.append(ap)
+
+                if changed:
+                    attr.Set(new_vals)
+                    updated += 1
+
             # 2) 处理模块名字符串占位（可选）
-            elif rewrite_module_refs and isinstance(val, str) and "::.::Materials::" in val:
-                name = val.split("::.::Materials::", 1)[1]
-                newp = _posix_join(materials_base, name + ".mdl")
-                # 对占位符，直接改写为 AssetPath 文件引用
-                attr.Set(Sdf.AssetPath(newp))
-                updated += 1
+            elif rewrite_module_refs and t in (Sdf.ValueTypeNames.String, Sdf.ValueTypeNames.Token):
+                val = attr.Get()
+                if isinstance(val, str) and "::.::Materials::" in val:
+                    name = val.split("::.::Materials::", 1)[1]
+                    newp = _posix_join(materials_base, name + ".mdl")
+                    # 对占位符，直接改写为 AssetPath 文件引用
+                    attr.Set(Sdf.AssetPath(newp))
+                    updated += 1
+            else:
+                continue
 
     # 导出到目标文件
     root.Export(dst_usd)
