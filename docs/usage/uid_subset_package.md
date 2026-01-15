@@ -151,3 +151,28 @@ python3 scripts/build_uid_subset_package.py \
   --verify \
   --create-empty-grscenes100
 ```
+
+---
+
+## 6. 为子集资产生成 GLB（可选）
+
+规范允许每个资产额外带一个 GLB：`glb/<uid>.glb`。
+
+如果你的子集包只有 `usd/<uid>.usd`，可以用批量脚本把每个资产 USD 转成 GLB，并写回同一个 uid 目录下：
+
+- 脚本：
+  - [scripts/convert_subset_usd_to_glb.py](../../scripts/convert_subset_usd_to_glb.py)
+
+示例（对 `sandbox/subset_20_gt10mb` 生成 GLB）：
+
+```bash
+python3 scripts/convert_subset_usd_to_glb.py \
+  --subset-root sandbox/subset_20_gt10mb \
+  --jobs 4 \
+  --report check_reports/subset_20_gt10mb_glb_report.json
+```
+
+说明：
+- 该脚本会调用你本地的 ConvertAsset 工具链（默认路径为 `/cpfs/shared/simulation/zhuzihou/dev/ConvertAsset`；可用 `--convertasset-root` 改）。
+- 生成路径固定为：`GRScenes_assets/<category>/<uid>/glb/<uid>.glb`。
+- 默认是增量模式：如果 `glb/<uid>.glb` 已存在且时间戳新于 `usd/<uid>.usd`，会跳过；可用 `--force` 强制重做。
