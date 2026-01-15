@@ -17,3 +17,9 @@ ENV/
 env/
 GRScenes-test0/
 GRScenes-test1/
+
+# Local run artifacts
+logs/
+check_reports/mdl_bak_*/
+scripts/run_phase2_full.sh
+scripts/run_phase3_full.sh

@@ -20,10 +20,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mdl-root", required=True)
     ap.add_argument("--output", default="check_reports/fix_mdl_textures_case_report.json")
+    ap.add_argument(
+        "--backup-dir",
+        default=None,
+        help=(
+            "If set (and not --dry-run), write backups under this directory instead of "
+            "creating <file>.bak next to each MDL. Relative paths are preserved from --mdl-root."
+        ),
+    )
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     root = os.path.abspath(args.mdl_root)
+    backup_dir = os.path.abspath(args.backup_dir) if args.backup_dir else None
     files = list_mdl(root)
     report = {"root": root, "total": len(files), "changed": [], "unchanged": []}
     for f in files:
@@ -37,8 +46,15 @@ def main():
         if new_txt != txt:
             if not args.dry_run:
                 try:
-                    with open(f + ".bak", "w", encoding="utf-8") as bk:
-                        bk.write(txt)
+                    if backup_dir:
+                        rel = os.path.relpath(f, root)
+                        bk_path = os.path.join(backup_dir, rel)
+                        os.makedirs(os.path.dirname(bk_path), exist_ok=True)
+                        with open(bk_path, "w", encoding="utf-8") as bk:
+                            bk.write(txt)
+                    else:
+                        with open(f + ".bak", "w", encoding="utf-8") as bk:
+                            bk.write(txt)
                     with open(f, "w", encoding="utf-8") as fh:
                         fh.write(new_txt)
                 except Exception:

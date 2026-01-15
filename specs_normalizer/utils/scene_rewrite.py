@@ -66,10 +66,19 @@ def rewrite_scene_refs_inplace(scene_usd: str, materials_dir: str, models_dir: s
     mats_rel = _posix(mats_rel)
     models_rel = _posix(models_rel)
     changed = 0
+
+    def _lower_textures_component(path_str: str) -> str:
+        # 仅做路径组件级别的大小写归一化，避免误伤文件名/其它内容。
+        p = _posix(path_str)
+        parts = p.split("/")
+        parts = [("textures" if comp == "Textures" else comp) for comp in parts]
+        return "/".join(parts)
     
     def _process_path(p: str) -> Optional[str]:
         if not p:
             return None
+        p = _lower_textures_component(p)
+
         # 处理材质
         if "Materials/" in p:
             idx = p.find("Materials/")
@@ -78,11 +87,17 @@ def rewrite_scene_refs_inplace(scene_usd: str, materials_dir: str, models_dir: s
             # [Fix] 移除多余的 mdl/ 前缀
             if rest.startswith("mdl/"):
                 rest = rest[4:]
-            
-            # [Fix] 强制 Textures -> textures 小写
-            if "/Textures/" in rest:
-                rest = rest.replace("/Textures/", "/textures/")
+
+            # [Fix] 强制 Textures -> textures 小写（兼容 rest 以 Textures/ 开头的情况）
+            rest = _lower_textures_component(rest)
                 
+            return f"{mats_rel}/{rest}"
+
+        # 兼容：如果已经指向规范化结构 Material/mdl/...，也强制 rebasing + 小写 textures
+        if "Material/mdl/" in p:
+            idx = p.find("Material/mdl/")
+            rest = p[idx + len("Material/mdl/"):]
+            rest = _lower_textures_component(rest)
             return f"{mats_rel}/{rest}"
         elif p.endswith(".mdl"):
             # 兼容旧逻辑：如果只是 .mdl 结尾但没 Materials/，也指向材质库？

@@ -45,15 +45,25 @@ def export_materials(src_root, dst_root):
     mats = os.path.join(src_root, "Materials")                 # 源材质目录
     dst_mdl = os.path.join(dst_root, "Material", "mdl")        # 目标 mdl 目录
     ensure_dir(dst_mdl)                                         # 确保目标目录存在
-    for f in os.listdir(mats):                                   # 遍历源材质目录
-        p = os.path.join(mats, f)                                # 拼接文件路径
-        if os.path.isfile(p) and f.lower().endswith(".mdl"):    # 仅复制 .mdl 文件
-            copy_file(p, os.path.join(dst_mdl, f))               # 复制到目标
-    tex_src = os.path.join(mats, "Textures")                    # 源贴图目录
-    if os.path.isdir(tex_src):
-        tex_dst = os.path.join(dst_mdl, "textures")             # 目标贴图目录（小写）
-        ensure_dir(tex_dst)
-        copy_dir(tex_src, tex_dst)
+    # 复制 Materials 下除贴图目录外的所有内容（包含 MDL package 目录，如 KooPbr、KooPbr_maps 等）
+    # 贴图目录统一落到 dst_mdl/textures（全小写）。
+    tex_dst = os.path.join(dst_mdl, "textures")
+    ensure_dir(tex_dst)
+    for entry in os.listdir(mats):
+        src_path = os.path.join(mats, entry)
+        # 统一处理贴图目录大小写
+        if entry.lower() == "textures" and os.path.isdir(src_path):
+            copy_dir(src_path, tex_dst)
+            continue
+
+        # 复制其余目录（MDL packages）
+        if os.path.isdir(src_path):
+            copy_dir(src_path, os.path.join(dst_mdl, entry))
+            continue
+
+        # 复制其余文件（.mdl 以及可能的配置/辅助文件）
+        if os.path.isfile(src_path):
+            copy_file(src_path, os.path.join(dst_mdl, entry))
     
     # 自动执行大小写修复
     _auto_fix_mdl_case(dst_mdl)
