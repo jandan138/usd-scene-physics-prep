@@ -24,6 +24,7 @@
 | [Navigation Preprocessing Usage](usage/navigation_preprocessing.md) | Active | 2025-12-22 | [`preprocess_for_navigation.py`](set_physics/preprocess_for_navigation.py) |
 | [Quickstart Guide](usage/quickstart.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
 | [Scene Export Usage](usage/export_scenes.md) | Active | 2025-12-22 | [`export_scene.py`](set_physics/export_scene.py) |
+| [UID Subset Package Usage](usage/uid_subset_package.md) | Active | 2026-01-15 | [`build_uid_subset_package.py`](scripts/build_uid_subset_package.py) |
 | [SimReady CLI Usage](usage/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |
 | [prep_interaction_root_scene.md](usage/prep_interaction_root_scene.md) | Unknown | N/A | - |
 
