@@ -196,6 +196,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true", help="Re-generate even if output is up-to-date")
     ap.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Only print final summary (progress still recorded in --report)",
+    )
+    ap.add_argument(
         "--extra-args",
         default=None,
         help="Extra args to append to ConvertAsset (string, e.g. \"--foo 1 --bar\")",
@@ -245,11 +250,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     max_workers = max(1, int(args.jobs))
 
     print(
-        f"Found {len(jobs_all)} assets. jobs={max_workers} dry_run={bool(args.dry_run)} force={bool(args.force)}"
+        f"Found {len(jobs_all)} assets. jobs={max_workers} dry_run={bool(args.dry_run)} force={bool(args.force)}",
+        flush=True,
     )
 
     results: List[Dict[str, object]] = []
     counts = {"ok": 0, "failed": 0, "skipped_existing": 0, "missing_input": 0, "dry_run": 0}
+
+    total = len(jobs_all)
+    done = 0
 
     with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
         futs = [
@@ -271,6 +280,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             st = str(r.get("status"))
             if st in counts:
                 counts[st] += 1
+            done += 1
+            if not args.quiet:
+                uid = r.get("uid")
+                cat = r.get("category")
+                secs = r.get("seconds")
+                out_glb = r.get("output_glb")
+                print(f"[{done:>3}/{total}] {cat}/{uid}  {st}  {secs}s  -> {out_glb}", flush=True)
 
     results.sort(key=lambda r: (str(r.get("category")), str(r.get("uid"))))
 
