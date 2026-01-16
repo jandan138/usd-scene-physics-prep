@@ -4,7 +4,15 @@ import argparse
 import json
 import os
 import shutil
+import sys
 from typing import Any, Dict, Iterator, Optional, Tuple
+
+# Allow running under wrappers (e.g. isaac_python.sh) where repo root may not be on PYTHONPATH.
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from specs_normalizer.utils.render_size import compute_usd_render_package_size_bytes
 
 
 def safe_file_size_bytes(path: str) -> Optional[int]:
@@ -83,7 +91,7 @@ def compute_backfill_fields(dataset_root: str, asset_dir: str, uid_for_paths: st
     urdf_dir = os.path.join(asset_dir, "urdf")
     return {
         "glb_size": safe_file_size_bytes(glb_path),
-        "usd_size": safe_file_size_bytes(usd_path),
+        "usd_size": compute_usd_render_package_size_bytes(usd_path, dataset_root=dataset_root, require_pxr=False),
         "urdf_size": safe_dir_size_bytes(urdf_dir),
         "orientation": 0,
         "usd_material_softlink": infer_usd_material_softlink(dataset_root=dataset_root, asset_dir=asset_dir),

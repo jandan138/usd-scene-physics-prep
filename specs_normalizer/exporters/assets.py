@@ -15,6 +15,7 @@ import json
 from ..utils.fs import ensure_dir, copy_file
 import re
 from ..utils.mdl_rewrite import rewrite_usd_mdl_paths
+from ..utils.render_size import compute_usd_render_package_size_bytes
 
 
 def _safe_file_size_bytes(path):
@@ -92,7 +93,8 @@ def generate_asset_annotation(uid, category, subcat, asset_dir, dst_root):
     glb_path = os.path.join(asset_dir, "glb", uid + ".glb")
     urdf_dir = os.path.join(asset_dir, "urdf")
 
-    usd_size = _safe_file_size_bytes(usd_path)
+    # usd_size = render package size: USD + required MDL + textures
+    usd_size = compute_usd_render_package_size_bytes(usd_path, dataset_root=dst_root, require_pxr=False)
     glb_size = _safe_file_size_bytes(glb_path)
     urdf_size = _safe_dir_size_bytes(urdf_dir)
 

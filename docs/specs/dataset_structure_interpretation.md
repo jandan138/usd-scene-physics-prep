@@ -102,7 +102,10 @@ Asset_name/
 - `category` (string, required): 资产类别（如 `bed`、`cabinet`）。
 - `asset_type` (string, required): 资产物理类型，取值：`rigid | soft | part_aware | articulation`。
 - `glb_size` (int|null, required): `glb/{uid}.glb` 的文件大小（字节）。不存在则为 `null`。
-- `usd_size` (int|null, required): `usd/{uid}.usd` 的文件大小（字节）。不存在则为 `null`。
+- `usd_size` (int|null, required): 该资产 USD 的“可渲染包大小”（字节）。
+  - 计算方式：`usd/{uid}.usd` 文件大小 + 该 USD 引用到的 MDL 文件 + 这些 MDL 引用到的贴图（去重后累计）。
+  - 说明：材质库集中存储时，多个资产可能共享同一组 MDL/贴图；`usd_size` 以“该资产单独可渲染所需依赖”为准，可能与整体包的增量下载大小不同。
+  - 若 `usd/{uid}.usd` 不存在则为 `null`。
 - `urdf_size` (int|null, required): `urdf/` 目录总大小（字节，递归累计）。不存在则为 `null`。
 - `orientation` (number, required): 资产默认朝向（角度制，单位：degree）。当前约定默认值为 `0`，后续可从 `{0, 15, 30, ..., 345, 360}` 中选择。
 - `usd_material_softlink` (bool, required):
