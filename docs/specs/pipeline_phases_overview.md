@@ -57,7 +57,7 @@ python -c "from specs_normalizer.exporters.materials import export_materials; ex
     - `/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/commercial_scenes/models/.../{category}/{uid}/instance.usd`
     - 复制为 `{asset_name}/{category}/{uid}/usd/{uid}.usd`。
   - 将 USD 中所有 MDL 引用改写为相对指向 `$DST/Material/mdl`。
-  - 必须生成 `{uid}_annotation.json`（含 `asset_type`），可选生成 `Asset_annotation.json`。
+  - 必须生成 `{uid}_annotation.json`（含 `asset_type`，并包含资产大小/姿态/材质组织方式等稳定字段），可选生成 `Asset_annotation.json`。
 - 命令示例：
   - 使用 Isaac Sim Python（用于 `pxr`/USD 改写；确保 `ISAAC_SIM_ROOT` 配置）：
 
@@ -77,7 +77,7 @@ cd "$REPO"
 - 预期结果：
   - `$DST/GRScenes_assets/{category}/{uid}/usd/{uid}.usd` 成立，数量与类别分布与源数据一致（去重后）。
   - 任意资产 USD 的 MDL 引用改写为相对路径（形如 `@../../Material/mdl/<mdl_name>.mdl@`），贴图引用解析到 `Material/mdl/textures/...`。
-  - 必定生成单资产注释 `{uid}_annotation.json`，其中 `asset_type` 字段正确填充（`articulation` 或 `rigid`）。
+  - 必定生成单资产注释 `{uid}_annotation.json`，其中 `asset_type` 字段正确填充（`articulation` 或 `rigid`），并补齐标准字段（如 `usd_size`、`glb_size`、`urdf_size`、`orientation`、`usd_material_softlink`）。
   - （后处理）为每个资产 USD 目录创建 `textures -> ../../../../Material/mdl/textures`（导出第一步不生成）。
 
 ## 阶段三：导出场景并重写引用指向新库

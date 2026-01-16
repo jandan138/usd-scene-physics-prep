@@ -16,6 +16,47 @@ from ..utils.fs import ensure_dir, copy_file
 import re
 from ..utils.mdl_rewrite import rewrite_usd_mdl_paths
 
+
+def _safe_file_size_bytes(path):
+    if not path or not os.path.exists(path) or not os.path.isfile(path):
+        return None
+    try:
+        return os.path.getsize(path)
+    except OSError:
+        return None
+
+
+def _safe_dir_size_bytes(path):
+    if not path or not os.path.exists(path) or not os.path.isdir(path):
+        return None
+    total = 0
+    for root, _, files in os.walk(path, followlinks=False):
+        for name in files:
+            fp = os.path.join(root, name)
+            if os.path.islink(fp):
+                continue
+            try:
+                total += os.path.getsize(fp)
+            except OSError:
+                continue
+    return total
+
+
+def _infer_usd_material_softlink(dst_root, asset_dir):
+    """Whether the asset's USD uses centralized materials (Material/mdl).
+
+    Notes:
+    - Historically the dataset may expose a per-USD `textures` symlink.
+    - Even without the symlink, if `dst_root/Material/mdl` exists, the
+      normalized export is expected to reference the centralized library.
+    """
+    usd_textures = os.path.join(asset_dir, "usd", "textures")
+    if os.path.islink(usd_textures):
+        return True
+    if os.path.isdir(os.path.join(dst_root, "Material", "mdl")):
+        return True
+    return False
+
 # 迭代器：遍历源目录下所有模型实例（返回类别、唯一 id、实例文件路径、子类别）
 def iter_model_instances(models_root):
     scopes = ["layout", "object"]                     # 顶层范围（布局/对象）
@@ -37,7 +78,7 @@ def iter_model_instances(models_root):
                     if os.path.exists(inst):                       # 确认存在
                         yield category, uid, inst, sub             # 返回元组
 
-def generate_asset_annotation(uid, category, subcat):
+def generate_asset_annotation(uid, category, subcat, asset_dir, dst_root):
     """
     生成资产元数据
     subcat: 'articulated' | 'others'
@@ -46,6 +87,16 @@ def generate_asset_annotation(uid, category, subcat):
     # articulated -> articulation
     # others -> rigid (假设 others 均为刚体，除非有更细的逻辑)
     asset_type = "articulation" if subcat == "articulated" else "rigid"
+
+    usd_path = os.path.join(asset_dir, "usd", uid + ".usd")
+    glb_path = os.path.join(asset_dir, "glb", uid + ".glb")
+    urdf_dir = os.path.join(asset_dir, "urdf")
+
+    usd_size = _safe_file_size_bytes(usd_path)
+    glb_size = _safe_file_size_bytes(glb_path)
+    urdf_size = _safe_dir_size_bytes(urdf_dir)
+
+    usd_material_softlink = _infer_usd_material_softlink(dst_root=dst_root, asset_dir=asset_dir)
     return {
         "uid": uid,
         "category": category,
@@ -54,7 +105,12 @@ def generate_asset_annotation(uid, category, subcat):
         "dimensions": "",
         "mass": "",
         "placement": [],
-        "asset_type": asset_type
+        "asset_type": asset_type,
+        "glb_size": glb_size,
+        "usd_size": usd_size,
+        "urdf_size": urdf_size,
+        "orientation": 0,
+        "usd_material_softlink": usd_material_softlink,
     }
 
 # 导出资产到规范结构
@@ -117,7 +173,7 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
             if with_annotations:
                 ann_path = os.path.join(asset_dir, uid + "_annotation.json")
                 if not os.path.exists(ann_path):
-                    ann = generate_asset_annotation(uid, category, subcat)
+                    ann = generate_asset_annotation(uid, category, subcat, asset_dir=asset_dir, dst_root=dst_root)
                     with open(ann_path, "w", encoding="utf-8") as f:
                         json.dump(ann, f, ensure_ascii=False, indent=2)
             continue
@@ -151,7 +207,7 @@ def export_assets(src_root, dst_root, asset_name, with_annotations, rewrite_mdl_
         # 我倾向于总是生成，或者至少在 with_annotations 为 True 时生成正确的格式。
         # 这里的函数调用者通常会传入 True。
         if with_annotations:
-            ann = generate_asset_annotation(uid, category, subcat)
+            ann = generate_asset_annotation(uid, category, subcat, asset_dir=asset_dir, dst_root=dst_root)
             with open(os.path.join(asset_dir, uid + "_annotation.json"), "w", encoding="utf-8") as f:
                 json.dump(ann, f, ensure_ascii=False, indent=2)
                 

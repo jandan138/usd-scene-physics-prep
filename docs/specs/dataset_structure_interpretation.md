@@ -76,7 +76,9 @@ Asset_name/
   - 三级 `{uid}`：单资产专属目录。
   - `glb/`、`usd/`、`urdf/`：按格式分子目录；最低要求为存在 `usd/{uid}.usd`。
   - `usd/textures`：软链接，指向顶层 `Material/mdl/textures`，方便在资产目录内独立打开 USD。
-  - `{uid}_annotation.json`：该资产的标注。**必须包含字段 `asset_type`**，取值为 `{'rigid', 'soft', 'part_aware', 'articulation'}` 之一。
+  - `{uid}_annotation.json`：该资产的标注文件。
+    - 必须包含字段 `asset_type`，取值为 `{'rigid', 'soft', 'part_aware', 'articulation'}` 之一。
+    - 本仓库同时约定一组“稳定字段”，用于描述资产大小、姿态与材质组织方式（见下方“单资产标注标准”）。
   - `front.png`：资产正视图缩略图（推荐）。
   - `Asset_annotation.json`：该类别下所有资产的聚合注释。
   - `Asset_features`：可选的特征目录，存储类别级或资产级的数值特征。
@@ -90,6 +92,49 @@ Asset_name/
     - 软链接：`{uid}/usd/textures -> ../../../Material/mdl/textures`（由后续脚本生成；导出第一步不生成）
     - 单资产标注：`{uid}/{uid}_annotation.json`，其中 `asset_type` 字段根据源路径 (`articulated`/`others`) 自动填充。
     - 汇总标注：`Asset_annotation.json` 可引用 `get_inst_model_mapping` 或自建聚合（`set_physics/pxr_utils/data_clean.py:706-725`）。
+
+### 单资产标注标准（{uid}_annotation.json）
+
+该文件用于“资产级（物体级）”元数据描述，路径固定为：`<Asset_name>/<category>/<uid>/{uid}_annotation.json`。
+
+字段规范（推荐所有字段都出现；不可用时填 `null`）：
+- `uid` (string, required): 资产唯一 ID（与目录名一致）。
+- `category` (string, required): 资产类别（如 `bed`、`cabinet`）。
+- `asset_type` (string, required): 资产物理类型，取值：`rigid | soft | part_aware | articulation`。
+- `glb_size` (int|null, required): `glb/{uid}.glb` 的文件大小（字节）。不存在则为 `null`。
+- `usd_size` (int|null, required): `usd/{uid}.usd` 的文件大小（字节）。不存在则为 `null`。
+- `urdf_size` (int|null, required): `urdf/` 目录总大小（字节，递归累计）。不存在则为 `null`。
+- `orientation` (number, required): 资产默认朝向（角度制，单位：degree）。当前约定默认值为 `0`，后续可从 `{0, 15, 30, ..., 345, 360}` 中选择。
+- `usd_material_softlink` (bool, required):
+  - `true`：USD 使用“集中材质库”（通常为顶层 `Material/mdl`，USD 内引用为相对路径，且可选存在 `usd/textures -> ../../../Material/mdl/textures` 软链接）。
+  - `false`：USD 使用“就地材质”（材质与贴图与 `{uid}.usd` 同目录/同层级存放）。
+
+兼容/占位字段（历史上已存在，允许为空字符串或空数组）：
+- `description` (string)
+- `material` (string)
+- `dimensions` (string)
+- `mass` (string)
+- `placement` (array)
+
+示例：
+
+```json
+{
+  "uid": "0a85b986de35ccfdec7c686d791fd747",
+  "category": "bed",
+  "description": "",
+  "material": "",
+  "dimensions": "",
+  "mass": "",
+  "placement": [],
+  "asset_type": "rigid",
+  "glb_size": null,
+  "usd_size": 12345678,
+  "urdf_size": null,
+  "orientation": 0,
+  "usd_material_softlink": true
+}
+```
 
 ## Scenes
 ```
