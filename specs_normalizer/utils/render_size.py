@@ -209,7 +209,7 @@ def compute_usd_render_package_size_bytes(
     anchor_dir = os.path.dirname(root_layer.realPath) if getattr(root_layer, "realPath", "") else os.path.dirname(usd_path)
 
     mdl_abs: Set[str] = set()
-    img_abs: Set[str] = set()
+    dep_files_abs: Set[str] = set()
 
     for prim in stage.Traverse():
         for attr in prim.GetAttributes():
@@ -229,9 +229,10 @@ def compute_usd_render_package_size_bytes(
                 low = resolved.lower()
                 if low.endswith(".mdl") and os.path.isfile(resolved):
                     mdl_abs.add(resolved)
+                    dep_files_abs.add(resolved)
                 ext = os.path.splitext(low)[1]
                 if ext in _IMAGE_EXTS and os.path.isfile(resolved):
-                    img_abs.add(resolved)
+                    dep_files_abs.add(resolved)
 
     # MDL closure: imports/using
     mdl_root = _guess_material_mdl_root(dataset_root, sorted(mdl_abs))
@@ -257,8 +258,10 @@ def compute_usd_render_package_size_bytes(
             if os.path.isfile(tex):
                 tex_abs.add(tex)
 
+    dep_files_abs.update(tex_abs)
+
     total = usd_file_size
-    for p in sorted(mdl_abs | tex_abs | img_abs):
+    for p in sorted(dep_files_abs):
         sz = _safe_file_size_bytes(p)
         if sz:
             total += sz
