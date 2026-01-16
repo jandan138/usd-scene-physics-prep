@@ -12,7 +12,7 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from specs_normalizer.utils.render_size import compute_usd_render_package_size_bytes
+from specs_normalizer.utils.render_size import bytes_to_mb, compute_usd_render_package_size_mb
 
 
 def safe_file_size_bytes(path: str) -> Optional[int]:
@@ -90,9 +90,9 @@ def compute_backfill_fields(dataset_root: str, asset_dir: str, uid_for_paths: st
     glb_path = os.path.join(asset_dir, "glb", uid_for_paths + ".glb")
     urdf_dir = os.path.join(asset_dir, "urdf")
     return {
-        "glb_size": safe_file_size_bytes(glb_path),
-        "usd_size": compute_usd_render_package_size_bytes(usd_path, dataset_root=dataset_root, require_pxr=False),
-        "urdf_size": safe_dir_size_bytes(urdf_dir),
+        "glb_size": bytes_to_mb(safe_file_size_bytes(glb_path)),
+        "usd_size": compute_usd_render_package_size_mb(usd_path, dataset_root=dataset_root, require_pxr=False),
+        "urdf_size": bytes_to_mb(safe_dir_size_bytes(urdf_dir)),
         "orientation": 0,
         "usd_material_softlink": infer_usd_material_softlink(dataset_root=dataset_root, asset_dir=asset_dir),
     }

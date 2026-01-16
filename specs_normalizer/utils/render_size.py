@@ -23,6 +23,13 @@ except Exception:
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".exr", ".tif", ".tiff", ".tga", ".bmp", ".webp", ".hdr")
 
 
+def bytes_to_mb(size_bytes: Optional[int]) -> Optional[float]:
+    if size_bytes is None:
+        return None
+    # Use MiB (1024*1024) but call it MB for user-facing readability.
+    return float(size_bytes) / float(1024 * 1024)
+
+
 def _safe_file_size_bytes(path: str) -> Optional[int]:
     if not path or not os.path.exists(path) or not os.path.isfile(path):
         return None
@@ -257,3 +264,18 @@ def compute_usd_render_package_size_bytes(
             total += sz
 
     return total
+
+
+def compute_usd_render_package_size_mb(
+    usd_path: str,
+    *,
+    dataset_root: Optional[str] = None,
+    require_pxr: bool = False,
+) -> Optional[float]:
+    return bytes_to_mb(
+        compute_usd_render_package_size_bytes(
+            usd_path,
+            dataset_root=dataset_root,
+            require_pxr=require_pxr,
+        )
+    )
