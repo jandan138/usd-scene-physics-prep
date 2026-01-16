@@ -195,6 +195,92 @@ def _iter_usd_files_under(root: str) -> List[str]:
     return out
 
 
+def _iter_usd_dirs_under(root: str) -> List[str]:
+    """Return USD directories (named 'usd') that contain at least one USD file."""
+    out: List[str] = []
+    for r, _, files in os.walk(root):
+        if os.path.basename(r) != "usd":
+            continue
+        if any(fn.lower().endswith((".usd", ".usda", ".usdc")) for fn in files):
+            out.append(r)
+    out.sort()
+    return out
+
+
+def _create_usd_textures_symlinks(
+    *,
+    dst_root: str,
+    dry_run: bool,
+    force: bool,
+) -> Dict[str, object]:
+    """Create per-USD `textures` symlink pointing to centralized `Material/mdl/textures`.
+
+    This is optional. Many workflows can resolve textures via relative paths to
+    `Material/mdl` without the symlink, but the symlink makes it easier to open
+    a USD directly from its asset folder.
+    """
+
+    assets_root = os.path.join(dst_root, "GRScenes_assets")
+    textures_root = os.path.join(dst_root, "Material", "mdl", "textures")
+
+    if not os.path.isdir(assets_root):
+        return {"enabled": True, "created": 0, "fixed": 0, "skipped": 0, "warnings": ["missing GRScenes_assets"]}
+    if not os.path.isdir(textures_root):
+        return {"enabled": True, "created": 0, "fixed": 0, "skipped": 0, "warnings": ["missing Material/mdl/textures"]}
+
+    created = 0
+    fixed = 0
+    skipped = 0
+    warnings: List[Dict[str, str]] = []
+
+    for usd_dir in _iter_usd_dirs_under(assets_root):
+        link_path = os.path.join(usd_dir, "textures")
+        desired = os.path.relpath(textures_root, usd_dir).replace(os.sep, "/")
+
+        if os.path.lexists(link_path):
+            if os.path.islink(link_path):
+                try:
+                    cur = os.readlink(link_path)
+                except OSError:
+                    cur = ""
+                if cur == desired:
+                    skipped += 1
+                    continue
+                if not force:
+                    skipped += 1
+                    warnings.append(
+                        {
+                            "usd_dir": usd_dir,
+                            "action": "skip_existing_symlink",
+                            "current": cur,
+                            "desired": desired,
+                        }
+                    )
+                    continue
+                if not dry_run:
+                    os.unlink(link_path)
+                    os.symlink(desired, link_path)
+                fixed += 1
+                continue
+
+            # Exists but not a symlink: never delete automatically.
+            skipped += 1
+            warnings.append({"usd_dir": usd_dir, "action": "skip_existing_non_symlink", "path": link_path})
+            continue
+
+        if not dry_run:
+            os.symlink(desired, link_path)
+        created += 1
+
+    return {
+        "enabled": True,
+        "created": created,
+        "fixed": fixed,
+        "skipped": skipped,
+        "warnings": warnings,
+    }
+
+
 def _analyze_usd_asset_attributes(usd_path: str) -> List[Dict[str, str]]:
     if Usd is None:
         raise RuntimeError(f"pxr.Usd not available: {_PXR_IMPORT_ERROR}")
@@ -550,6 +636,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--write-manifest", action="store_true", help="Write <dst>/subset_manifest.json")
     ap.add_argument("--verify", action="store_true", help="Re-scan subset USDs and report missing MDL/texture files")
     ap.add_argument("--create-empty-grscenes100", action="store_true", help="Create empty GRScenes100 dir (no scenes copied)")
+    ap.add_argument(
+        "--create-usd-textures-symlink",
+        action="store_true",
+        help="Create per-asset usd/textures symlink -> <dst>/Material/mdl/textures (optional)",
+    )
+    ap.add_argument(
+        "--force-usd-textures-symlink",
+        action="store_true",
+        help="If usd/textures symlink exists but points elsewhere, replace it",
+    )
 
     args = ap.parse_args(list(argv) if argv is not None else None)
 
@@ -636,6 +732,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         else:
             verify_report = _verify_subset(dst_root)
 
+    symlink_report: Optional[Dict[str, object]] = None
+    if args.create_usd_textures_symlink:
+        if dry_run:
+            print("DRY-RUN: would create usd/textures symlinks.")
+            symlink_report = {"enabled": True, "dry_run": True}
+        else:
+            symlink_report = _create_usd_textures_symlinks(
+                dst_root=dst_root,
+                dry_run=dry_run,
+                force=bool(args.force_usd_textures_symlink),
+            )
+
     manifest = {
         "src_root": src_root,
         "dst_root": dst_root,
@@ -647,6 +755,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "asset_copy": {"copied_files": copied_asset_files, "skipped_files": skipped_asset_files},
         "material": dep_report,
         "verify": verify_report,
+        "usd_textures_symlink": symlink_report,
     }
 
     print("=== Subset package summary ===")

@@ -9,7 +9,7 @@
 - `GRScenes_assets/<category>/<uid>/`：**整目录复制**（未来可能包含 `.glb` 等非 USD 文件，不能只拷 USD）。
 - `Material/`：只携带这些资产 USD 真实引用到的 **MDL + 纹理**（最小闭包）。
 - 不包含 Scenes（`GRScenes100` 不拷贝场景文件；可选择创建空目录占位）。
-- 不创建 symlink。
+- 默认不创建 symlink；如需“在资产目录内直接打开 USD 也能方便解析贴图”，可选创建 `usd/textures -> ../../../Material/mdl/textures` 软链接。
 
 实现脚本：
 
@@ -66,6 +66,26 @@ python3 scripts/build_uid_subset_package.py \
 ```
 
 注意：`--dry-run` 不会写文件（包含 manifest），也不会执行 `--verify`。
+
+### 1.4 可选：创建 usd/textures 软链接
+
+为了方便在 `GRScenes_assets/<category>/<uid>/usd/` 目录里直接打开 `{uid}.usd`，可以为每个 `usd/` 目录创建一个 `textures` 软链接：
+
+```text
+<uid>/usd/textures -> ../../../../Material/mdl/textures
+```
+
+启用方式：
+
+```bash
+python3 scripts/build_uid_subset_package.py \
+  --src GRScenes-test1 \
+  --dst sandbox/my_subset \
+  --uid-file uids.txt \
+  --create-usd-textures-symlink
+```
+
+如果目录中已经存在 `usd/textures` 但指向不一致，可加：`--force-usd-textures-symlink`。
 
 ---
 
