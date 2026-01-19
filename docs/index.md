@@ -25,6 +25,7 @@
 | [Quickstart Guide](usage/quickstart.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
 | [Scene Export Usage](usage/export_scenes.md) | Active | 2025-12-22 | [`export_scene.py`](set_physics/export_scene.py) |
 | [UID Subset Package Usage](usage/uid_subset_package.md) | Active | 2026-01-15 | [`build_uid_subset_package.py`](scripts/build_uid_subset_package.py) |
+| [Scene Subset Package Usage](usage/scene_subset_package.md) | Active | 2026-01-19 | [`build_scene_uid_subset_package.py`](scripts/build_scene_uid_subset_package.py) |
 | [Script Guides (External)](scripts/index.md) | Active | 2026-01-19 | - |
 | [脚本指南（对外）](scripts/index.md) | Active | 2026-01-19 | - |
 | [SimReady CLI Usage](usage/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |
