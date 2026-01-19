@@ -10,3 +10,5 @@ This directory contains detailed, “from scratch” explanations of selected sc
 
 - [UID Asset Downloader (build subset package)](uid_asset_downloader.md)
 - [UID 资产下载脚本（按 UID 构建子集包）](uid_asset_downloader.zh-CN.md)
+- [Scene UID Downloader (scene + all referenced assets)](scene_asset_downloader.md)
+- [场景 UID 下载脚本（场景 + 所有引用的资产 + 材质）](scene_asset_downloader.zh-CN.md)
