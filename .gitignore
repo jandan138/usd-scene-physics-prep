@@ -21,5 +21,10 @@ GRScenes-test1/
 # Local run artifacts
 logs/
 check_reports/mdl_bak_*/
+check_reports/*_report_test*.json
+check_reports/*_dryrun*.json
+check_reports/subset_*_glb_report.json
+check_reports/fix_mdl_textures_case_report_test1.json
+check_reports/subset_20_gt10mb_glb_report.json
 scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
