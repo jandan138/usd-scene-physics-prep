@@ -183,6 +183,10 @@ python3 scripts/build_uid_subset_package.py \
 - 脚本：
   - [scripts/convert_subset_usd_to_glb.py](../../scripts/convert_subset_usd_to_glb.py)
 
+更完整的流程、规范与参数说明见：
+
+- [docs/usage/usd_to_glb_in_subset.md](usd_to_glb_in_subset.md)
+
 示例（对 `sandbox/subset_20_gt10mb` 生成 GLB）：
 
 ```bash
