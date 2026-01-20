@@ -28,6 +28,7 @@
 | [Scene Subset Package Usage](usage/scene_subset_package.md) | Active | 2026-01-19 | [`build_scene_uid_subset_package.py`](scripts/build_scene_uid_subset_package.py) |
 | [USD to GLB in Subset](usage/usd_to_glb_in_subset.md) | Active | 2026-01-20 | [`convert_subset_usd_to_glb.py`](scripts/convert_subset_usd_to_glb.py) |
 | [从 layout.usd 生成 layout.json（Blender）](usage/layout_json_for_blender.md) | Active | 2026-01-20 | [`generate_layout_json_from_usd.py`](scripts/generate_layout_json_from_usd.py) |
+| [layout.usd → layout.json 原理与代码解析](usage/layout_usd_to_layout_json_deep_dive.md) | Active | 2026-01-20 | [`generate_layout_json_from_usd.py`](scripts/generate_layout_json_from_usd.py) |
 | [Script Guides (External)](scripts/index.md) | Active | 2026-01-19 | - |
 | [脚本指南（对外）](scripts/index.md) | Active | 2026-01-19 | - |
 | [SimReady CLI Usage](usage/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |

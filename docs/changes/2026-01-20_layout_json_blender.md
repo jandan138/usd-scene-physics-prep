@@ -11,4 +11,5 @@ Adds a workflow to export a Blender-friendly `layout.json` from a scene `layout.
   - Extracts referenced `GRScenes_assets/<category>/<uid>` placements
   - Computes world transforms and outputs `layout.json` that points to `glb/<uid>.glb`
 - Added usage doc: [docs/usage/layout_json_for_blender.md](../usage/layout_json_for_blender.md)
+- Added deep-dive doc: [docs/usage/layout_usd_to_layout_json_deep_dive.md](../usage/layout_usd_to_layout_json_deep_dive.md)
 - Updated documentation index to include the new usage doc

@@ -4,6 +4,9 @@
 >
 > 目标：以 `layout.usd` 为权威布局，生成一个 `layout.json`，让 Blender 通过导入 GLB 并应用位姿，得到“物体摆放布局一致”的场景。
 
+如果你需要更深入的“流程原理 + 代码解析”，请看：
+- [docs/usage/layout_usd_to_layout_json_deep_dive.md](layout_usd_to_layout_json_deep_dive.md)
+
 ---
 
 ## 你会得到什么
