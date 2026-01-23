@@ -1,6 +1,6 @@
 # Project Documentation Index
 
-> Generated at: 2026-01-20
+> Generated at: 2026-01-23
 
 ## Overview
 
@@ -62,6 +62,7 @@
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
 | [environment_setup.md](operations/environment_setup.md) | Unknown | N/A | - |
+| [GRScenes-test1 类别别名合并操作指南（维护向）](operations/grscenes_test1_category_merge.md) | Active | 2026-01-23 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py) |
 | [prep_interaction_root_scene_checklist.md](operations/prep_interaction_root_scene_checklist.md) | Unknown | N/A | - |
 | [simbench_interaction_preprocess_field_notes.md](operations/simbench_interaction_preprocess_field_notes.md) | Unknown | N/A | - |
 | [troubleshooting_glb_payload_multimesh.md](operations/troubleshooting_glb_payload_multimesh.md) | Unknown | N/A | - |
@@ -80,6 +81,7 @@
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
 | [2025-12-20_simready_cli.md](changes/2025-12-20_simready_cli.md) | Unknown | N/A | - |
+| [2026-01-23_test1_category_alias_merge.md](changes/2026-01-23_test1_category_alias_merge.md) | Unknown | N/A | - |
 | [Specs Normalizer Guide](specs_normalizer/specs_normalizer_guide.md) | Active | 2025-12-22 | [`normalize.py`](specs_normalizer/normalize.py) |
 | [faq.md](faq/faq.md) | Unknown | N/A | - |
 | [workflow_examples.md](examples/workflow_examples.md) | Unknown | N/A | - |
