@@ -62,6 +62,7 @@
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
 | [environment_setup.md](operations/environment_setup.md) | Unknown | N/A | - |
+| [Isaac Sim / Kit 的 MDL 渲染与路径配置（通俗版）](operations/isaacsim_mdl_workflow.md) | Active | 2026-01-23 | - |
 | [GRScenes-test1 类别别名合并操作指南（维护向）](operations/grscenes_test1_category_merge.md) | Active | 2026-01-23 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py) |
 | [prep_interaction_root_scene_checklist.md](operations/prep_interaction_root_scene_checklist.md) | Unknown | N/A | - |
 | [simbench_interaction_preprocess_field_notes.md](operations/simbench_interaction_preprocess_field_notes.md) | Unknown | N/A | - |
