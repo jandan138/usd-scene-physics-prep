@@ -17,6 +17,7 @@ ENV/
 env/
 GRScenes-test0/
 GRScenes-test1/
+GRScenes-test1_bak/
 
 # Local run artifacts
 logs/
@@ -29,3 +30,6 @@ check_reports/fix_mdl_textures_case_report_test1.json
 check_reports/subset_20_gt10mb_glb_report.json
 scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
+
+# Keep specific check_reports under version control (auditable maintenance outputs)
+!check_reports/test1_category_merge_*.json

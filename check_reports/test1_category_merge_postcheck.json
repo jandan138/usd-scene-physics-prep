@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-01-23T02:55:03.459140+00:00",
+  "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1",
+  "category_merges": {
+    "coffeemaker": "coffee_maker",
+    "sofachair": "sofa_chair",
+    "tvstand": "tv_stand"
+  },
+  "plans": [
+    {
+      "old": "coffeemaker",
+      "new": "coffee_maker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "sofachair",
+      "new": "sofa_chair",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "tvstand",
+      "new": "tv_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    }
+  ],
+  "uid_collisions_total": 0,
+  "move_preview": {
+    "moved_count": 0,
+    "moved": [],
+    "per_asset_annotation_updates": 0
+  },
+  "usd_rewrite_preview_count": 0,
+  "usd_rewrite_preview": []
+}
