@@ -28,6 +28,10 @@ check_reports/subset_*_glb_report.json
 check_reports/scene_subset_*_glb_report.json
 check_reports/fix_mdl_textures_case_report_test1.json
 check_reports/subset_20_gt10mb_glb_report.json
+check_reports/*asset_mesh_dedup*.json
+check_reports/*asset_mesh_dedup*.jsonl
+check_reports/*asset_mesh_dedup*.log
+check_reports/*asset_mesh_dedup*.pid
 scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
 
