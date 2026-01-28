@@ -2,7 +2,7 @@
 
 > 目标读者：想把“重复几何”省掉，但又不想把场景搞坏的人
 >
-> 最后更新：2026-01-27
+> 最后更新：2026-01-28
 
 ## 0. 你要解决的矛盾（先讲人话）
 
@@ -203,6 +203,20 @@
 
 回滚：
 - 回滚引用修改 + 回滚你加的补偿 transform。
+
+【已完成：sig=6da9 扩展到更多 layout（batch 记录）】
+
+- full mapping（组内 18→1，除 canonical 外其余成员全部映射到 canonical）：
+  - `check_reports/c1_pilot/pilot_mapping_plant_sig6da9_full.json`
+- 全库 layout 命中扫描（扫描 `GRScenes-test1/GRScenes100/**/layout.usd`）：
+  - 扫描总数：`scanned_layouts=99`
+  - 命中 layout 数：`hit_layouts=12`
+  - 命中清单：`check_reports/c1_pilot/plant_sig6da9_layout_hits.json`
+- batch dry-run / apply 产物：
+  - 每个命中 scene 生成一份报告（12 份）：`check_reports/c1_pilot/sig6da9_batch/*_dryrun.json`、`check_reports/c1_pilot/sig6da9_batch/*_apply.json`
+  - 每个命中 scene 生成一个输出 layout（不覆盖原文件，写同目录）：`layout.c1_sig6da9_dedup_v1.usd`
+- 关键一致性验证（自动）：
+  - 对 12 个输出 layout 中所有被补偿的 prim 做了“effective world matrix”一致性检查：`checked_prims=18`，全部通过（diff ≤ `1e-6`）
 
 #### Step 3 前置小检查（强烈建议加在任何改动之前）
 
