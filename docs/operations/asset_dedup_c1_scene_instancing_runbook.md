@@ -329,6 +329,20 @@
 - 如果你做的是“移动到 bak”，回滚就是移回来
 - 如果你做了永久删除，回滚就只能从备份/版本库恢复
 
+#### Step 6 进度显示（避免以为“卡住”）
+
+全库扫描通常会读很多 USD 文件（几十万级别也可能），属于 I/O 密集任务，体感会慢。
+
+建议使用“带进度输出”的扫描方式：
+- 终端会周期性打印：`processed/total`、`rate`、`eta`
+- 同时写一个进度快照 JSON（覆盖写）+ JSONL（历史追加），你可以用 `watch` 看它持续更新
+
+#### 已完成组的记录（避免重复处理同一组）
+
+除了手册里的文字记录外，建议维护一个机器可读的 ledger：
+- `check_reports/c1_pilot/c1_dedup_ledger.jsonl`
+- 每完成一个组（promote+scan+soft delete）就追加一行，包含 `group_label/sig`、canonical、报告路径、bak 目的地等
+
 【已完成：sig=6da9 的 Step 6（soft delete）记录】
 
 1) 把输出文件“落地”为正式文件（并保留可回滚备份）：
