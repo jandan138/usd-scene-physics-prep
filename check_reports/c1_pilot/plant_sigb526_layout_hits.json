@@ -1,0 +1,278 @@
+{
+  "sig_short": "b526",
+  "mapping_json": "check_reports/c1_pilot/pilot_mapping_plant_sigb526_full.json",
+  "hit_layouts": 17,
+  "items": [
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MV7J6NIKTKJZ2AABAAAAADY8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_f80c237c31c7ed4ceb89bee1af3bed92_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUCSQAKTKJ5EAABAAAAABY8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_823574eace89b34bc32d306920099b78_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUCSQAKTKJ5EAABAAAAADA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_16b94f26d71d9f5686c8fabcddd2dcc2_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUCSQAKTKJ5EAABAAAAADI8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 3,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 3,
+        "instanceable_set": 0,
+        "change_records": 6
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_b9386d24d1d829a6b0ce48763753ed59_0",
+        "/Root/Meshes/Furnitures/plant/model_24444114de364eae26ef617a33abc317_0",
+        "/Root/Meshes/Furnitures/plant/model_354db1cdde0399077af583866b41e5d1_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUCSQAKTKJ5EAABAAAAAEI8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_b1cb4fd4360641238d9b48b4ef706546_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHL5YKTKJ5EAABAAAAAAA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 5,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 5,
+        "instanceable_set": 0,
+        "change_records": 10
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_b43cbbf60372c2dd114145cba0508296_0",
+        "/Root/Meshes/Furnitures/plant/model_72b71ad294fc8d9f5e9ab0f29c4a886b_0",
+        "/Root/Meshes/Furnitures/plant/model_d917da9a537934d2ca9dd69fa46181d8_0",
+        "/Root/Meshes/Furnitures/plant/model_00cb5dfde5580f520b03628214c33bdf_0",
+        "/Root/Meshes/Furnitures/plant/model_8d7e30a36eeb521f278f12229719d991_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHLWYKTKJ5EAABAAAAAAQ8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_d24b1fb3dff5d3a439622ee3a701a8c5_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHLWYKTKJ5EAABAAAAAAY8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_8a663c4cb9c089e75637485fe5f92cbf_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHLWYKTKJ5EAABAAAAACA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_6730c74d39fafe8ad98a87ab49afd7fe_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHLWYKTKJ5EAABAAAAACI8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 5,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 5,
+        "instanceable_set": 0,
+        "change_records": 10
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_b43cbbf60372c2dd114145cba0508296_0",
+        "/Root/Meshes/Furnitures/plant/model_72b71ad294fc8d9f5e9ab0f29c4a886b_0",
+        "/Root/Meshes/Furnitures/plant/model_f2d4015b4305cdeb22e74185e04128f4_0",
+        "/Root/Meshes/Furnitures/plant/model_00cb5dfde5580f520b03628214c33bdf_0",
+        "/Root/Meshes/Furnitures/plant/model_8d7e30a36eeb521f278f12229719d991_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MVUHLWYKTKJ5EAABAAAAAEI8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_155950116f0497a47795be15a8177880_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWAX5JYKTKJZ2AABAAAAAAA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 5,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 5,
+        "instanceable_set": 0,
+        "change_records": 10
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_d699ef62e807157fd1b0444e9cee3c60_0",
+        "/Root/Meshes/Furnitures/plant/model_38ad745251460223aa4bf6c5032727c9_0",
+        "/Root/Meshes/Furnitures/plant/model_3eeb852ccd579cf2900e13e613000895_0",
+        "/Root/Meshes/Furnitures/plant/model_cb0d7db3561aa077ddc7d1929a014e28_0",
+        "/Root/Meshes/Furnitures/plant/model_7b8d760b18b53b82edea82c1b6aad504_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWAX5JYKTKJZ2AABAAAAAAQ8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 2,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 2,
+        "instanceable_set": 0,
+        "change_records": 4
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_a47694cb1b764fa3b9d0613df0988927_0",
+        "/Root/Meshes/Furnitures/plant/model_e46eef2e2679663d3f8a924d7e6e7646_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWAX5JYKTKJZ2AABAAAAACA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_ae8194f54adb7fa75c5e4cf12153ce78_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWBGLKQKTKJZ2AABAAAAAAI8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_a229d5993ba04837ec832e7593267d57_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWBGLKQKTKJZ2AABAAAAAAY8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 2,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 2,
+        "instanceable_set": 0,
+        "change_records": 4
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_3f707c12825a13444cce3d1190e41678_0",
+        "/Root/Meshes/Furnitures/plant/model_b0c49b01b14a97bd05e8e491eecc6a72_0"
+      ]
+    },
+    {
+      "report": "check_reports/c1_pilot/sigb526_batch/MWBGLKQKTKJZ2AABAAAAABA8_usd_layout_dryrun.json",
+      "layout_usd": "",
+      "counts": {
+        "refs_changed": 1,
+        "payloads_changed": 0,
+        "asset_attrs_changed": 0,
+        "xform_compensated": 1,
+        "instanceable_set": 0,
+        "change_records": 2
+      },
+      "changed_prims": [
+        "/Root/Meshes/Furnitures/plant/model_b062ef786e381a7148055193ef37ec3a_0"
+      ]
+    }
+  ]
+}

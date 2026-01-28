@@ -218,6 +218,20 @@
 - 关键一致性验证（自动）：
   - 对 12 个输出 layout 中所有被补偿的 prim 做了“effective world matrix”一致性检查：`checked_prims=18`，全部通过（diff ≤ `1e-6`）
 
+【进行中：sig=b526 扩展到更多 layout（batch 记录，未 promote/未 delete）】
+
+- full mapping（组内 30→1）：
+  - `check_reports/c1_pilot/pilot_mapping_plant_sigb526_full.json`
+- 全库 layout 命中扫描（通过对 99 个 layout 跑 Step 3B dry-run 得到 hit 清单）：
+  - 命中 layout 数：`hit_layouts=17`
+  - 命中清单：`check_reports/c1_pilot/plant_sigb526_layout_hits.json`
+- batch dry-run / apply 产物：
+  - dry-run 报告（99 份）：`check_reports/c1_pilot/sigb526_batch/*_layout_dryrun.json`
+  - apply 报告（17 份）：`check_reports/c1_pilot/sigb526_batch/*_layout_apply.json`
+  - 输出 layout（不覆盖原文件，写同目录）：`layout.c1_sigb526_dedup_v1.usd`
+- 关键一致性验证（自动，effective world matrix）：
+  - `check_reports/c1_pilot/sigb526_batch/validation_geom_world_diff.json`（`bad_prims_total=0`，`max_abs_diff_total=0.0`）
+
 #### Step 3 前置小检查（强烈建议加在任何改动之前）
 
 为了决定走 3A 还是 3B，建议你对该组抽样 2~3 个资产 USD 做一次检查：
