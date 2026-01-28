@@ -53,6 +53,10 @@ cd /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep \
 - 比较“几何 + scale”，忽略平移/旋转
 - 本项目约定：**scale 不同视为不同资产**，所以这份通常是首选
 
+补充（与“落地去重方案 C1”相关）：
+- 如果你的目标是做“scene 侧引用归一 + instancing（C1）”，并且你确认 transform（包含 scale）都由 `layout.usd` 控制，那么用于挑选“同几何候选”的口径通常更偏向 `geom_only`。
+- 如果你不确定 scale 是否完全由 scene 控制（例如资产 USD 内部自带缩放），再用 `scale_only` 会更稳。
+
 3) `full_matrix`
 - 比较“几何 + 完整 4×4 world matrix（平移/旋转/缩放都敏感）”
 - 用途：更像“完全拷贝/完全重复”的检查

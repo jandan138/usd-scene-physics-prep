@@ -29,6 +29,7 @@
 | [USD to GLB in Subset](usage/usd_to_glb_in_subset.md) | Active | 2026-01-20 | [`convert_subset_usd_to_glb.py`](scripts/convert_subset_usd_to_glb.py) |
 | [从 layout.usd 生成 layout.json（Blender）](usage/layout_json_for_blender.md) | Active | 2026-01-20 | [`generate_layout_json_from_usd.py`](scripts/generate_layout_json_from_usd.py) |
 | [layout.usd → layout.json 原理与代码解析](usage/layout_usd_to_layout_json_deep_dive.md) | Active | 2026-01-20 | [`generate_layout_json_from_usd.py`](scripts/generate_layout_json_from_usd.py) |
+| [layout.usd 引用归一 + transform 补偿（Step 3B 工具）](usage/rewrite_layout_asset_refs_with_compensation.md) | Active | 2026-01-27 | [`rewrite_layout_asset_refs_with_compensation.py`](scripts/rewrite_layout_asset_refs_with_compensation.py) |
 | [Script Guides (External)](scripts/index.md) | Active | 2026-01-19 | - |
 | [脚本指南（对外）](scripts/index.md) | Active | 2026-01-19 | - |
 | [SimReady CLI Usage](usage/simready.md) | Active | 2025-12-22 | [`simready.py`](set_physics/simready.py) |
@@ -64,6 +65,7 @@
 | [environment_setup.md](operations/environment_setup.md) | Unknown | N/A | - |
 | [GRScenes 资产 Mesh 去重报告（仅分析，不修改数据）](operations/asset_mesh_dedup_report.md) | Active | 2026-01-26 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
 | [report_asset_mesh_dedup.py 代码导读（中文）](operations/asset_mesh_dedup_code_guide.md) | Active | 2026-01-26 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [资产去重落地方案 C1 执行手册（Scene 侧引用归一 + Instancing）](operations/asset_dedup_c1_scene_instancing_runbook.md) | Active | 2026-01-27 | - |
 | [Isaac Sim / Kit 的 MDL 渲染与路径配置（通俗版）](operations/isaacsim_mdl_workflow.md) | Active | 2026-01-23 | - |
 | [GRScenes-test1 类别别名合并操作指南（维护向）](operations/grscenes_test1_category_merge.md) | Active | 2026-01-23 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py) |
 | [prep_interaction_root_scene_checklist.md](operations/prep_interaction_root_scene_checklist.md) | Unknown | N/A | - |
