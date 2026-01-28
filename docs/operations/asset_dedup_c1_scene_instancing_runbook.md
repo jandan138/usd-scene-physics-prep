@@ -299,6 +299,24 @@
 - 如果你做的是“移动到 bak”，回滚就是移回来
 - 如果你做了永久删除，回滚就只能从备份/版本库恢复
 
+【已完成：sig=6da9 的 Step 6（soft delete）记录】
+
+1) 把输出文件“落地”为正式文件（并保留可回滚备份）：
+- `layout.usd`：已从 `layout.c1_sig6da9_dedup_v1.usd` 提升为正式 `layout.usd`，原文件备份为 `layout.pre_c1_sig6da9.<stamp>.usd`
+  - 操作清单：`check_reports/c1_pilot/sig6da9_batch/promote_to_layout_usd_report.json`
+- `start_result_navigation.usd` / `start_result_interaction.usd`：同样执行了改引用 + 补偿并就地替换，原文件备份为 `*.pre_c1_sig6da9.<stamp>.usd`
+  - 操作清单：`check_reports/c1_pilot/sig6da9_batch/promote_start_results_report.json`
+
+2) 引用检查（确保“活跃数据”不再引用 old 资产）：
+- layout 扫描：`check_reports/c1_pilot/sig6da9_batch/post_promote_layout_scan.json`（hit=0）
+- 全库 USD 扫描（排除 `*pre_c1_sig6da9*` 备份文件）：`check_reports/c1_pilot/sig6da9_batch/post_promote_full_usd_scan_excluding_backups.json`（hit=0）
+
+3) soft delete（移动旧资产目录，而非永久删除）：
+- 已将 sig=6da9 的 18 个 old plant 资产目录移动到：
+  - `GRScenes-test1_bak/_dedup_assets/sig6da9_<stamp>/GRScenes_assets/plant/`
+  - 详情报告：`check_reports/c1_pilot/sig6da9_batch/soft_delete_old_assets_report.json`
+- 移动后 layout 再扫描：`check_reports/c1_pilot/sig6da9_batch/post_soft_delete_layout_scan.json`（hit=0）
+
 ---
 
 ## 4. 推荐的执行节奏（你要的“一步一步来”）
