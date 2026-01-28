@@ -1,0 +1,108 @@
+{
+  "stamp": "20260128_061514",
+  "count": 17,
+  "ops": [
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADA8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADI8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADI8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADI8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADI8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEI8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEI8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEI8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEI8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHL5YKTKJ5EAABAAAAAAA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHL5YKTKJ5EAABAAAAAAA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHL5YKTKJ5EAABAAAAAAA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHL5YKTKJ5EAABAAAAAAA8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAQ8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAQ8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAQ8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAQ8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAY8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAY8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAY8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAY8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACA8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACI8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACI8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACI8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACI8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAEI8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAEI8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAEI8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAEI8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAA8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAQ8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAQ8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAQ8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAAAQ8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAACA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAACA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAACA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAACA8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAI8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAI8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAI8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAI8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAY8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAY8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAY8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAY8_usd/layout.usd"
+    },
+    {
+      "dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABA8_usd",
+      "backup": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABA8_usd/layout.pre_c1_sigb526.20260128_061514.usd",
+      "promoted_from": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABA8_usd/layout.c1_sigb526_dedup_v1.usd",
+      "promoted_to": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABA8_usd/layout.usd"
+    }
+  ]
+}

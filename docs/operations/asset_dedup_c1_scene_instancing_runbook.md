@@ -218,7 +218,7 @@
 - 关键一致性验证（自动）：
   - 对 12 个输出 layout 中所有被补偿的 prim 做了“effective world matrix”一致性检查：`checked_prims=18`，全部通过（diff ≤ `1e-6`）
 
-【进行中：sig=b526 扩展到更多 layout（batch 记录，未 promote/未 delete）】
+【已完成：sig=b526 扩展到更多 layout（batch + promote + soft delete 记录）】
 
 - full mapping（组内 30→1）：
   - `check_reports/c1_pilot/pilot_mapping_plant_sigb526_full.json`
@@ -231,6 +231,22 @@
   - 输出 layout（不覆盖原文件，写同目录）：`layout.c1_sigb526_dedup_v1.usd`
 - 关键一致性验证（自动，effective world matrix）：
   - `check_reports/c1_pilot/sigb526_batch/validation_geom_world_diff.json`（`bad_prims_total=0`，`max_abs_diff_total=0.0`）
+
+【已完成：sig=b526 的 Step 6（promote + scan + soft delete）记录】
+
+1) promote（把输出文件落地为正式 `layout.usd`，并保留可回滚备份）：
+- `layout.usd`：已从 `layout.c1_sigb526_dedup_v1.usd` 提升为正式 `layout.usd`，原文件备份为 `layout.pre_c1_sigb526.<stamp>.usd`
+  - 操作清单：`check_reports/c1_pilot/sigb526_batch/promote_to_layout_usd_report.json`
+
+2) 引用检查（确保“活跃数据”不再引用 old 资产；扫描口径按 old 资产 USD 路径，而不是 uid 子串，避免误判 prim 名）：
+- layout 扫描：`check_reports/c1_pilot/sigb526_batch/post_promote_layout_scan.json`（hit=0）
+- 全库 USD 扫描（排除 `*pre_c1_sigb526*` 备份文件）：`check_reports/c1_pilot/sigb526_batch/post_promote_full_usd_scan_excluding_backups.json`（hit=0）
+
+3) soft delete（移动旧资产目录，而非永久删除）：
+- 已将 sig=b526 的 29 个 old plant 资产目录移动到：
+  - `GRScenes-test1_bak/_dedup_assets/sigb526_<stamp>/GRScenes_assets/plant/`
+  - 详情报告：`check_reports/c1_pilot/sigb526_batch/soft_delete_old_assets_report.json`
+- 移动后 layout 再扫描：`check_reports/c1_pilot/sigb526_batch/post_soft_delete_layout_scan.json`（hit=0）
 
 #### Step 3 前置小检查（强烈建议加在任何改动之前）
 
