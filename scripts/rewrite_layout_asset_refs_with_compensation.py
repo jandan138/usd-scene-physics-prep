@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -319,6 +320,117 @@ def _rewrite_payload_listop(payloads, base_dir: str, old_abs: str, new_abs: str)
     return new_pls, changed
 
 
+def _rewrite_reference_listop_with_mapping(
+    refs,
+    base_dir: str,
+    mapping_by_old_abs: Dict[str, str],
+) -> Tuple[Any, int, List[Tuple[str, str]]]:
+    """Rewrite references by resolving each authored ref and looking it up in a mapping dict.
+
+    Returns: (new_refs, changed_count, changed_pairs[(old_abs, new_abs), ...])
+    """
+    if not refs:
+        return refs, 0, []
+
+    def _iter_items():
+        try:
+            return list(refs.GetAddedOrExplicitItems())
+        except Exception:
+            return []
+
+    items = _iter_items()
+    if not items:
+        return refs, 0, []
+
+    if getattr(refs, "explicitItems", None):
+        bucket = "explicitItems"
+    elif getattr(refs, "prependedItems", None):
+        bucket = "prependedItems"
+    elif getattr(refs, "addedItems", None):
+        bucket = "addedItems"
+    else:
+        bucket = "explicitItems"
+
+    changed = 0
+    changed_pairs: List[Tuple[str, str]] = []
+    new_refs = Sdf.ReferenceListOp()
+    new_items: List[Sdf.Reference] = []
+
+    for ref in items:
+        ap = getattr(ref, "assetPath", "") or ""
+        resolved = _resolve_ref_asset_path(base_dir, ap)
+        new_abs = mapping_by_old_abs.get(resolved)
+        if new_abs:
+            new_ap = _format_new_asset_path(base_dir, ap, new_abs)
+            new_ref = Sdf.Reference(
+                assetPath=new_ap,
+                primPath=getattr(ref, "primPath", Sdf.Path.emptyPath),
+                layerOffset=getattr(ref, "layerOffset", None),
+                customData=getattr(ref, "customData", None),
+            )
+            new_items.append(new_ref)
+            changed += 1
+            changed_pairs.append((resolved, new_abs))
+        else:
+            new_items.append(ref)
+
+    setattr(new_refs, bucket, new_items)
+    return new_refs, changed, changed_pairs
+
+
+def _rewrite_payload_listop_with_mapping(
+    payloads,
+    base_dir: str,
+    mapping_by_old_abs: Dict[str, str],
+) -> Tuple[Any, int, List[Tuple[str, str]]]:
+    if not payloads:
+        return payloads, 0, []
+
+    def _iter_items():
+        try:
+            return list(payloads.GetAddedOrExplicitItems())
+        except Exception:
+            return []
+
+    items = _iter_items()
+    if not items:
+        return payloads, 0, []
+
+    if getattr(payloads, "explicitItems", None):
+        bucket = "explicitItems"
+    elif getattr(payloads, "prependedItems", None):
+        bucket = "prependedItems"
+    elif getattr(payloads, "addedItems", None):
+        bucket = "addedItems"
+    else:
+        bucket = "explicitItems"
+
+    changed = 0
+    changed_pairs: List[Tuple[str, str]] = []
+    new_pls = Sdf.PayloadListOp()
+    new_items: List[Sdf.Payload] = []
+
+    for pl in items:
+        ap = getattr(pl, "assetPath", "") or ""
+        resolved = _resolve_ref_asset_path(base_dir, ap)
+        new_abs = mapping_by_old_abs.get(resolved)
+        if new_abs:
+            new_ap = _format_new_asset_path(base_dir, ap, new_abs)
+            new_pl = Sdf.Payload(
+                assetPath=new_ap,
+                primPath=getattr(pl, "primPath", Sdf.Path.emptyPath),
+                layerOffset=getattr(pl, "layerOffset", None),
+            )
+            new_items.append(new_pl)
+            changed += 1
+            changed_pairs.append((resolved, new_abs))
+        else:
+            new_items.append(pl)
+
+    setattr(new_pls, bucket, new_items)
+    return new_pls, changed, changed_pairs
+
+
 def rewrite_layout(
     *,
     layout_usd: str,
@@ -336,15 +448,21 @@ def rewrite_layout(
 
     layout_usd = _norm_abs(layout_usd)
 
+    started_at = time.time()
+
     # Copy-on-write unless writing in-place.
+    # If dry-run, do NOT copy/write; just report the intended output path.
+    planned_out_usd: Optional[str] = None
     target_usd = layout_usd
     if out_usd:
         out_usd = _norm_abs(out_usd)
-        os.makedirs(os.path.dirname(out_usd), exist_ok=True)
-        # copy file only (layers referenced by relative paths are untouched)
-        with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
-            wf.write(rf.read())
-        target_usd = out_usd
+        planned_out_usd = out_usd
+        if not dry_run:
+            os.makedirs(os.path.dirname(out_usd), exist_ok=True)
+            # copy file only (layers referenced by relative paths are untouched)
+            with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
+                wf.write(rf.read())
+            target_usd = out_usd
 
     # Resolve relative reference paths from the directory of the file we are
     # actually opening/modifying.
@@ -354,13 +472,15 @@ def rewrite_layout(
     if stage is None:
         raise RuntimeError(f"Failed to open stage: {target_usd}")
 
-    # Precompute internal matrices for any involved assets.
-    unique_assets: Dict[str, Gf.Matrix4d] = {}
-    for mp in mapping_pairs:
-        if mp.old_abs not in unique_assets:
-            unique_assets[mp.old_abs] = _get_asset_internal_matrix(mp.old_abs)
-        if mp.canonical_abs not in unique_assets:
-            unique_assets[mp.canonical_abs] = _get_asset_internal_matrix(mp.canonical_abs)
+    # Lazily compute internal matrices only for assets involved in actual changes.
+    asset_internal_cache: Dict[str, Gf.Matrix4d] = {}
+
+    def _get_internal_cached(asset_abs: str) -> Gf.Matrix4d:
+        m = asset_internal_cache.get(asset_abs)
+        if m is None:
+            m = _get_asset_internal_matrix(asset_abs)
+            asset_internal_cache[asset_abs] = m
+        return m
 
     xform_cache = UsdGeom.XformCache(Usd.TimeCode.Default())
 
@@ -385,27 +505,30 @@ def rewrite_layout(
         if prim.HasAuthoredReferences():
             refs = prim.GetMetadata("references")
             if refs:
-                for old_abs, new_abs in mapping_by_old.items():
-                    new_refs, n = _rewrite_reference_listop(refs, base_dir, old_abs, new_abs)
-                    if n:
-                        prim.SetMetadata("references", new_refs)
-                        refs_changed += n
-                        rewritten_prims.add(prim_path_str)
+                new_refs, n, changed_pairs = _rewrite_reference_listop_with_mapping(refs, base_dir, mapping_by_old)
+                if n:
+                    prim.SetMetadata("references", new_refs)
+                    refs_changed += n
+                    rewritten_prims.add(prim_path_str)
+                    for old_abs, new_abs in changed_pairs:
                         changes.append(
                             {
                                 "prim": prim_path_str,
                                 "kind": "references",
                                 "old_abs": old_abs,
                                 "new_abs": new_abs,
-                                "count": n,
+                                "count": 1,
                             }
                         )
 
-                        if apply_compensation:
-                            old_internal = unique_assets[old_abs]
-                            canonical_internal = unique_assets[new_abs]
+                    if apply_compensation:
+                        uniq = sorted(set(changed_pairs))
+                        if len(uniq) == 1:
+                            old_abs, new_abs = uniq[0]
                             # world-based compensation to avoid parent/xformStack quirks
                             try:
+                                old_internal = _get_internal_cached(old_abs)
+                                canonical_internal = _get_internal_cached(new_abs)
                                 old_world = xform_cache.GetLocalToWorldTransform(prim)
                                 parent = prim.GetParent()
                                 parent_world = (
@@ -435,29 +558,34 @@ def rewrite_layout(
                                         "error": str(e),
                                     }
                                 )
-
-                        # Update refs variable so multiple old_abs won't re-run on stale object
-                        refs = prim.GetMetadata("references")
+                        else:
+                            # Safety: a prim with multiple different reference rewrites cannot be unambiguously compensated.
+                            changes.append(
+                                {
+                                    "prim": prim_path_str,
+                                    "kind": "xform_compensation_skipped_multi_ref",
+                                    "changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq],
+                                }
+                            )
 
         # 2) Payloads
         if prim.HasAuthoredPayloads():
             pls = prim.GetMetadata("payloads")
             if pls:
-                for old_abs, new_abs in mapping_by_old.items():
-                    new_pls, n = _rewrite_payload_listop(pls, base_dir, old_abs, new_abs)
-                    if n:
-                        prim.SetMetadata("payloads", new_pls)
-                        payloads_changed += n
+                new_pls, n, changed_pairs = _rewrite_payload_listop_with_mapping(pls, base_dir, mapping_by_old)
+                if n:
+                    prim.SetMetadata("payloads", new_pls)
+                    payloads_changed += n
+                    for old_abs, new_abs in changed_pairs:
                         changes.append(
                             {
                                 "prim": prim_path_str,
                                 "kind": "payloads",
                                 "old_abs": old_abs,
                                 "new_abs": new_abs,
-                                "count": n,
+                                "count": 1,
                             }
                         )
-                        pls = prim.GetMetadata("payloads")
 
         # 3) Asset-valued attributes (fallback)
         for attr in prim.GetAttributes():
@@ -523,11 +651,13 @@ def rewrite_layout(
 
     summary: Dict[str, Any] = {
         "layout_in": layout_usd,
-        "layout_out": target_usd,
+        "layout_out": planned_out_usd or target_usd,
         "subset_root": subset_root,
         "dry_run": bool(dry_run),
         "apply_compensation": bool(apply_compensation),
         "set_instanceable": bool(set_instanceable),
+        "elapsed_sec": max(0.0, time.time() - started_at),
+        "asset_internal_matrices_computed": len(asset_internal_cache),
         "counts": {
             "refs_changed": refs_changed,
             "payloads_changed": payloads_changed,
