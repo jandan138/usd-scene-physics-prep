@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-02-09T05:15:03.210160+00:00",
+  "validate_report": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test1_category_merge_underscore_v3_validate_after_clear_missing_door_refs.json",
+  "home_materials_root": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/Materials",
+  "apply": true,
+  "missing_entries": 47,
+  "unique_missing_targets": 13,
+  "unique_missing_jpg": 5,
+  "unique_missing_mdl": 8,
+  "copied": [
+    {
+      "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/1c0/224/4efe3c3ce4f3f2c6857dff5b4fb8f88d694762f.jpg",
+      "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/Materials/textures/1c0/224/4efe3c3ce4f3f2c6857dff5b4fb8f88d694762f.jpg"
+    },
+    {
+      "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/467/4fc/216362e4afa8b0b739586a6d76150b275118426.jpg",
+      "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/Materials/textures/467/4fc/216362e4afa8b0b739586a6d76150b275118426.jpg"
+    },
+    {
+      "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/704/609/d0b9ba417d09baab851ce1a5a5c1a152eba2f78.jpg",
+      "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/Materials/textures/704/609/d0b9ba417d09baab851ce1a5a5c1a152eba2f78.jpg"
+    },
+    {
+      "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/bd8/8a5/0eef4d60d0831d83575a6762161b4f5650494eb.jpg",
+      "src": "/cpfs/shared/simulation/zzh-grscenes/scenes/GRScenes-100/home_scenes/Materials/textures/bd8/8a5/0eef4d60d0831d83575a6762161b4f5650494eb.jpg"
+    }
+  ],
+  "placeholders": [
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/eyes03A.jpg",
+      "kind": "jpg"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Glass/Tinted_Glass_R50.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Glass/Tinted_Glass_R75.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Wood/Ash_Planks.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Graphical_White_Jacquard_FL_3075963.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Concrete/Mortar.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Glass/Glass_Glazing_Spandrel.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+      "kind": "mdl"
+    },
+    {
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+      "kind": "mdl"
+    }
+  ],
+  "skipped_existing": [],
+  "failed": []
+}

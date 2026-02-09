@@ -1,0 +1,128 @@
+{
+  "generated_at": "2026-02-09T05:15:20.481462+00:00",
+  "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1",
+  "category_merges": {
+    "bathtub": "bath_tub",
+    "bookshelf": "book_shelf",
+    "chestofdrawers": "chest_of_drawers",
+    "coffeemaker": "coffee_maker",
+    "dishwasher": "dish_washer",
+    "electriccooker": "electric_cooker",
+    "nightstand": "night_stand",
+    "shoppingtrolley": "shopping_trolley",
+    "shoecabinet": "shoe_cabinet",
+    "sideboardcabinet": "sideboard_cabinet",
+    "sofachair": "sofa_chair",
+    "teatable": "tea_table",
+    "trashcan": "trash_can",
+    "tvstand": "tv_stand",
+    "washingmachine": "washing_machine",
+    "Musical_instrument": "musical_instrument"
+  },
+  "plans": [
+    {
+      "old": "bathtub",
+      "new": "bath_tub",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "bookshelf",
+      "new": "book_shelf",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "chestofdrawers",
+      "new": "chest_of_drawers",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "coffeemaker",
+      "new": "coffee_maker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "dishwasher",
+      "new": "dish_washer",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "electriccooker",
+      "new": "electric_cooker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "nightstand",
+      "new": "night_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "shoppingtrolley",
+      "new": "shopping_trolley",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "shoecabinet",
+      "new": "shoe_cabinet",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "sideboardcabinet",
+      "new": "sideboard_cabinet",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "sofachair",
+      "new": "sofa_chair",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "teatable",
+      "new": "tea_table",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "trashcan",
+      "new": "trash_can",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "tvstand",
+      "new": "tv_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "washingmachine",
+      "new": "washing_machine",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "Musical_instrument",
+      "new": "musical_instrument",
+      "move_count": 0,
+      "uid_collisions": []
+    }
+  ],
+  "uid_collisions_total": 0,
+  "validate": {
+    "scenes_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100",
+    "layout_usd_count": 99,
+    "checked": 99,
+    "missing_count": 0,
+    "missing": []
+  }
+}
