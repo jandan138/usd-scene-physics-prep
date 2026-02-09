@@ -1,0 +1,196 @@
+{
+  "generated_at": "2026-02-06T08:32:54.647837+00:00",
+  "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1",
+  "category_merges": {
+    "coffeemaker": "coffee_maker",
+    "shoecabinet": "shoe_cabinet",
+    "sofachair": "sofa_chair",
+    "tvstand": "tv_stand"
+  },
+  "plans": [
+    {
+      "old": "coffeemaker",
+      "new": "coffee_maker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "shoecabinet",
+      "new": "shoe_cabinet",
+      "move_count": 6,
+      "uid_collisions": []
+    },
+    {
+      "old": "sofachair",
+      "new": "sofa_chair",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "tvstand",
+      "new": "tv_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    }
+  ],
+  "uid_collisions_total": 0,
+  "move_preview": {
+    "moved_count": 6,
+    "moved": [
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/225a251da7f2cd0efa07a2fbddc3c7d8",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/225a251da7f2cd0efa07a2fbddc3c7d8"
+      },
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/23be66adbf270b72167eaca29756defd",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/23be66adbf270b72167eaca29756defd"
+      },
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/384de059508faf48236326f0fa2f03f7",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/384de059508faf48236326f0fa2f03f7"
+      },
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/3dfc139a593edf614f0b8ea26532dd9a",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/3dfc139a593edf614f0b8ea26532dd9a"
+      },
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/42b7aa3bc4f99022603f6c942700d00b",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/42b7aa3bc4f99022603f6c942700d00b"
+      },
+      {
+        "src": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoecabinet/942768bea270c44bc9fa77c9f478bf8a",
+        "dst": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets/shoe_cabinet/942768bea270c44bc9fa77c9f478bf8a"
+      }
+    ],
+    "per_asset_annotation_updates": 0
+  },
+  "usd_rewrite_preview_count": 18,
+  "usd_rewrite_preview": [
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADI8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADI8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADI8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADQ8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADQ8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADQ8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADY8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEA8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEA8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEA8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEI8_usd/layout.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEI8_usd/start_result_interaction.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    },
+    {
+      "usd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAAEI8_usd/start_result_navigation.usd",
+      "refs_changed": 1,
+      "payloads_changed": 0,
+      "asset_attrs_changed": 0,
+      "str_attrs_changed": 0
+    }
+  ]
+}

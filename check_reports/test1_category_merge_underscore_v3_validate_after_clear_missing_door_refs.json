@@ -1,0 +1,458 @@
+{
+  "generated_at": "2026-02-06T12:06:51.104671+00:00",
+  "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1",
+  "category_merges": {
+    "bathtub": "bath_tub",
+    "bookshelf": "book_shelf",
+    "chestofdrawers": "chest_of_drawers",
+    "coffeemaker": "coffee_maker",
+    "dishwasher": "dish_washer",
+    "electriccooker": "electric_cooker",
+    "nightstand": "night_stand",
+    "shoppingtrolley": "shopping_trolley",
+    "shoecabinet": "shoe_cabinet",
+    "sideboardcabinet": "sideboard_cabinet",
+    "sofachair": "sofa_chair",
+    "teatable": "tea_table",
+    "trashcan": "trash_can",
+    "tvstand": "tv_stand",
+    "washingmachine": "washing_machine",
+    "Musical_instrument": "musical_instrument"
+  },
+  "plans": [
+    {
+      "old": "bathtub",
+      "new": "bath_tub",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "bookshelf",
+      "new": "book_shelf",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "chestofdrawers",
+      "new": "chest_of_drawers",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "coffeemaker",
+      "new": "coffee_maker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "dishwasher",
+      "new": "dish_washer",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "electriccooker",
+      "new": "electric_cooker",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "nightstand",
+      "new": "night_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "shoppingtrolley",
+      "new": "shopping_trolley",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "shoecabinet",
+      "new": "shoe_cabinet",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "sideboardcabinet",
+      "new": "sideboard_cabinet",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "sofachair",
+      "new": "sofa_chair",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "teatable",
+      "new": "tea_table",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "trashcan",
+      "new": "trash_can",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "tvstand",
+      "new": "tv_stand",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "washingmachine",
+      "new": "washing_machine",
+      "move_count": 0,
+      "uid_collisions": []
+    },
+    {
+      "old": "Musical_instrument",
+      "new": "musical_instrument",
+      "move_count": 0,
+      "uid_collisions": []
+    }
+  ],
+  "uid_collisions_total": 0,
+  "validate": {
+    "scenes_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100",
+    "layout_usd_count": 99,
+    "checked": 99,
+    "missing_count": 47,
+    "missing": [
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV5M25QKTKJZ2AABAAAAAAY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/cup/model_bda17dcc9b156ee54c9d4e0ed7e415c7_0/Looks/Tinted_Glass_R75/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Glass/Tinted_Glass_R75.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Glass/Tinted_Glass_R75.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_686affb28b84cdac46049372755ca6bc_0/Looks/ground_leaves_green_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_686affb28b84cdac46049372755ca6bc_0/Looks/ground_leaves_green/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_686affb28b84cdac46049372755ca6bc_0/Looks/ground_leaves_green_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_9670b2d47a87d1855a54f6b463881e04_0/Looks/ground_leaves_green_04/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_9670b2d47a87d1855a54f6b463881e04_0/Looks/ground_leaves_green_05/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV7J6NIKTKJZ2AABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_9670b2d47a87d1855a54f6b463881e04_0/Looks/ground_leaves_green_03/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MVJWVGYKTLDAYAABAAAAAAQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_5879b3b4e959d4045d2286976443cc9b_0/Looks/ground_leaves_green_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MVJWVGYKTLDAYAABAAAAAAQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_38c1342153365b46e6aa63b383f5efd2_0/Looks/Tinted_Glass_R50/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Glass/Tinted_Glass_R50.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Glass/Tinted_Glass_R50.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MVJWVGYKTLDAYAABAAAAAAQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_5c70a2eff49be4d6088921e3bc085df9_0/Looks/Mortar_White_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Concrete/Mortar.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Concrete/Mortar.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MVSGSAIKTKJ66AABAAAAAEA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_7476803400874eb6b1ef597eb8493b6d_0/Looks/ground_leaves_green/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MVSYCXYKTKJ66AABAAAAACY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/bottle/model_14b407edb428c013877b16d11f86e9b5_0/Looks/Tinted_Glass_R50_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Glass/Tinted_Glass_R50.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Glass/Tinted_Glass_R50.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/person/model_4c4f794e5b4027e9b2f57ad60ceb7d24_0/Looks/_51168bb7a627f0001ee0b9e/Num5dd77cea7d6a630001bffad3.inputs:BaseColor_Tex",
+        "path": "../../../Material/mdl/textures/eyes03A.jpg",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/eyes03A.jpg"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_08/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_10/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_05/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_04/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_03/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_06/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_07/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_168de0b4d315a064c76f16fcc621c064_0/Looks/ground_leaves_green_09/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAACQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_8fe58912daf650e7a05014f4f6413a72_0/Looks/Glass_Glazing_Spandrel_Dark_Blue_03/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Glass/Glass_Glazing_Spandrel.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Glass/Glass_Glazing_Spandrel.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAACQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_f72a1a1ef883598b7688881f493710b6_0/Looks/ground_leaves_green_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAACQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_f72a1a1ef883598b7688881f493710b6_0/Looks/ground_leaves_green/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAACQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_f72a1a1ef883598b7688881f493710b6_0/Looks/ground_leaves_green_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_06/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_03/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_07/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_04/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_05/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_19dbc07c651b5a20f1e76c4fc13e1131_0/Looks/Retroreflective_Material_Yellow_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Other/Retroreflective/Retroreflective_Material.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/other/model_5802b6048ea1aec241b59ec0d4b9e0c5_0/Looks/Graphical_White_Jacquard_FL_3075963/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Graphical_White_Jacquard_FL_3075963.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Graphical_White_Jacquard_FL_3075963.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_3b1db48bf2e4c5bce3d96b6e0983911e_0/Looks/Ash_Planks_02/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Wood/Ash_Planks.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Wood/Ash_Planks.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_3b1db48bf2e4c5bce3d96b6e0983911e_0/Looks/ground_leaves_green_03/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_4d087bb48c869eab2c85ed6514875326_0/Looks/ground_leaves_green/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_4d087bb48c869eab2c85ed6514875326_0/Looks/Ash_Planks_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Wood/Ash_Planks.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Wood/Ash_Planks.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_4d087bb48c869eab2c85ed6514875326_0/Looks/ground_leaves_green_01/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/vMaterials_2/Ground/Ground_Leaves.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWHLEPQKTIFZIAABAAAAAAA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Furnitures/plant/model_4d087bb48c869eab2c85ed6514875326_0/Looks/Ash_Planks/Shader.info:mdl:sourceAsset",
+        "path": "../../../Material/mdl/Base/Wood/Ash_Planks.mdl",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/Base/Wood/Ash_Planks.mdl"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAABQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Animation/sideboardcabinet/model_063f1517ca9e2546e3ad8f2f19876fe6_0/Instance/textures.texture_1",
+        "path": "../../../Material/mdl/textures/1c0/224/4efe3c3ce4f3f2c6857dff5b4fb8f88d694762f.jpg",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/1c0/224/4efe3c3ce4f3f2c6857dff5b4fb8f88d694762f.jpg"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABQ8_usd/layout.usd",
+        "prim": "/Root/Meshes/Animation/dishwasher/model_79fd15b7362e813617fbd320dd92d3ce_0/Instance/textures.texture_0",
+        "path": "../../../Material/mdl/textures/467/4fc/216362e4afa8b0b739586a6d76150b275118426.jpg",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/467/4fc/216362e4afa8b0b739586a6d76150b275118426.jpg"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAABY8_usd/layout.usd",
+        "prim": "/Root/Meshes/Animation/oven/model_3fe89bf7a6e64aeaf8b573f7ee59d489_0/Instance/textures.texture_2",
+        "path": "../../../Material/mdl/textures/704/609/d0b9ba417d09baab851ce1a5a5c1a152eba2f78.jpg",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/704/609/d0b9ba417d09baab851ce1a5a5c1a152eba2f78.jpg"
+      },
+      {
+        "kind": "attr",
+        "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAACA8_usd/layout.usd",
+        "prim": "/Root/Meshes/Animation/oven/model_a6bd1f04a24fd158fa8e3f2a54eb706f_0/Instance/textures.texture_2",
+        "path": "../../../Material/mdl/textures/bd8/8a5/0eef4d60d0831d83575a6762161b4f5650494eb.jpg",
+        "resolved": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/Material/mdl/textures/bd8/8a5/0eef4d60d0831d83575a6762161b4f5650494eb.jpg"
+      }
+    ]
+  }
+}

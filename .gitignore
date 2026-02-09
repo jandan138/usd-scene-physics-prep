@@ -5,6 +5,10 @@ export_specs_commercial/
 sandbox/
 .trae/
 
+# Local scratch / backups
+_soft_delete/
+error_info.log
+
 # Python bytecode / cache
 __pycache__/
 *.py[cod]
@@ -18,12 +22,15 @@ env/
 GRScenes-test0/
 GRScenes-test1/
 GRScenes-test1_bak/
+GRScenes-test1_bak_20260131_104203/
 
 # Local run artifacts
 logs/
 check_reports/mdl_bak_*/
+check_reports/c1_bulk/
 check_reports/*_report_test*.json
 check_reports/*_dryrun*.json
+check_reports/*glb_report*.json
 check_reports/subset_*_glb_report.json
 check_reports/scene_subset_*_glb_report.json
 check_reports/fix_mdl_textures_case_report_test1.json
@@ -34,6 +41,15 @@ check_reports/*asset_mesh_dedup*.log
 check_reports/*asset_mesh_dedup*.pid
 scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
+
+# Derived summaries (keep the raw counts / apply+validate reports instead)
+check_reports/GRScenes_assets_category_cnt_stats.*
+
+# Intermediate suggestion reports (keep v3 only)
+check_reports/test1_grscenes_assets_category_underscore_suggestions.json
+check_reports/test1_grscenes_assets_category_underscore_suggestions.md
+check_reports/test1_grscenes_assets_category_underscore_suggestions_v2.json
+check_reports/test1_grscenes_assets_category_underscore_suggestions_v2.md
 
 # Keep specific check_reports under version control (auditable maintenance outputs)
 !check_reports/test1_category_merge_*.json

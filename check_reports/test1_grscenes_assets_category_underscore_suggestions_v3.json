@@ -1,0 +1,183 @@
+{
+  "root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes_assets",
+  "counts": {
+    "total_categories": 79,
+    "has_underscore": 6,
+    "no_underscore": 73,
+    "suggestions_count": 11,
+    "manual_review_count": 62,
+    "style_flags_count": 1
+  },
+  "suggestions": [
+    {
+      "category": "sideboardcabinet",
+      "suggestion": "sideboard_cabinet",
+      "tokens": [
+        "sideboard",
+        "cabinet"
+      ],
+      "score": 47.352030263919616
+    },
+    {
+      "category": "nightstand",
+      "suggestion": "night_stand",
+      "tokens": [
+        "night",
+        "stand"
+      ],
+      "score": 30.96573590279973
+    },
+    {
+      "category": "shoppingtrolley",
+      "suggestion": "shopping_trolley",
+      "tokens": [
+        "shopping",
+        "trolley"
+      ],
+      "score": 30.0
+    },
+    {
+      "category": "chestofdrawers",
+      "suggestion": "chest_of_drawers",
+      "tokens": [
+        "chest",
+        "of",
+        "drawers"
+      ],
+      "score": 28.0
+    },
+    {
+      "category": "electriccooker",
+      "suggestion": "electric_cooker",
+      "tokens": [
+        "electric",
+        "cooker"
+      ],
+      "score": 28.0
+    },
+    {
+      "category": "washingmachine",
+      "suggestion": "washing_machine",
+      "tokens": [
+        "washing",
+        "machine"
+      ],
+      "score": 28.0
+    },
+    {
+      "category": "dishwasher",
+      "suggestion": "dish_washer",
+      "tokens": [
+        "dish",
+        "washer"
+      ],
+      "score": 20.0
+    },
+    {
+      "category": "bookshelf",
+      "suggestion": "book_shelf",
+      "tokens": [
+        "book",
+        "shelf"
+      ],
+      "score": 18.0
+    },
+    {
+      "category": "teatable",
+      "suggestion": "tea_table",
+      "tokens": [
+        "tea",
+        "table"
+      ],
+      "score": 16.0
+    },
+    {
+      "category": "trashcan",
+      "suggestion": "trash_can",
+      "tokens": [
+        "trash",
+        "can"
+      ],
+      "score": 16.0
+    },
+    {
+      "category": "bathtub",
+      "suggestion": "bath_tub",
+      "tokens": [
+        "bath",
+        "tub"
+      ],
+      "score": 14.0
+    }
+  ],
+  "style_flags": [
+    {
+      "category": "Musical_instrument",
+      "suggestion": "musical_instrument"
+    }
+  ],
+  "manual_review": [
+    "backpack",
+    "basket",
+    "bed",
+    "bicycle",
+    "blanket",
+    "book",
+    "bottle",
+    "bowl",
+    "box",
+    "cabinet",
+    "cart",
+    "ceiling",
+    "chair",
+    "clock",
+    "clothes",
+    "column",
+    "couch",
+    "counter",
+    "cup",
+    "curtain",
+    "decoration",
+    "desk",
+    "door",
+    "fan",
+    "faucet",
+    "ground",
+    "hearth",
+    "keyboard",
+    "lamp",
+    "laptop",
+    "light",
+    "microwave",
+    "mirror",
+    "monitor",
+    "mouse",
+    "other",
+    "oven",
+    "pan",
+    "pen",
+    "person",
+    "piano",
+    "picture",
+    "pillow",
+    "plant",
+    "plate",
+    "pot",
+    "refrigerator",
+    "shelf",
+    "shoe",
+    "sink",
+    "speaker",
+    "stool",
+    "table",
+    "telephone",
+    "threshold",
+    "toilet",
+    "towel",
+    "toy",
+    "tray",
+    "tv",
+    "wall",
+    "window"
+  ]
+}

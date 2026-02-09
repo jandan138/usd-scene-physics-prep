@@ -3,9 +3,21 @@
 
 Scope (per user request)
 - Only merge these aliases (underscore style canonical):
-  - coffeemaker  -> coffee_maker
-  - sofachair    -> sofa_chair
-  - tvstand      -> tv_stand
+    - bathtub           -> bath_tub
+    - bookshelf         -> book_shelf
+    - chestofdrawers    -> chest_of_drawers
+    - coffeemaker       -> coffee_maker
+    - dishwasher        -> dish_washer
+    - electriccooker    -> electric_cooker
+    - nightstand        -> night_stand
+    - shoecabinet       -> shoe_cabinet
+    - shoppingtrolley   -> shopping_trolley
+    - sideboardcabinet  -> sideboard_cabinet
+    - sofachair         -> sofa_chair
+    - teatable          -> tea_table
+    - trashcan          -> trash_can
+    - tvstand           -> tv_stand
+    - Musical_instrument -> musical_instrument
 - Do NOT merge door_* variants.
 
 What this does
@@ -38,9 +50,22 @@ from pxr import Sdf, Usd
 
 
 CATEGORY_MERGES: Dict[str, str] = {
+    "bathtub": "bath_tub",
+    "bookshelf": "book_shelf",
+    "chestofdrawers": "chest_of_drawers",
     "coffeemaker": "coffee_maker",
+    "dishwasher": "dish_washer",
+    "electriccooker": "electric_cooker",
+    "nightstand": "night_stand",
+    "shoppingtrolley": "shopping_trolley",
+    "shoecabinet": "shoe_cabinet",
+    "sideboardcabinet": "sideboard_cabinet",
     "sofachair": "sofa_chair",
+    "teatable": "tea_table",
+    "trashcan": "trash_can",
     "tvstand": "tv_stand",
+    "washingmachine": "washing_machine",
+    "Musical_instrument": "musical_instrument",
 }
 
 _NON_FILE_SCHEMES = (
@@ -448,6 +473,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--validate", action="store_true")
     ap.add_argument("--report", default=None)
     ap.add_argument("--max-usd-files", type=int, default=None, help="Limit USD rewrite scan for quick testing")
+    ap.add_argument(
+        "--progress-every",
+        type=int,
+        default=500,
+        help="Print progress every N USD files while scanning (default=500; set 0 to disable)",
+    )
     ap.add_argument("--max-scenes", type=int, default=None, help="Limit scene validation for quick testing")
     args = ap.parse_args(argv)
 
@@ -496,8 +527,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.max_usd_files is not None:
             usd_targets = usd_targets[: args.max_usd_files]
 
+        print("usd_scan_targets:", len(usd_targets), flush=True)
+
         changes = []
-        for p in usd_targets:
+        for i, p in enumerate(usd_targets, start=1):
+            if args.progress_every and args.progress_every > 0 and (i == 1 or i % args.progress_every == 0):
+                print(f"usd_scan_progress: {i}/{len(usd_targets)}", flush=True)
             stats = rewrite_usd_paths_in_stage(p, save=False)
             if any(stats.values()):
                 changes.append({"usd": p, **stats})
@@ -515,8 +550,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.max_usd_files is not None:
             usd_targets = usd_targets[: args.max_usd_files]
 
+        print("usd_scan_targets:", len(usd_targets), flush=True)
+
         rewritten = []
-        for p in usd_targets:
+        for i, p in enumerate(usd_targets, start=1):
+            if args.progress_every and args.progress_every > 0 and (i == 1 or i % args.progress_every == 0):
+                print(f"usd_scan_progress: {i}/{len(usd_targets)}", flush=True)
             stats = rewrite_usd_paths_in_stage(p, save=True)
             if any(stats.values()):
                 rewritten.append({"usd": p, **stats})

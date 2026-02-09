@@ -1,0 +1,499 @@
+{
+  "generated_at": "2026-02-06T12:06:20.390842+00:00",
+  "validate_report": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test1_category_merge_underscore_v3_validate.json",
+  "apply": true,
+  "missing_total": 78,
+  "door_reference_missing_total": 31,
+  "stages_planned": 25,
+  "stages_processed": 25,
+  "touched_stages": 25,
+  "prims_touched": 31,
+  "references_removed_total": 31,
+  "per_stage": [
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV5M25QKTKJZ2AABAAAAAAA8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_37C6947E_D216_4A5A_BA26_8A5058390159/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_37C6947E_D216_4A5A_BA26_8A5058390159/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV5M25QKTKJZ2AABAAAAAAY8_usd/layout.usd",
+      "removed": 2,
+      "prims_touched": 2,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_E5FB7A0D_3DC1_4768_9275_040EA0FB93E6/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_E5FB7A0D_3DC1_4768_9275_040EA0FB93E6/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_EA253481_2D3A_4169_A10B_A1E429C394EA/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_EA253481_2D3A_4169_A10B_A1E429C394EA/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MV5M25QKTKJZ2AABAAAAAEI8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_5B2F97C6_47A3_4EB4_B62E_1AF4671D2FF5/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_5B2F97C6_47A3_4EB4_B62E_1AF4671D2FF5/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/commercial/MWF4WLIKTIFZIAABAAAAABY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_76D1E7ED_803D_4349_B900_847EFA95BCAF/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_76D1E7ED_803D_4349_B900_847EFA95BCAF/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAAQ8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_455E8FD5_990C_432F_879E_7C3D3DBE8357/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_455E8FD5_990C_432F_879E_7C3D3DBE8357/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABI8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_961C9DD2_802F_48B1_AE59_A9271C41AC2E/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_961C9DD2_802F_48B1_AE59_A9271C41AC2E/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_03709DDE_5114_47C3_B930_CC023B19FEEE/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_03709DDE_5114_47C3_B930_CC023B19FEEE/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAACA8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_AD8F1E4B_561E_4952_A9E0_0D370066C5E9/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_AD8F1E4B_561E_4952_A9E0_0D370066C5E9/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAADY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_C51F6348_77CF_454D_8660_7562FDFB9A73/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_C51F6348_77CF_454D_8660_7562FDFB9A73/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEA8_usd/layout.usd",
+      "removed": 3,
+      "prims_touched": 3,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_07B00D01_236F_4C79_9842_CB2ADF7BFA61/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_07B00D01_236F_4C79_9842_CB2ADF7BFA61/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_8F66B469_3510_405A_A950_0A9E68C7F975/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_8F66B469_3510_405A_A950_0A9E68C7F975/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_F16007CC_39D5_4385_B195_633F7FF6762C/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_F16007CC_39D5_4385_B195_633F7FF6762C/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAAEI8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_246C02B0_9CE0_4DDB_9C91_CBE70985B244/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_246C02B0_9CE0_4DDB_9C91_CBE70985B244/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHL5YKTKJ5EAABAAAAAAQ8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_28E748F6_EB83_4CB1_B2F4_0B30C3C07DD7/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_28E748F6_EB83_4CB1_B2F4_0B30C3C07DD7/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAA8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_8CC63646_CD14_4B4B_97D9_90211E8E9B92/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_8CC63646_CD14_4B4B_97D9_90211E8E9B92/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAI8_usd/layout.usd",
+      "removed": 3,
+      "prims_touched": 3,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_B06C8F5C_2E6F_4310_93D2_B0BE1B2C9F34/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_B06C8F5C_2E6F_4310_93D2_B0BE1B2C9F34/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_D01D7A53_70AF_4BDE_82D2_6902317E8B6F/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_D01D7A53_70AF_4BDE_82D2_6902317E8B6F/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_E974A83A_3A5E_4658_9B26_3A3DEC5F9A93/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_E974A83A_3A5E_4658_9B26_3A3DEC5F9A93/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAAY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_CD36AE9A_59D7_4B1E_BF16_870855537FD6/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_CD36AE9A_59D7_4B1E_BF16_870855537FD6/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAABI8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_7B507244_4BD7_47EE_8BAA_E920BA972B59/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_7B507244_4BD7_47EE_8BAA_E920BA972B59/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAABY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_9FF38250_3501_47B2_ACD3_90C2444CC5C3/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_9FF38250_3501_47B2_ACD3_90C2444CC5C3/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACA8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_3E470445_53DC_4A4E_9DF6_3CE15C6816EF/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_3E470445_53DC_4A4E_9DF6_3CE15C6816EF/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAACY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_33956DBE_ADD6_417E_A559_F164C04C8CF8/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_33956DBE_ADD6_417E_A559_F164C04C8CF8/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAADA8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_D49A7CCB_F248_44CD_802E_5602FCD67C9E/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_D49A7CCB_F248_44CD_802E_5602FCD67C9E/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAADI8_usd/layout.usd",
+      "removed": 2,
+      "prims_touched": 2,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_A5B26AA7_445D_4AE8_B035_F9E25945C48B/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_A5B26AA7_445D_4AE8_B035_F9E25945C48B/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        },
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_FFD45E79_3F31_41F8_8241_26849288C0C3/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_FFD45E79_3F31_41F8_8241_26849288C0C3/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAADQ8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_60B390DA_9E77_4C51_B319_82B1CF5DA21D/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_60B390DA_9E77_4C51_B319_82B1CF5DA21D/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAADY8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_2B3656E8_05EA_4885_9289_E02CCDEF2083/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_2B3656E8_05EA_4885_9289_E02CCDEF2083/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MVUHLWYKTKJ5EAABAAAAAEI8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_38D2F4C3_69C3_4029_8C6F_7345AF68D71C/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_38D2F4C3_69C3_4029_8C6F_7345AF68D71C/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    },
+    {
+      "stage": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test1/GRScenes100/home/MWBGLKQKTKJZ2AABAAAAAAQ8_usd/layout.usd",
+      "removed": 1,
+      "prims_touched": 1,
+      "prim_reports": [
+        {
+          "prim": "/Root/Meshes/BaseAnimation/door_BDD0C251_4442_416E_A6EC_FEA7E3C07E82/model_d41d8cd98f00b204e9800998ecf8427e_0",
+          "type": "Xform",
+          "remove": [
+            "../../../GRScenes_assets/door_BDD0C251_4442_416E_A6EC_FEA7E3C07E82/d41d8cd98f00b204e9800998ecf8427e/usd/d41d8cd98f00b204e9800998ecf8427e.usd"
+          ],
+          "removed": 1,
+          "remaining_refs_after": 0,
+          "note": "cleared_references_metadata"
+        }
+      ]
+    }
+  ]
+}
