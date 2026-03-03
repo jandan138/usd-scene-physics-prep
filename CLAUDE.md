@@ -1,0 +1,177 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Purpose
+
+A USD scene toolset for **asset splitting** and **physics simulation preprocessing**: normalize raw scenes into a reusable model/material library with scene reference structures, then batch-assign collision bodies, rigid bodies, and joints for Omniverse Isaac Sim interaction and navigation simulation.
+
+## Environment
+
+- **Core dependencies**: `usd-core` (pxr), `numpy`, `pandas`
+- **Physics preprocessing** (interaction/navigation): requires Omniverse Isaac Sim (`isaacsim`, `omni.*`)
+- **Doc management**: `pip install pyyaml`
+
+Isaac Sim scripts must be run via the Isaac Sim Python wrapper:
+```bash
+# Auto-detects Isaac Sim install; or set ISAAC_SIM_ROOT=/path/to/isaac_sim-<version>
+./scripts/isaac_python.sh <script.py> [args...]
+```
+
+## Common Commands
+
+**Step 1 – Scene splitting** (standard Python, no Isaac Sim):
+```bash
+python clean_data.py
+# Reads home_scenes/<scene_id>/{start_result_fix.usd|start_result_new.usd}
+# Writes target/ (Materials, models, scenes)
+```
+
+**Step 2 – Interaction physics** (requires Isaac Sim):
+```bash
+# Edit scene_path/dest_scene_path in the script first
+./scripts/isaac_python.sh set_physics/preprocess_for_interaction.py
+# Output: start_result_dynamic.usd
+```
+
+**Step 2 alt – Navigation physics** (requires Isaac Sim):
+```bash
+# Edit paths first
+./scripts/isaac_python.sh set_physics/preprocess_for_navigation.py
+# Output: start_result_navigation.usd
+```
+
+**Step 3 – Export/package**:
+```bash
+./scripts/isaac_python.sh set_physics/get_all_references.py
+./scripts/isaac_python.sh set_physics/export_scene.py
+```
+
+**One-shot SimReady CLI** (Option B – no manual splitting needed):
+```bash
+./scripts/isaac_python.sh -m set_physics.simready --input-usd /path/to/scene.usd
+```
+
+**External /root-structured scenes** (Option C – for SimBench/GRScene datasets):
+```bash
+./scripts/isaac_python.sh scripts/prep_interaction_root_scene.py \
+  --input /path/to/scene.usd \
+  --output /path/to/scene_interaction_dynamic.usd
+```
+
+**Normalized export** (specs_normalizer):
+```bash
+# GRScenes
+python -m specs_normalizer --src-target ./target --dst-root ./export_specs \
+  --asset-name GRScenes_assets --scene-name GRScenes100 --scene-category home --with-annotations
+# MesaTask
+python -m specs_normalizer --src-target ./target --dst-root ./export_mesa_specs \
+  --asset-name MesaTask_assets --scene-name MesaTask --scene-category office_table
+```
+
+**Fix portable texture paths**:
+```bash
+./scripts/isaac_python.sh scripts/collect_textures_to_local_textures.py \
+  --input /abs/path/to/scene.usd \
+  --output /abs/path/to/scene_textures_fixed.usd \
+  --report /abs/path/to/texture_rewrite_report.json
+```
+
+**Documentation maintenance**:
+```bash
+python scripts/doc_manager.py --find-refs simready.py   # find docs referencing a code file
+python scripts/doc_manager.py --validate                 # validate doc metadata
+python scripts/doc_manager.py --gen-index               # regenerate docs/INDEX.md
+```
+
+## Architecture
+
+### Three SimReady Options
+
+| Option | Entry Point | Use Case |
+|--------|-------------|----------|
+| A – Standard Pipeline | `set_physics/preprocess_for_interaction.py` | Batch processing with fine control (split first, then bind physics) |
+| B – One-shot CLI | `set_physics/simready.py` | Quick start; no manual intermediate steps |
+| C – External Adapter | `scripts/prep_interaction_root_scene.py` | Non-standard `/root`-structured datasets (SimBench/GRScene) |
+
+### Core Pipeline (Option A)
+
+1. **Scene splitting** (`clean_data.py` → `set_physics/pxr_utils/data_clean.py:parse_scene`)
+   - Copies root structure, skips `Meshes/Looks/PhysicsMaterial`
+   - Extracts each instance into `instance.usd`, replaces with reference
+   - Stable model fingerprint via MD5 hash of reference chain + transform (`data_clean.py:612-616`)
+   - Creates `target/scenes/<sid>/Materials` and `models` symlinks
+
+2. **Transform normalization** (`data_clean.py:121-149`)
+   - Converts `xformOp:transform` → `translate/orient/scale` for physics API compatibility
+
+3. **Interaction preprocessing** (`set_physics/preprocess_for_interaction.py:335-387`)
+   - Binds rigid body + collision approximation for pickable/articulated objects
+   - Enables joints; sets up collision groups + filtering
+
+4. **Navigation preprocessing** (`set_physics/preprocess_for_navigation.py:198-231,389-425`)
+   - Disables non-primary doors; applies static triangle mesh approximation; writes semantic labels
+
+5. **Export** (`get_all_references.py` + `export_scene.py`)
+   - Scans model/material references → JSON manifest → copies files to destination
+
+### Directory Layout
+
+**Input**:
+```
+home_scenes/<scene_id>/{start_result_fix.usd|start_result_new.usd}
+home_scenes/<scene_id>/Materials/*.mdl + Textures/
+```
+
+**Pipeline output** (`target/`):
+```
+target/
+  Materials/Textures/  *.mdl
+  models/
+    layout|object/
+      articulated|others/
+        <category>/<model_hash>/instance.usd
+  scenes/<scene_id>/
+    Materials -> ../../Materials  (symlink)
+    models    -> ../../models     (symlink)
+    start_result_{new|fix}.usd
+```
+
+**Normalized export** (`export_specs/`):
+```
+export_specs/
+  Material/mdl/{mid}.mdl + textures/
+  GRScenes_assets/<category>/<model_hash>/usd/<model_hash>.usd
+  GRScenes100/home/<scene_id>/layout.usd
+```
+
+### Key Modules
+
+- `set_physics/pxr_utils/data_clean.py` – Core splitting logic (`parse_scene`, `recursive_copy`, `create_instance`, `unique_id`)
+- `set_physics/pxr_utils/usd_physics.py` – Physics API helpers (collider binding, rigid body)
+- `set_physics/pxr_utils/read_info.py` – CSV reading utilities
+- `specs_normalizer/` – Normalized export package: `normalize.py` (orchestrator) → `validators/structure.py`, `exporters/{materials,assets,scenes}.py`
+- `scripts/doc_manager.py` – Doc metadata validation and index generation
+- `set_physics/tools/` – Isaac Sim utilities (thumbnail generation, random model placement)
+- `scripts/` – One-off and batch automation scripts (many `oneoff_*.py` for targeted fixes)
+
+### Physics Collision Approximation Constants
+
+Used across multiple scripts; named constants for Isaac Sim PhysX schemas:
+- `"sdf"` – SDF
+- `"convexHull"` – Convex Hull
+- `"convexDecomposition"` – Convex Decomposition
+- `"meshSimplification"` – Mesh Simplification
+- `"none"` – Triangle Mesh (static)
+
+## Documentation Maintenance
+
+All docs under `docs/` use YAML frontmatter (`title`, `code_reference`, `created_at`, `updated_at`, `maintainer`, `status`). When modifying code, run `python scripts/doc_manager.py --find-refs <file>` to find related docs to update. After modifying docs, run `--validate` and `--gen-index`.
+
+## Important Notes
+
+- **Windows**: symlink creation and `cp` commands may not work; use `shutil` alternatives. See `docs/operations/windows_notes.md`.
+- **Texture portability**: USD files may embed machine-specific `/tmp/<hash>/textures/` paths. Use `collect_textures_to_local_textures.py` to fix before distribution.
+- **Texture symlinks in exports**: `textures -> ../../../Material/mdl/textures` symlinks inside each asset's `usd/` directory are NOT created by `specs_normalizer` — they are created by a separate post-processing script.
+- **`/root` structure**: For external datasets (SimBench/GRScene task10) that use `/root` instead of `/Root/Meshes`, use `scripts/prep_interaction_root_scene.py` (Option C), not the standard pipeline.
+- **MDL copy fix**: If `.mdl` files are missing in the export, they need to be explicitly copied (see commit notes on `test1` MDL copy+placeholder fix).
