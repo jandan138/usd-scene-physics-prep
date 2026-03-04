@@ -84,6 +84,32 @@ python scripts/doc_manager.py --validate                 # validate doc metadata
 python scripts/doc_manager.py --gen-index               # regenerate docs/INDEX.md
 ```
 
+## DLC Remote Job Submission
+
+Scripts in `scripts/dlc/` submit physics preprocessing jobs to Alibaba Cloud PAI-DLC GPU workers using the Isaac Sim 4.5.0 container image; inside the container the `dlc-operator` Claude agent can be used for job monitoring and submission automation.
+
+**Single job**:
+```bash
+bash scripts/dlc/launch_job.sh <name> <chunk_id> <chunk_total> [data_sources] [command_args]
+```
+
+**Batch submission** (one job per chunk):
+```bash
+python scripts/dlc/submit_batch.py --name <name> --total <N> --mode <mode> [--command_args "..."]
+```
+
+**Execution modes** (first arg to `run_task.sh`):
+- `interaction` – interaction physics preprocessing (Isaac Sim)
+- `navigation` – navigation physics preprocessing (Isaac Sim)
+- `simready` – one-shot SimReady CLI (Isaac Sim)
+- `prep_root_scene` – external `/root`-structured scene prep (Isaac Sim)
+- `normalize` – normalized export via `specs_normalizer` (Isaac Sim Python)
+- `clean` – scene splitting via `clean_data.py` (Isaac Sim Python)
+- `custom` – pass any script directly to Isaac Sim Python
+- `batch` – chunk-based dispatch (default; passes extra args to Isaac Sim Python)
+
+**Environment**: uses Isaac Sim 4.5.0 container image; activated via `scripts/isaac_python.sh` (not conda). Override defaults via `DLC_WORKSPACE_ID`, `DLC_RESOURCE_ID`, `DLC_IMAGE`, `DLC_CODE_ROOT`, `DLC_BIN`. The `dlc` binary is gitignored and must be placed at the project root.
+
 ## Architecture
 
 ### Three SimReady Options
@@ -154,6 +180,7 @@ export_specs/
 - `scripts/doc_manager.py` – Doc metadata validation and index generation
 - `set_physics/tools/` – Isaac Sim utilities (thumbnail generation, random model placement)
 - `scripts/` – One-off and batch automation scripts (many `oneoff_*.py` for targeted fixes)
+- `scripts/dlc/` – DLC remote job submission: `launch_job.sh` (single job), `submit_batch.py` (batch), `run_task.sh` (in-container dispatcher)
 
 ### Physics Collision Approximation Constants
 
@@ -167,6 +194,18 @@ Used across multiple scripts; named constants for Isaac Sim PhysX schemas:
 ## Documentation Maintenance
 
 All docs under `docs/` use YAML frontmatter (`title`, `code_reference`, `created_at`, `updated_at`, `maintainer`, `status`). When modifying code, run `python scripts/doc_manager.py --find-refs <file>` to find related docs to update. After modifying docs, run `--validate` and `--gen-index`.
+
+## Agent Team Documentation Rule
+
+**All agents in a team MUST document their work.** This is a mandatory requirement:
+
+1. **What to document**: Research findings, code changes, test commands, test results, decisions made, errors encountered and how they were resolved.
+2. **Where to write**:
+   - Progress/results → `docs/` (with proper YAML frontmatter) or the team's memory files under `.claude/agent-memory/<agent-name>/`
+   - Task-level progress → the project memory at `~/.claude/projects/.../memory/` (update existing task docs or create new ones)
+3. **If the agent has write permission**: Write docs directly. At minimum, create or update a task log in the memory directory summarizing what was done and what remains.
+4. **If the agent does NOT have write permission** (e.g., read-only/explore agents): Send findings to the `docs-writer` agent via `SendMessage`, including all details needed to produce the doc. The `docs-writer` agent will write it.
+5. **Timing**: Document as you go, not just at the end. Each major milestone (research complete, implementation done, tests passed/failed) should be recorded.
 
 ## Important Notes
 

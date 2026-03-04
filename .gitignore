@@ -1,9 +1,15 @@
+# DLC CLI binary (root only, not scripts/dlc/ or docs/dlc/)
+/dlc
+
 export_specs/
 export_specs_no_links/
 export_specs_unified/
 export_specs_commercial/
 sandbox/
 .trae/
+
+# Environment files
+.env
 
 # Local scratch / backups
 _soft_delete/
