@@ -48,6 +48,7 @@ if [ $# -eq 0 ]; then
     echo "  simready        One-shot SimReady CLI (--input-usd <path>)"
     echo "  prep_root_scene External /root-structured scene prep"
     echo "  normalize       Normalized export via specs_normalizer"
+    echo "  normalize_assets  Asset transform normalization (recenter + Y-up→Z-up)"
     echo "  clean           Scene splitting / data cleaning"
     echo "  custom          Pass any command to Isaac Sim Python"
     echo "  <chunk_id> <chunk_total> [script.py ...]  Batch mode"
@@ -89,6 +90,13 @@ elif [ "$1" == "normalize" ]; then
     shift
     echo "Running Normalize (specs_normalizer)..."
     "$ISAAC_PYTHON" -m specs_normalizer "$@"
+
+elif [ "$1" == "normalize_assets" ]; then
+    # Asset transform normalization (recenter + Y-up→Z-up)
+    # 用法: bash run_task.sh normalize_assets [args...]
+    shift
+    echo "Running Asset Transform Normalization..."
+    "$ISAAC_PYTHON" "$CODE_ROOT/scripts/normalize_asset_transforms.py" "$@"
 
 elif [ "$1" == "clean" ]; then
     # 场景拆分模式 (Scene splitting / data cleaning)

@@ -104,6 +104,7 @@ python scripts/dlc/submit_batch.py --name <name> --total <N> --mode <mode> [--co
 - `simready` – one-shot SimReady CLI (Isaac Sim)
 - `prep_root_scene` – external `/root`-structured scene prep (Isaac Sim)
 - `normalize` – normalized export via `specs_normalizer` (Isaac Sim Python)
+- `normalize_assets` – asset transform normalization (recenter + Y-up→Z-up) via `normalize_asset_transforms.py` (Isaac Sim Python)
 - `clean` – scene splitting via `clean_data.py` (Isaac Sim Python)
 - `custom` – pass any script directly to Isaac Sim Python
 - `batch` – chunk-based dispatch (default; passes extra args to Isaac Sim Python)
