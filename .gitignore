@@ -29,6 +29,7 @@ GRScenes-test0/
 GRScenes-test1/
 GRScenes-test1_bak/
 GRScenes-test1_bak_20260131_104203/
+GRScenes-test1-normalized/
 
 # Local run artifacts
 logs/
