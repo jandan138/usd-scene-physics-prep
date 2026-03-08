@@ -50,6 +50,7 @@ class MeshSig:
     geom_sig_hex: str
     scale_sig_hex: str
     full_matrix_sig_hex: str
+    topo_sig_hex: str  # topology-only hash (no vertex coords)
     vertex_count: int
     face_count: int
     has_normals: bool
@@ -65,6 +66,7 @@ class AssetRecord:
     asset_geom_sig_hex: str
     asset_scale_sig_hex: str
     asset_full_matrix_sig_hex: str
+    asset_topo_sig_hex: str  # topology-only hash (for tolerance merge)
     meshes: List[MeshSig]
 
 
@@ -199,6 +201,43 @@ def _compute_mesh_sigs(
 
     geom_sig_hex = h_geom.hexdigest()
 
+    # --- Topology-only signature (excludes vertex/normal coordinate values)
+    # Used by --merge-tolerance to pre-group assets by topology before
+    # doing pairwise vertex comparison.  Includes face counts, indices,
+    # subdivision scheme, doubleSided, normal/UV presence and counts,
+    # but NOT the actual coordinate values.
+    h_topo = _sha256_init("mesh_topo_v1")
+    _hash_update_ints(h_topo, face_vertex_counts)
+    _hash_update_ints(h_topo, face_vertex_indices)
+    h_topo.update(struct.pack("<I", len(points)))  # vertex count
+    _hash_update_token(h_topo, subdivision_scheme)
+    h_topo.update(struct.pack("<?", bool(double_sided)))
+    if normals:
+        # normals_interp is set above in the geom hash section when normals exist
+        _hash_update_token(h_topo, normals_interp)
+        h_topo.update(struct.pack("<I", len(normals)))
+    else:
+        _hash_update_token(h_topo, "<no_normals>")
+    if st_pv is not None:
+        _hash_update_token(h_topo, st_pv.GetInterpolation())
+        _hash_update_ints(h_topo, [int(st_pv.GetElementSize())])
+        st_vals_topo = st_pv.Get() or []
+        h_topo.update(struct.pack("<I", len(st_vals_topo)))
+        # Include UV values (they're exact, no float noise from bake/unbake)
+        for uv in st_vals_topo:
+            _hash_update_floats(h_topo, (float(uv[0]), float(uv[1])), eps=float_eps)
+        st_idx_topo = []
+        try:
+            if st_pv.IsIndexed():
+                st_idx_topo = st_pv.GetIndices() or []
+        except Exception:
+            pass
+        _hash_update_ints(h_topo, st_idx_topo)
+    else:
+        _hash_update_token(h_topo, "<no_st>")
+
+    topo_sig_hex = h_topo.hexdigest()
+
     # --- Transform signatures
     # World transform at the mesh prim.
     world_m = xform_cache.GetLocalToWorldTransform(prim)
@@ -220,6 +259,7 @@ def _compute_mesh_sigs(
         geom_sig_hex=geom_sig_hex,
         scale_sig_hex=h_scale.hexdigest(),
         full_matrix_sig_hex=h_full.hexdigest(),
+        topo_sig_hex=topo_sig_hex,
         vertex_count=int(len(points)),
         face_count=face_count,
         has_normals=has_normals,
@@ -299,6 +339,164 @@ def _make_duplicates_map(records: List[AssetRecord], key: str) -> Dict[str, List
     return {sig: paths for sig, paths in out.items() if len(paths) > 1}
 
 
+# ---------------------------------------------------------------------------
+# Tolerance-based merge (post-processing pass)
+# ---------------------------------------------------------------------------
+
+def _read_mesh_points(usd_path: str) -> List[List[Tuple[float, float, float]]]:
+    """Read all mesh vertex positions from a USD, sorted by (vertex_count, face_count).
+
+    Returns a list of meshes, each mesh is a list of (x, y, z) tuples.
+    """
+    stage = Usd.Stage.Open(usd_path, load=Usd.Stage.LoadNone)
+    if stage is None:
+        return []
+    meshes = []
+    for prim in stage.Traverse():
+        if not prim.IsA(UsdGeom.Mesh):
+            continue
+        mesh = UsdGeom.Mesh(prim)
+        points = mesh.GetPointsAttr().Get() or []
+        fvc = mesh.GetFaceVertexCountsAttr().Get() or []
+        pts = [(float(p[0]), float(p[1]), float(p[2])) for p in points]
+        meshes.append((len(pts), len(fvc), pts))
+    # Sort by (vertex_count, face_count) for consistent pairing
+    meshes.sort(key=lambda m: (m[0], m[1]))
+    return [m[2] for m in meshes]
+
+
+def _max_vertex_distance(meshes_a: List[List[Tuple[float, float, float]]],
+                          meshes_b: List[List[Tuple[float, float, float]]]) -> float:
+    """Compute max per-vertex distance between two assets (paired by mesh size).
+
+    Returns float('inf') if meshes can't be paired (different counts or sizes).
+    """
+    if len(meshes_a) != len(meshes_b):
+        return float("inf")
+    max_dist = 0.0
+    for pts_a, pts_b in zip(meshes_a, meshes_b):
+        if len(pts_a) != len(pts_b):
+            return float("inf")
+        for (ax, ay, az), (bx, by, bz) in zip(pts_a, pts_b):
+            dx, dy, dz = ax - bx, ay - by, az - bz
+            d = math.sqrt(dx * dx + dy * dy + dz * dz)
+            if d > max_dist:
+                max_dist = d
+        # Early exit if already above any reasonable tolerance
+        if max_dist > 1.0:
+            return max_dist
+    return max_dist
+
+
+def _tolerance_merge(
+    records: List[AssetRecord],
+    existing_dups: Dict[str, List[str]],
+    tolerance: float,
+) -> Dict[str, List[str]]:
+    """Find additional duplicate groups by tolerance-based vertex comparison.
+
+    1. Group records by topology hash (asset_topo_sig_hex).
+    2. Within each topology group, skip assets already in existing_dups.
+    3. For remaining assets, do pairwise max-vertex-distance comparison.
+    4. Merge assets within tolerance into new groups.
+
+    Returns merged duplicates map (existing + new groups).
+    """
+    already_grouped: set = set()
+    for paths in existing_dups.values():
+        already_grouped.update(paths)
+
+    # Group by topology
+    topo_groups: Dict[str, List[AssetRecord]] = {}
+    for r in records:
+        topo_groups.setdefault(r.asset_topo_sig_hex, []).append(r)
+
+    new_group_id = 0
+    merged = dict(existing_dups)  # copy
+
+    for topo_sig, group in topo_groups.items():
+        if len(group) < 2:
+            continue
+
+        # Load mesh points for all candidates (lazy, cached)
+        points_cache: Dict[str, Optional[List[List[Tuple[float, float, float]]]]] = {}
+
+        def _get_points(usd_path: str):
+            if usd_path not in points_cache:
+                try:
+                    points_cache[usd_path] = _read_mesh_points(usd_path)
+                except Exception:
+                    points_cache[usd_path] = None
+            return points_cache[usd_path]
+
+        # Union-Find for merging
+        parent: Dict[int, int] = {i: i for i in range(len(group))}
+
+        def _find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def _union(a: int, b: int) -> None:
+            ra, rb = _find(a), _find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                # Skip if both already in same existing group
+                if (group[i].usd_path in already_grouped and
+                    group[j].usd_path in already_grouped):
+                    continue
+                # Skip if already same hash (already grouped)
+                if group[i].asset_geom_sig_hex == group[j].asset_geom_sig_hex:
+                    _union(i, j)
+                    continue
+                pts_i = _get_points(group[i].usd_path)
+                pts_j = _get_points(group[j].usd_path)
+                if pts_i is None or pts_j is None:
+                    continue
+                dist = _max_vertex_distance(pts_i, pts_j)
+                if dist <= tolerance:
+                    _union(i, j)
+
+        # Collect merged groups
+        clusters: Dict[int, List[str]] = {}
+        for i in range(len(group)):
+            root = _find(i)
+            clusters.setdefault(root, []).append(group[i].usd_path)
+
+        for paths in clusters.values():
+            if len(paths) < 2:
+                continue
+            # Check if this is a genuinely new group (not already in merged)
+            paths_set = set(paths)
+            is_new = True
+            for existing_paths in merged.values():
+                if paths_set == set(existing_paths):
+                    is_new = False
+                    break
+                if paths_set.issubset(set(existing_paths)):
+                    is_new = False
+                    break
+            if is_new:
+                sig_key = f"tolerance_merge_{new_group_id}"
+                new_group_id += 1
+                # Merge with any overlapping existing group
+                final_paths = set(paths)
+                keys_to_remove = []
+                for k, v in merged.items():
+                    if final_paths & set(v):
+                        final_paths.update(v)
+                        keys_to_remove.append(k)
+                for k in keys_to_remove:
+                    del merged[k]
+                merged[sig_key] = sorted(final_paths)
+
+    return merged
+
+
 def _write_report(
     out_path: str,
     *,
@@ -309,6 +507,7 @@ def _write_report(
     records: List[AssetRecord],
     errors: List[Dict[str, str]],
     started_at: float,
+    merge_tolerance: float = 0.0,
 ) -> None:
     duplicates_key = {
         "geom_only": "asset_geom_sig_hex",
@@ -318,12 +517,24 @@ def _write_report(
 
     dups = _make_duplicates_map(records, duplicates_key)
 
+    # Tolerance-based merge: find near-miss duplicates that hash differently
+    # due to floating-point noise but are geometrically identical within tolerance.
+    tolerance_merged_count = 0
+    if merge_tolerance > 0 and mode == "geom_only":
+        hash_only_count = len(dups)
+        dups = _tolerance_merge(records, dups, merge_tolerance)
+        tolerance_merged_count = len(dups) - hash_only_count
+        if tolerance_merged_count > 0:
+            print(f"  Tolerance merge ({merge_tolerance}): found {tolerance_merged_count} additional groups", flush=True)
+
     payload = {
         "meta": {
             "dataset": dataset,
             "mode": mode,
             "assets_root": os.path.abspath(assets_root),
             "float_quantize_eps": float_eps,
+            "merge_tolerance": merge_tolerance,
+            "tolerance_merged_groups": tolerance_merged_count,
             "asset_usd_count": len(records),
             "error_count": len(errors),
             "duplicate_group_count": len(dups),
@@ -343,12 +554,14 @@ def _write_report(
                 "asset_geom_sig": r.asset_geom_sig_hex,
                 "asset_scale_sig": r.asset_scale_sig_hex,
                 "asset_full_matrix_sig": r.asset_full_matrix_sig_hex,
+                "asset_topo_sig": r.asset_topo_sig_hex,
                 "meshes": [
                     {
                         "prim_path": m.prim_path,
                         "geom_sig": m.geom_sig_hex,
                         "scale_sig": m.scale_sig_hex,
                         "full_matrix_sig": m.full_matrix_sig_hex,
+                        "topo_sig": m.topo_sig_hex,
                         "vertex_count": m.vertex_count,
                         "face_count": m.face_count,
                         "has_normals": m.has_normals,
@@ -401,6 +614,15 @@ def main() -> int:
         type=int,
         default=100,
         help="Print/write progress every N files (0 disables)",
+    )
+    parser.add_argument(
+        "--merge-tolerance",
+        type=float,
+        default=0.0,
+        help="Post-hash tolerance merge: assets with identical topology and max "
+             "per-vertex distance <= this value are merged as duplicates. "
+             "Fixes hash bucket-boundary misses from floating-point noise. "
+             "Recommended: 0.005 for normalized assets (0 disables).",
     )
     parser.add_argument(
         "--progress-jsonl",
@@ -521,6 +743,9 @@ def main() -> int:
             asset_full_sig = _aggregate_asset_sig(
                 [m.full_matrix_sig_hex for m in mesh_sigs], tag="asset_full_matrix_v1"
             )
+            asset_topo_sig = _aggregate_asset_sig(
+                [m.topo_sig_hex for m in mesh_sigs], tag="asset_topo_only_v1"
+            )
 
             records.append(
                 AssetRecord(
@@ -531,6 +756,7 @@ def main() -> int:
                     asset_geom_sig_hex=asset_geom_sig,
                     asset_scale_sig_hex=asset_scale_sig,
                     asset_full_matrix_sig_hex=asset_full_sig,
+                    asset_topo_sig_hex=asset_topo_sig,
                     meshes=mesh_sigs,
                 )
             )
@@ -542,6 +768,8 @@ def main() -> int:
     out_scale = os.path.join(out_dir, f"{dataset}_asset_mesh_dedup_scale_only.json")
     out_full = os.path.join(out_dir, f"{dataset}_asset_mesh_dedup_full_matrix.json")
 
+    merge_tol = float(args.merge_tolerance)
+
     _write_report(
         out_geom,
         mode="geom_only",
@@ -551,6 +779,7 @@ def main() -> int:
         records=records,
         errors=errors,
         started_at=started_at,
+        merge_tolerance=merge_tol,
     )
     _write_report(
         out_scale,
