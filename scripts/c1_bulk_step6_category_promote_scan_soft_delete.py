@@ -59,14 +59,23 @@ def _append_jsonl(path: Path, payload: object) -> None:
 
 
 def _parse_uid_from_report_style_asset_usd(p: str) -> Optional[str]:
+    """Extract UID from asset USD path.
+
+    Handles both relative and absolute paths by locating GRScenes_assets/ marker:
+      .../GRScenes_assets/<cat>/<uid>/usd/<uid>.usd  ->  <uid>
+    """
     try:
         parts = Path(p).parts
     except Exception:
         return None
-    # <dataset_name>/GRScenes_assets/<cat>/<uid>/usd/<uid>.usd
-    if len(parts) < 6:
-        return None
-    return parts[3]
+    # Find 'GRScenes_assets' in parts and extract uid (2 positions after)
+    for i, part in enumerate(parts):
+        if part == "GRScenes_assets" and i + 2 < len(parts):
+            return parts[i + 2]
+    # Fallback for relative report-style paths
+    if len(parts) >= 6:
+        return parts[3]
+    return None
 
 
 def _abs_from_usd_ref(base_dir: str, asset_path: str) -> str:
