@@ -50,6 +50,7 @@ if [ $# -eq 0 ]; then
     echo "  normalize       Normalized export via specs_normalizer"
     echo "  normalize_assets  Asset transform normalization (recenter + Y-up→Z-up)"
     echo "  clean           Scene splitting / data cleaning"
+    echo "  dedup           Asset dedup report by category chunk"
     echo "  custom          Pass any command to Isaac Sim Python"
     echo "  <chunk_id> <chunk_total> [script.py ...]  Batch mode"
     exit 0
@@ -105,6 +106,13 @@ elif [ "$1" == "clean" ]; then
     shift
     echo "Running Clean (scene splitting)..."
     "$ISAAC_PYTHON" "$CODE_ROOT/clean_data.py" "$@"
+
+elif [ "$1" == "dedup" ]; then
+    # 去重扫描模式 (Asset dedup report by category chunk)
+    # 用法: bash run_task.sh dedup --chunk-id <id> --chunk-total <total> [args...]
+    shift
+    echo "Running Dedup Report (by category chunk)..."
+    "$ISAAC_PYTHON" "$CODE_ROOT/scripts/dlc/dedup_by_category.py" "$@"
 
 elif [ "$1" == "custom" ]; then
     # 通用模式 - 直接传递命令给 Isaac Sim Python (Generic mode - pass any command)
