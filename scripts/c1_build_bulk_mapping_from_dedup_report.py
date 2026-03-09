@@ -37,20 +37,20 @@ except Exception as e:  # pragma: no cover
     _PXR_ERR = e
 
 
-def _norm_rel_asset_path(p: str) -> Optional[str]:
+def _norm_rel_asset_path(p: str, dataset_name: str) -> Optional[str]:
     p = (p or "").replace("\\", "/").strip()
     if p.startswith("@") and p.endswith("@"):  # Sdf.AssetPath string form
         p = p[1:-1]
 
-    # Expect report-style: GRScenes-test1/GRScenes_assets/<cat>/<uid>/usd/<uid>.usd
-    marker = "GRScenes-test1/GRScenes_assets/"
+    # Expect report-style: <dataset_name>/GRScenes_assets/<cat>/<uid>/usd/<uid>.usd
+    marker = f"{dataset_name}/GRScenes_assets/"
     if marker in p:
         return p[p.find(marker) :].lstrip("/")
 
     # Sometimes we see GRScenes_assets/... without dataset prefix
     marker2 = "GRScenes_assets/"
     if marker2 in p:
-        return "GRScenes-test1/" + p[p.find(marker2) :].lstrip("/")
+        return f"{dataset_name}/" + p[p.find(marker2) :].lstrip("/")
 
     return None
 
@@ -66,16 +66,16 @@ def _abs_from_layout_ref(base_dir: str, asset_path: str) -> str:
     return os.path.abspath(os.path.join(base_dir, s))
 
 
-def _abs_to_report_style(abs_path: str) -> Optional[str]:
+def _abs_to_report_style(abs_path: str, dataset_name: str) -> Optional[str]:
     p = (abs_path or "").replace("\\", "/")
-    marker = "/GRScenes-test1/GRScenes_assets/"
+    marker = f"/{dataset_name}/GRScenes_assets/"
     idx = p.find(marker)
     if idx >= 0:
         return p[idx + 1 :]
     marker2 = "/GRScenes_assets/"
     idx2 = p.find(marker2)
     if idx2 >= 0:
-        return "GRScenes-test1/" + p[idx2 + 1 :]
+        return f"{dataset_name}/" + p[idx2 + 1 :]
     return None
 
 
@@ -85,7 +85,7 @@ def _iter_duplicate_groups(report_path: Path) -> Iterable[Dict]:
             yield item
 
 
-def _count_layout_asset_usage(dataset_root: Path) -> Counter:
+def _count_layout_asset_usage(dataset_root: Path, dataset_name: str) -> Counter:
     if _PXR_ERR is not None:
         raise RuntimeError(f"pxr.Usd not available: {_PXR_ERR}")
 
@@ -111,7 +111,7 @@ def _count_layout_asset_usage(dataset_root: Path) -> Counter:
                         items = []
                     for r in items:
                         ap = getattr(r, "assetPath", "") or ""
-                        rel = _abs_to_report_style(_abs_from_layout_ref(base_dir, ap))
+                        rel = _abs_to_report_style(_abs_from_layout_ref(base_dir, ap), dataset_name)
                         if rel:
                             counts[rel] += 1
 
@@ -124,7 +124,7 @@ def _count_layout_asset_usage(dataset_root: Path) -> Counter:
                         items = []
                     for r in items:
                         ap = getattr(r, "assetPath", "") or ""
-                        rel = _abs_to_report_style(_abs_from_layout_ref(base_dir, ap))
+                        rel = _abs_to_report_style(_abs_from_layout_ref(base_dir, ap), dataset_name)
                         if rel:
                             counts[rel] += 1
 
@@ -168,8 +168,9 @@ def main() -> int:
 
     report = Path(args.report)
     dataset_root = Path(args.dataset_root)
+    dataset_name = dataset_root.name
 
-    usage = _count_layout_asset_usage(dataset_root)
+    usage = _count_layout_asset_usage(dataset_root, dataset_name)
 
     mapping: Dict[str, str] = {}
     group_count = 0
@@ -189,7 +190,7 @@ def main() -> int:
         # Filter category if requested
         if args.category:
             want = str(args.category)
-            paths = [p for p in paths if f"GRScenes-test1/GRScenes_assets/{want}/" in p]
+            paths = [p for p in paths if f"{dataset_name}/GRScenes_assets/{want}/" in p]
             if not paths:
                 continue
 

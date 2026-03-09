@@ -63,7 +63,7 @@ def _parse_uid_from_report_style_asset_usd(p: str) -> Optional[str]:
         parts = Path(p).parts
     except Exception:
         return None
-    # GRScenes-test1/GRScenes_assets/<cat>/<uid>/usd/<uid>.usd
+    # <dataset_name>/GRScenes_assets/<cat>/<uid>/usd/<uid>.usd
     if len(parts) < 6:
         return None
     return parts[3]
@@ -80,16 +80,16 @@ def _abs_from_usd_ref(base_dir: str, asset_path: str) -> str:
     return os.path.abspath(os.path.join(base_dir, s))
 
 
-def _abs_to_report_style(abs_path: str) -> Optional[str]:
+def _abs_to_report_style(abs_path: str, dataset_name: str) -> Optional[str]:
     p = (abs_path or "").replace("\\", "/")
-    marker = "/GRScenes-test1/GRScenes_assets/"
+    marker = f"/{dataset_name}/GRScenes_assets/"
     idx = p.find(marker)
     if idx >= 0:
         return p[idx + 1 :]
     marker2 = "/GRScenes_assets/"
     idx2 = p.find(marker2)
     if idx2 >= 0:
-        return "GRScenes-test1/" + p[idx2 + 1 :]
+        return f"{dataset_name}/" + p[idx2 + 1 :]
     return None
 
 
@@ -97,7 +97,7 @@ def _abs_to_report_style(abs_path: str) -> Optional[str]:
 class ScanHit:
     file: str
     hit_assets: List[str]
-def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]) -> List[str]:
+def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str], dataset_name: str) -> List[str]:
     """Return matched report-style asset USD paths referenced/payloaded/authored in this stage.
 
     Important: Match by full report-style asset USD path (mapping key), NOT just UID.
@@ -128,7 +128,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
                 for r in items:
                     ap = str(getattr(r, "assetPath", "") or "")
                     abs_p = _abs_from_usd_ref(base_dir, ap)
-                    rel = _abs_to_report_style(abs_p)
+                    rel = _abs_to_report_style(abs_p, dataset_name)
                     if not rel:
                         continue
                     if rel in old_asset_usd_rel_set:
@@ -144,7 +144,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
                 for r in items:
                     ap = str(getattr(r, "assetPath", "") or "")
                     abs_p = _abs_from_usd_ref(base_dir, ap)
-                    rel = _abs_to_report_style(abs_p)
+                    rel = _abs_to_report_style(abs_p, dataset_name)
                     if not rel:
                         continue
                     if rel in old_asset_usd_rel_set:
@@ -162,7 +162,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
 
             def handle_asset_path(asset_path: str) -> None:
                 abs_p = _abs_from_usd_ref(base_dir, asset_path)
-                rel = _abs_to_report_style(abs_p)
+                rel = _abs_to_report_style(abs_p, dataset_name)
                 if not rel:
                     return
                 if rel in old_asset_usd_rel_set:
@@ -260,6 +260,7 @@ def _scan_tree_pxr(
     root: Path,
     *,
     old_asset_usd_rel_set: Set[str],
+    dataset_name: str,
     exclude_dir_contains: Sequence[str],
     progress_every: int,
     progress_json: Optional[Path],
@@ -307,7 +308,7 @@ def _scan_tree_pxr(
             )
 
         try:
-            matched = _scan_stage_for_old_assets(p, old_asset_usd_rel_set)
+            matched = _scan_stage_for_old_assets(p, old_asset_usd_rel_set, dataset_name)
         except Exception as e:
             hits.append({"file": str(p), "error": str(e)})
             continue
@@ -358,6 +359,7 @@ def main() -> int:
         raise SystemExit(f"pxr.Usd not available: {_PXR_ERR}")
 
     dataset_root = Path(args.dataset_root)
+    dataset_name = dataset_root.name
     bak_root = Path(args.bak_root)
     layout_root = Path(args.layout_root) if args.layout_root else (dataset_root / "GRScenes100")
     report_dir = Path(args.report_dir)
@@ -442,7 +444,7 @@ def main() -> int:
     # 2a) layout-only scan (kept for backwards compatibility)
     layout_hits: List[Dict[str, object]] = []
     for lp in layouts:
-        matched = _scan_stage_for_old_assets(lp, old_asset_usd_rel_set)
+        matched = _scan_stage_for_old_assets(lp, old_asset_usd_rel_set, dataset_name)
         if matched:
             layout_hits.append({"layout": str(lp), "hit_assets": matched})
     post_promote_layout_scan = {"scanned_layouts": len(layouts), "hit_layouts": len(layout_hits), "results": layout_hits}
@@ -452,7 +454,7 @@ def main() -> int:
     scene_hits: List[Dict[str, object]] = []
     for it in promote_items:
         fp = Path(str(it["file"]))
-        matched = _scan_stage_for_old_assets(fp, old_asset_usd_rel_set)
+        matched = _scan_stage_for_old_assets(fp, old_asset_usd_rel_set, dataset_name)
         if matched:
             scene_hits.append({"file": str(fp), "hit_assets": matched})
     _write_json(report_dir / "post_promote_scene_files_scan_pxr.json", {"scanned_files": len(promote_items), "hit_files": len(scene_hits), "results": scene_hits})
@@ -461,6 +463,7 @@ def main() -> int:
     full_scan = _scan_tree_pxr(
         dataset_root,
         old_asset_usd_rel_set=old_asset_usd_rel_set,
+        dataset_name=dataset_name,
         exclude_dir_contains=list(args.exclude_dir_contains),
         progress_every=int(args.progress_every),
         progress_json=progress_json,
@@ -502,7 +505,7 @@ def main() -> int:
     # 4) Post soft-delete layout scan
     layout_hits2: List[Dict[str, object]] = []
     for lp in layouts:
-        matched = _scan_stage_for_old_assets(lp, old_asset_usd_rel_set)
+        matched = _scan_stage_for_old_assets(lp, old_asset_usd_rel_set, dataset_name)
         if matched:
             layout_hits2.append({"layout": str(lp), "hit_assets": matched})
     post_soft = {"scanned_layouts": len(layouts), "hit_layouts": len(layout_hits2), "results": layout_hits2}
