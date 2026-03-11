@@ -41,7 +41,10 @@ import time
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+import numpy as np
 from pxr import Gf, Usd, UsdGeom
+
+SHAPE_DESCRIPTOR_EPS = 0.01
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,8 @@ class MeshSig:
     face_count: int
     has_normals: bool
     has_st: bool
+    shape_invariant_sig_hex: str = ""
+    shape_descriptor_key: str = ""
 
 
 @dataclass(frozen=True)
@@ -68,6 +73,22 @@ class AssetRecord:
     asset_full_matrix_sig_hex: str
     asset_topo_sig_hex: str  # topology-only hash (for tolerance merge)
     meshes: List[MeshSig]
+    asset_shape_invariant_sig_hex: str = ""
+    asset_shape_descriptor_key: str = ""
+
+
+@dataclass(frozen=True)
+class ShapeDescriptor:
+    """Shape descriptor for shape-invariant dedup pre-filtering.
+
+    Fields:
+        vertex_count: Number of vertices in mesh
+        face_count: Number of faces in mesh
+        aspect_ratio_hash: Quantized sorted bbox aspect ratios (16 hex chars)
+    """
+    vertex_count: int
+    face_count: int
+    aspect_ratio_hash: str
 
 
 def _sha256_init(tag: str) -> "hashlib._Hash":
@@ -129,6 +150,172 @@ def _get_st_primvar(mesh_prim: Usd.Prim) -> Optional[UsdGeom.Primvar]:
     if not pv or not pv.HasValue():
         return None
     return pv
+
+
+# ---------------------------------------------------------------------------
+# Shape-invariant dedup helper functions
+# ---------------------------------------------------------------------------
+
+def _normalize_to_unit_bbox(points: Sequence) -> np.ndarray:
+    """Normalize vertices to unit bounding box (preserving aspect ratio).
+
+    Args:
+        points: Sequence of vertices (each vertex is a 3-element array-like).
+
+    Returns:
+        np.ndarray of shape (N, 3) with vertices normalized to [0, ~1] range.
+        Uses uniform scale (max extent) to preserve aspect ratio.
+    """
+    pts = np.array(points, dtype=np.float64)  # shape (N, 3)
+    if len(pts) == 0:
+        return pts
+
+    bbox_min = pts.min(axis=0)
+    bbox_max = pts.max(axis=0)
+    extent = bbox_max - bbox_min
+
+    # Use max extent for uniform scale (preserves aspect ratio)
+    # Clamp to 1e-10 to avoid division by zero on degenerate meshes
+    scale = max(float(extent.max()), 1e-10)
+
+    return (pts - bbox_min) / scale
+
+
+def _compute_shape_descriptor(
+    points: Sequence,
+    face_count: int,
+    *,
+    eps: float = 0.01,
+) -> ShapeDescriptor:
+    """Compute shape descriptor for shape-invariant dedup pre-filtering.
+
+    Args:
+        points: Sequence of vertices.
+        face_count: Number of faces.
+        eps: Quantization epsilon for aspect ratio hashing.
+
+    Returns:
+        ShapeDescriptor with vertex count, face count, and aspect ratio hash.
+    """
+    vertex_count = len(points)
+
+    # Compute aspect ratios from normalized bounding box
+    pts = np.array(points, dtype=np.float64)
+    if len(pts) == 0:
+        aspect_ratio_hash = "0" * 16
+    else:
+        bbox_min = pts.min(axis=0)
+        bbox_max = pts.max(axis=0)
+        extent = bbox_max - bbox_min
+
+        # Normalize to longest axis, sort descending
+        max_ext = max(float(extent.max()), 1e-10)
+        aspect_ratios = sorted([float(e) / max_ext for e in extent], reverse=True)
+
+        # Quantize and hash
+        quantized = tuple(_quantize(ar, eps) for ar in aspect_ratios)
+        h = _sha256_init("aspect_ratio_v1")
+        for ar in quantized:
+            h.update(struct.pack("<d", ar))
+        aspect_ratio_hash = h.hexdigest()[:16]
+
+    return ShapeDescriptor(
+        vertex_count=vertex_count,
+        face_count=face_count,
+        aspect_ratio_hash=aspect_ratio_hash,
+    )
+
+
+def _shape_invariant_mesh_sig(normalized_points: np.ndarray, face_count: int, eps: float = 0.01) -> str:
+    """Compute shape-invariant mesh signature from pre-normalized points.
+
+    Assumes points are already normalized to unit bounding box (caller responsibility).
+    Rounds coordinates to eps precision, lexicographically sorts, then SHA256 hashes.
+
+    Args:
+        normalized_points: np.ndarray of shape (N, 3), already normalized.
+        face_count: Number of faces in the mesh.
+        eps: Quantization epsilon for coordinate rounding.
+
+    Returns:
+        64-char hex SHA256 digest.
+    """
+    pts = np.array(normalized_points, dtype=np.float64)
+    if len(pts) == 0:
+        h = hashlib.sha256(f"empty_{face_count}".encode("utf-8"))
+        return h.hexdigest()
+
+    # Round to eps precision
+    rounded = np.round(pts / eps) * eps
+
+    # Lexicographic sort
+    sorted_pts = rounded[np.lexsort(rounded.T[::-1])]
+
+    # Hash sorted points + face_count
+    h = hashlib.sha256()
+    h.update(sorted_pts.tobytes())
+    h.update(struct.pack("<I", face_count))
+    return h.hexdigest()
+
+
+def _hausdorff_distance(
+    pts_a: np.ndarray,
+    pts_b: np.ndarray,
+) -> float:
+    """Compute bidirectional Hausdorff distance between two point sets.
+
+    Assumes both point sets are normalized to unit bounding box.
+
+    Args:
+        pts_a: Array of shape (N, 3), normalized vertex positions.
+        pts_b: Array of shape (M, 3), normalized vertex positions.
+
+    Returns:
+        Hausdorff distance (max of min distances both directions).
+        Returns float('inf') if shapes are incompatible (different vertex counts).
+    """
+    if len(pts_a) == len(pts_b) and len(pts_a) > 0:
+        # Fast path: same vertex count, use lexicographic sort + pairing
+        sorted_a = pts_a[np.lexsort(pts_a.T[::-1])]
+        sorted_b = pts_b[np.lexsort(pts_b.T[::-1])]
+        distances = np.linalg.norm(sorted_a - sorted_b, axis=1)
+        return float(np.max(distances))
+
+    if len(pts_a) == 0 or len(pts_b) == 0:
+        return float("inf")
+
+    # Slow path: use KD-tree for bidirectional Hausdorff
+    try:
+        from scipy.spatial import KDTree
+        tree_b = KDTree(pts_b)
+        d_ab = tree_b.query(pts_a)[0].max()  # max of min distances A→B
+
+        tree_a = KDTree(pts_a)
+        d_ba = tree_a.query(pts_b)[0].max()  # max of min distances B→A
+
+        return float(max(d_ab, d_ba))
+    except ImportError:
+        # Fallback: O(V^2) brute force if scipy unavailable
+        max_dist = 0.0
+        for pa in pts_a:
+            min_dist = float("inf")
+            for pb in pts_b:
+                d = float(np.linalg.norm(pa - pb))
+                if d < min_dist:
+                    min_dist = d
+            if min_dist > max_dist:
+                max_dist = min_dist
+
+        for pb in pts_b:
+            min_dist = float("inf")
+            for pa in pts_a:
+                d = float(np.linalg.norm(pb - pa))
+                if d < min_dist:
+                    min_dist = d
+            if min_dist > max_dist:
+                max_dist = min_dist
+
+        return max_dist
 
 
 def _compute_mesh_sigs(
@@ -254,6 +441,12 @@ def _compute_mesh_sigs(
 
     face_count = int(len(face_vertex_counts))
 
+    # --- Shape-invariant signature
+    normalized_pts = _normalize_to_unit_bbox(points)
+    shape_inv_sig = _shape_invariant_mesh_sig(normalized_pts, face_count, eps=float_eps if float_eps > 0 else SHAPE_DESCRIPTOR_EPS)
+    shape_desc = _compute_shape_descriptor(points, face_count, eps=SHAPE_DESCRIPTOR_EPS)
+    shape_desc_key = f"{shape_desc.vertex_count}_{shape_desc.aspect_ratio_hash}"
+
     return MeshSig(
         prim_path=str(prim.GetPath()),
         geom_sig_hex=geom_sig_hex,
@@ -264,6 +457,8 @@ def _compute_mesh_sigs(
         face_count=face_count,
         has_normals=has_normals,
         has_st=has_st,
+        shape_invariant_sig_hex=shape_inv_sig,
+        shape_descriptor_key=shape_desc_key,
     )
 
 
@@ -388,6 +583,188 @@ def _max_vertex_distance(meshes_a: List[List[Tuple[float, float, float]]],
     return max_dist
 
 
+# ---------------------------------------------------------------------------
+# Shape-invariant merge (for shape-invariant dedup mode)
+# ---------------------------------------------------------------------------
+
+def _shape_invariant_merge(
+    records: List[AssetRecord],
+    asset_mesh_points: Optional[Dict[str, List[Tuple[np.ndarray, int, int]]]] = None,
+    hausdorff_threshold: float = 0.05,
+    *,
+    tolerance: Optional[float] = None,
+) -> Dict[str, List[str]]:
+    """Find duplicate groups using shape-invariant Hausdorff distance metric.
+
+    Algorithm:
+    1. Pre-filter: Group records by asset_shape_descriptor_key
+       (aggregated per-mesh vertex_count + aspect_ratio_hash). Skip singletons.
+    2. Within each pre-filter group: normalize meshes to unit bbox,
+       sort by (vertex_count, face_count), pair 1:1.
+    3. Compute max Hausdorff distance across all mesh pairs.
+    4. Union-Find to merge assets where max Hausdorff < hausdorff_threshold.
+
+    Args:
+        records: List of AssetRecord with asset_shape_descriptor_key populated.
+        asset_mesh_points: Optional dict mapping usd_path to list of
+            (points_array, vertex_count, face_count) tuples. If None, meshes
+            are loaded on demand from USD files.
+        hausdorff_threshold: Hausdorff distance threshold on unit-normalized
+            meshes. Default 0.05 = 5% of bounding box.
+        tolerance: Alias for hausdorff_threshold (backward compatibility).
+
+    Returns:
+        Dict[str, List[str]]: {group_sig: [usd_paths]} for groups with >= 2 members.
+    """
+    import logging
+
+    # Support 'tolerance' kwarg as alias for hausdorff_threshold
+    if tolerance is not None:
+        hausdorff_threshold = tolerance
+
+    # Pre-filter grouping by shape descriptor key
+    shape_groups: Dict[str, List[AssetRecord]] = {}
+    skipped = 0
+    for r in records:
+        if r.mesh_count == 0 or not r.asset_shape_descriptor_key:
+            skipped += 1
+            continue
+        shape_groups.setdefault(r.asset_shape_descriptor_key, []).append(r)
+
+    # Drop singletons
+    shape_groups = {k: v for k, v in shape_groups.items() if len(v) >= 2}
+
+    total_candidates = sum(len(g) for g in shape_groups.values())
+    logging.info(
+        "shape_invariant_merge: %d pre-filter groups, %d candidate assets, "
+        "%d skipped (empty mesh or no descriptor key)",
+        len(shape_groups), total_candidates, skipped,
+    )
+
+    # Cache of normalized meshes per asset
+    norm_cache: Dict[str, Optional[List[np.ndarray]]] = {}
+
+    def _load_normalized_from_usd(usd_path: str) -> Optional[List[np.ndarray]]:
+        """Fallback: load and normalize meshes directly from USD file."""
+        try:
+            stage = Usd.Stage.Open(usd_path, load=Usd.Stage.LoadNone)
+            if stage is None:
+                return None
+            meshes = []
+            for prim in stage.Traverse():
+                if not prim.IsA(UsdGeom.Mesh):
+                    continue
+                mesh = UsdGeom.Mesh(prim)
+                points = mesh.GetPointsAttr().Get() or []
+                fvc = mesh.GetFaceVertexCountsAttr().Get() or []
+                if points:
+                    normalized = _normalize_to_unit_bbox(points)
+                    meshes.append((len(points), len(fvc), normalized))
+            meshes.sort(key=lambda m: (m[0], m[1]))
+            return [m[2] for m in meshes] if meshes else None
+        except Exception:
+            return None
+
+    def _get_normalized(usd_path: str) -> Optional[List[np.ndarray]]:
+        if usd_path in norm_cache:
+            return norm_cache[usd_path]
+
+        if asset_mesh_points is not None:
+            raw = asset_mesh_points.get(usd_path)
+            if raw is None:
+                norm_cache[usd_path] = None
+                return None
+            sorted_meshes = sorted(raw, key=lambda m: (m[1], m[2]))
+            result = []
+            for pts, _vc, _fc in sorted_meshes:
+                if len(pts) == 0:
+                    continue
+                result.append(_normalize_to_unit_bbox(pts))
+            norm_cache[usd_path] = result if result else None
+        else:
+            norm_cache[usd_path] = _load_normalized_from_usd(usd_path)
+
+        return norm_cache[usd_path]
+
+    new_group_id = 0
+    merged: Dict[str, List[str]] = {}
+    groups_processed = 0
+
+    for desc_key, group in shape_groups.items():
+        groups_processed += 1
+        if groups_processed % 500 == 0:
+            logging.info(
+                "shape_invariant_merge: processed %d/%d pre-filter groups",
+                groups_processed, len(shape_groups),
+            )
+
+        n = len(group)
+
+        # Union-Find
+        parent: Dict[int, int] = {i: i for i in range(n)}
+
+        def _find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def _union(a: int, b: int) -> None:
+            ra, rb = _find(a), _find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        # Pairwise Hausdorff comparison
+        for i in range(n):
+            meshes_i = _get_normalized(group[i].usd_path)
+            if meshes_i is None:
+                continue
+            for j in range(i + 1, n):
+                if _find(i) == _find(j):
+                    continue
+
+                meshes_j = _get_normalized(group[j].usd_path)
+                if meshes_j is None:
+                    continue
+
+                if len(meshes_i) != len(meshes_j):
+                    continue
+
+                max_hausdorff = 0.0
+                exceeded = False
+                for pts_i, pts_j in zip(meshes_i, meshes_j):
+                    h = _hausdorff_distance(pts_i, pts_j)
+                    if h == float("inf"):
+                        exceeded = True
+                        break
+                    if h > max_hausdorff:
+                        max_hausdorff = h
+                    if max_hausdorff > hausdorff_threshold:
+                        exceeded = True
+                        break
+
+                if not exceeded and max_hausdorff <= hausdorff_threshold:
+                    _union(i, j)
+
+        # Collect merged clusters
+        clusters: Dict[int, List[str]] = {}
+        for i in range(n):
+            root = _find(i)
+            clusters.setdefault(root, []).append(group[i].usd_path)
+
+        for cluster_paths in clusters.values():
+            if len(cluster_paths) >= 2:
+                sig_key = f"shape_invariant_merge_{new_group_id}"
+                new_group_id += 1
+                merged[sig_key] = sorted(cluster_paths)
+
+    logging.info(
+        "shape_invariant_merge: done. %d duplicate groups found.",
+        len(merged),
+    )
+    return merged
+
+
 def _tolerance_merge(
     records: List[AssetRecord],
     existing_dups: Dict[str, List[str]],
@@ -508,39 +885,51 @@ def _write_report(
     errors: List[Dict[str, str]],
     started_at: float,
     merge_tolerance: float = 0.0,
+    **kwargs,
 ) -> None:
     duplicates_key = {
         "geom_only": "asset_geom_sig_hex",
         "scale_only": "asset_scale_sig_hex",
         "full_matrix": "asset_full_matrix_sig_hex",
-    }[mode]
+        "shape_invariant": "asset_shape_invariant_sig_hex",
+    }.get(mode)
 
-    dups = _make_duplicates_map(records, duplicates_key)
+    if mode == "shape_invariant":
+        # Use Hausdorff-based merge instead of simple hash grouping
+        hausdorff_threshold = kwargs.get("hausdorff_threshold", 0.05)
+        dups = _shape_invariant_merge(records, tolerance=hausdorff_threshold)
+    else:
+        assert duplicates_key is not None, f"Unknown mode: {mode}"
+        dups = _make_duplicates_map(records, duplicates_key)
 
     # Tolerance-based merge: find near-miss duplicates that hash differently
     # due to floating-point noise but are geometrically identical within tolerance.
     tolerance_merged_count = 0
-    if merge_tolerance > 0 and mode == "geom_only":
+    if merge_tolerance > 0 and mode == "geom_only" and mode != "shape_invariant":
         hash_only_count = len(dups)
         dups = _tolerance_merge(records, dups, merge_tolerance)
         tolerance_merged_count = len(dups) - hash_only_count
         if tolerance_merged_count > 0:
             print(f"  Tolerance merge ({merge_tolerance}): found {tolerance_merged_count} additional groups", flush=True)
 
+    meta = {
+        "dataset": dataset,
+        "mode": mode,
+        "assets_root": os.path.abspath(assets_root),
+        "float_quantize_eps": float_eps,
+        "merge_tolerance": merge_tolerance,
+        "tolerance_merged_groups": tolerance_merged_count,
+        "asset_usd_count": len(records),
+        "error_count": len(errors),
+        "duplicate_group_count": len(dups),
+        "generated_at_unix": int(time.time()),
+        "elapsed_sec": time.time() - started_at,
+    }
+    if mode == "shape_invariant":
+        meta["hausdorff_threshold"] = kwargs.get("hausdorff_threshold", 0.05)
+
     payload = {
-        "meta": {
-            "dataset": dataset,
-            "mode": mode,
-            "assets_root": os.path.abspath(assets_root),
-            "float_quantize_eps": float_eps,
-            "merge_tolerance": merge_tolerance,
-            "tolerance_merged_groups": tolerance_merged_count,
-            "asset_usd_count": len(records),
-            "error_count": len(errors),
-            "duplicate_group_count": len(dups),
-            "generated_at_unix": int(time.time()),
-            "elapsed_sec": time.time() - started_at,
-        },
+        "meta": meta,
         "duplicates": [
             {"sig": sig, "count": len(paths), "usd_paths": paths}
             for sig, paths in sorted(dups.items(), key=lambda kv: (-len(kv[1]), kv[0]))
@@ -623,6 +1012,20 @@ def main() -> int:
              "per-vertex distance <= this value are merged as duplicates. "
              "Fixes hash bucket-boundary misses from floating-point noise. "
              "Recommended: 0.005 for normalized assets (0 disables).",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["all", "shape_invariant"],
+        default="all",
+        help="Dedup mode. 'all' generates 3 standard reports. "
+             "'shape_invariant' additionally generates a 4th scale/order-invariant report.",
+    )
+    parser.add_argument(
+        "--hausdorff-threshold",
+        type=float,
+        default=0.05,
+        help="Hausdorff distance threshold for shape_invariant mode "
+             "(fraction of unit bbox, default 0.05)",
     )
     parser.add_argument(
         "--progress-jsonl",
@@ -746,6 +1149,12 @@ def main() -> int:
             asset_topo_sig = _aggregate_asset_sig(
                 [m.topo_sig_hex for m in mesh_sigs], tag="asset_topo_only_v1"
             )
+            asset_shape_inv_sig = _aggregate_asset_sig(
+                [m.shape_invariant_sig_hex for m in mesh_sigs], tag="asset_shape_invariant_v1"
+            )
+            # Aggregate shape descriptor key: sort per-mesh keys and join
+            per_mesh_desc_keys = sorted(m.shape_descriptor_key for m in mesh_sigs)
+            asset_shape_desc_key = "|".join(per_mesh_desc_keys) if per_mesh_desc_keys else ""
 
             records.append(
                 AssetRecord(
@@ -758,6 +1167,8 @@ def main() -> int:
                     asset_full_matrix_sig_hex=asset_full_sig,
                     asset_topo_sig_hex=asset_topo_sig,
                     meshes=mesh_sigs,
+                    asset_shape_invariant_sig_hex=asset_shape_inv_sig,
+                    asset_shape_descriptor_key=asset_shape_desc_key,
                 )
             )
         except Exception as e:
@@ -802,12 +1213,31 @@ def main() -> int:
         started_at=started_at,
     )
 
+    # Shape-invariant report (only when --mode shape_invariant)
+    out_shape_inv = None
+    if args.mode == "shape_invariant":
+        out_shape_inv = os.path.join(out_dir, f"{dataset}_asset_mesh_dedup_shape_invariant.json")
+        hausdorff_thr = float(args.hausdorff_threshold)
+        _write_report(
+            out_shape_inv,
+            mode="shape_invariant",
+            assets_root=assets_root,
+            dataset=dataset,
+            float_eps=float_eps,
+            records=records,
+            errors=errors,
+            started_at=started_at,
+            hausdorff_threshold=hausdorff_thr,
+        )
+
     _emit_progress(total, phase="finalize")
 
     print("Wrote reports:", flush=True)
     print(f"  {out_geom}", flush=True)
     print(f"  {out_scale}", flush=True)
     print(f"  {out_full}", flush=True)
+    if out_shape_inv:
+        print(f"  {out_shape_inv}", flush=True)
     if errors:
         print(f"WARNING: {len(errors)} files had errors (see report errors[])", flush=True)
 

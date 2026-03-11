@@ -69,12 +69,32 @@ python -m specs_normalizer --src-target ./target --dst-root ./export_mesa_specs 
   --asset-name MesaTask_assets --scene-name MesaTask --scene-category office_table
 ```
 
+**Fix MDL/texture absolute paths in normalized assets**:
+```bash
+python scripts/fix_normalized_mdl_paths.py \
+  --dataset-root /path/to/GRScenes-test1-normalized \
+  [--materials-dir /path/to/GRScenes-test1-normalized/Material/mdl] \
+  [--category bottle] [--dry-run] [--workers 8]
+```
+
 **Fix portable texture paths**:
 ```bash
 ./scripts/isaac_python.sh scripts/collect_textures_to_local_textures.py \
   --input /abs/path/to/scene.usd \
   --output /abs/path/to/scene_textures_fixed.usd \
   --report /abs/path/to/texture_rewrite_report.json
+```
+
+**Shape-invariant dedup** (complementary to geom_only):
+```bash
+python scripts/report_asset_mesh_dedup.py \
+  --dataset-root ./GRScenes-test1-normalized \
+  --dataset-name GRScenes_assets \
+  --category bottle \
+  --mode shape_invariant \
+  --hausdorff-threshold 0.05 \
+  --merge-tolerance 0.005 \
+  --out-dir check_reports/shape_invariant/
 ```
 
 **Documentation maintenance**:
