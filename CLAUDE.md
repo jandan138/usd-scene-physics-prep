@@ -219,15 +219,29 @@ All docs under `docs/` use YAML frontmatter (`title`, `code_reference`, `created
 
 ## Agent Team Documentation Rule
 
-**All agents in a team MUST document their work.** This is a mandatory requirement:
+**When using `TeamCreate` / `Agent` tool to spawn teammate agents, you (the team lead) MUST inject the documentation requirement into each agent's `prompt` parameter.** Spawned subagents do NOT automatically read CLAUDE.md, so the rule must be explicitly passed to them.
 
-1. **What to document**: Research findings, code changes, test commands, test results, decisions made, errors encountered and how they were resolved.
-2. **Where to write**:
-   - Progress/results → `docs/` (with proper YAML frontmatter) or the team's memory files under `.claude/agent-memory/<agent-name>/`
-   - Task-level progress → the project memory at `~/.claude/projects/.../memory/` (update existing task docs or create new ones)
-3. **If the agent has write permission**: Write docs directly. At minimum, create or update a task log in the memory directory summarizing what was done and what remains.
-4. **If the agent does NOT have write permission** (e.g., read-only/explore agents): Send findings to the `docs-writer` agent via `SendMessage`, including all details needed to produce the doc. The `docs-writer` agent will write it.
-5. **Timing**: Document as you go, not just at the end. Each major milestone (research complete, implementation done, tests passed/failed) should be recorded.
+### What to inject
+
+Append the following block to every spawned agent's prompt (adapt paths as needed):
+
+```
+【Documentation Requirement】
+You MUST document your work before finishing. This is mandatory.
+- What to document: research findings, code changes, test commands & results, decisions, errors & resolutions.
+- Where to write:
+  • Results/progress → `docs/` (with YAML frontmatter: title, code_reference, created_at, updated_at, maintainer, status)
+  • Task logs → project memory at `~/.claude/projects/-cpfs-shared-simulation-zhuzihou-dev-usd-scene-physics-prep/memory/`
+- If you have write permission: write docs directly.
+- If you are read-only (e.g., Explore agent): send all findings via SendMessage to the team lead, including enough detail to produce the doc.
+- Timing: document as you go, not just at the end. Each major milestone should be recorded.
+```
+
+### Checklist for team lead
+
+- [ ] When calling `Agent` with `team_name`, include the documentation block above in the `prompt`.
+- [ ] When using `SendMessage` to assign new tasks to existing teammates, remind them of the documentation requirement if the task scope is significant.
+- [ ] After all teammates finish, verify that documentation was produced (check `docs/` and memory files).
 
 ## Important Notes
 

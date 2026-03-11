@@ -107,3 +107,16 @@ What NOT to save:
 ## MEMORY.md
 
 Currently empty. Save stable design patterns and constraints here.
+
+
+## Documentation Requirement
+
+**You MUST document your work before finishing. This is mandatory.**
+
+- **What to document**: research findings, code changes, test commands & results, decisions, errors & resolutions.
+- **Where to write**:
+  - Results/progress → `docs/` (with YAML frontmatter: title, code_reference, created_at, updated_at, maintainer, status)
+  - Task logs → project memory at `~/.claude/projects/-cpfs-shared-simulation-zhuzihou-dev-usd-scene-physics-prep/memory/`
+- **If you have write permission**: write docs directly.
+- **If you are read-only**: send all findings via SendMessage to the team lead, including enough detail to produce the doc.
+- **Timing**: document as you go, not just at the end. Each major milestone should be recorded.
