@@ -11,6 +11,14 @@ Usage (inside DLC container via run_task.sh dedup mode):
         --out-dir check_reports/dedup_tolerance \
         --merge-tolerance 0.005 --float-quantize-eps 1e-2
 
+Shape-invariant mode (adds scale/order-invariant dedup report):
+    python scripts/dlc/dedup_by_category.py \
+        --chunk-id 0 --chunk-total 10 \
+        --assets-root GRScenes-test1/GRScenes_assets \
+        --out-dir check_reports/dedup_shape_invariant \
+        --merge-tolerance 0.005 --float-quantize-eps 1e-2 \
+        --mode shape_invariant --hausdorff-threshold 0.05
+
 Local test (single category, chunk 0 of 79):
     ./scripts/isaac_python.sh scripts/dlc/dedup_by_category.py \
         --chunk-id 0 --chunk-total 79 \
@@ -68,6 +76,16 @@ def main() -> int:
     parser.add_argument("--merge-tolerance", type=float, default=0.005)
     parser.add_argument("--float-quantize-eps", type=float, default=1e-2)
     parser.add_argument("--progress-every", type=int, default=100)
+    parser.add_argument(
+        "--mode", choices=["all", "shape_invariant"], default="all",
+        help="Dedup mode passthrough to report_asset_mesh_dedup.py. "
+             "'shape_invariant' adds a 4th scale/order-invariant report.",
+    )
+    parser.add_argument(
+        "--hausdorff-threshold", type=float, default=0.05,
+        help="Hausdorff distance threshold for shape_invariant mode "
+             "(fraction of unit bbox, default 0.05)",
+    )
     args = parser.parse_args()
 
     assets_root = os.path.abspath(args.assets_root)
@@ -113,6 +131,8 @@ def main() -> int:
             "--float-quantize-eps", str(args.float_quantize_eps),
             "--merge-tolerance", str(args.merge_tolerance),
             "--progress-every", str(args.progress_every),
+            "--mode", args.mode,
+            "--hausdorff-threshold", str(args.hausdorff_threshold),
         ]
 
         try:

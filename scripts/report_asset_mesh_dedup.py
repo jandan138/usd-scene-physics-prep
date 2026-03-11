@@ -714,7 +714,10 @@ def _shape_invariant_merge(
             if ra != rb:
                 parent[rb] = ra
 
-        # Pairwise Hausdorff comparison
+        # Pairwise Hausdorff comparison within pre-filter group.
+        # Pre-filtering by shape_descriptor_key reduces group size to typically <50.
+        # Early exit on threshold breach further limits actual comparisons.
+        # Acceptable O(n²) within small pre-filtered groups.
         for i in range(n):
             meshes_i = _get_normalized(group[i].usd_path)
             if meshes_i is None:
@@ -1038,6 +1041,9 @@ def main() -> int:
         help="Optional JSON progress output path (defaults to <out-dir>/<dataset>_asset_mesh_dedup_progress.json)",
     )
     args = parser.parse_args()
+
+    if args.hausdorff_threshold < 0 or math.isinf(args.hausdorff_threshold):
+        parser.error("--hausdorff-threshold must be non-negative and finite")
 
     assets_root = args.assets_root
     out_dir = args.out_dir
