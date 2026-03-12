@@ -9,15 +9,16 @@ Core idea:
 - If assets carry different internal alignment transforms, adjust the *layout prim* local transform so that the
   final world placement stays unchanged.
 
-Mathematically (conceptual):
-- M_world = M_layout * M_assetInternal
-- After swapping to canonical:
-  M_layout_new * M_canonicalInternal == M_layout_old * M_oldInternal
-  => M_layout_new = M_layout_old * M_oldInternal * inverse(M_canonicalInternal)
+Mathematically (row-vector convention, p' = p * M):
+- p_world = p_mesh * M_assetInternal * M_layout * M_parent_world
+- After swapping old asset ref to canonical, world position must be unchanged:
+  M_oldInternal * M_layout_old = M_canonicalInternal * M_layout_new
+  => M_layout_new = inverse(M_canonicalInternal) * M_oldInternal * M_layout_old  (left-multiply)
 
 Important limitations (intentional):
-- We currently treat "asset internal" as the local transform authored on the asset stage's defaultPrim.
-  This matches common GRScenes patterns where alignment/scale is authored at the asset root.
+- We treat "asset internal" as the local transform on the Instance child of the asset stage's defaultPrim
+  (/Root/Instance), where normalize_asset_transforms.py writes the alignment transform.
+  Falls back to defaultPrim if no Instance child exists.
 - The script will author a single `xformOp:transform` on the instance prim to represent the compensated transform.
   This may replace existing TRS op stacks; it preserves the composed matrix but not the exact op decomposition.
 
@@ -163,26 +164,41 @@ def _format_new_asset_path(base_dir: str, old_asset_path_raw: str, new_abs: str)
 
 
 def _get_asset_internal_matrix(asset_usd_abs: str) -> Gf.Matrix4d:
-    """Return local xform of asset's defaultPrim as 'asset internal' matrix."""
+    """Return local xform of asset's /Root/Instance as 'asset internal' matrix.
+
+    normalize_asset_transforms.py writes the alignment transform (recenter +
+    Y-up->Z-up rotation) on the Instance child of the defaultPrim.  We must
+    read that prim -- NOT the defaultPrim itself, whose transform is typically
+    identity.  Falls back to defaultPrim when no Instance child exists.
+    """
     stage = Usd.Stage.Open(asset_usd_abs, load=Usd.Stage.LoadNone)
     if stage is None:
         raise RuntimeError(f"Failed to open asset USD: {asset_usd_abs}")
 
-    prim = stage.GetDefaultPrim()
-    if not prim or not prim.IsValid():
+    default_prim = stage.GetDefaultPrim()
+    if not default_prim or not default_prim.IsValid():
         children = [c for c in stage.GetPseudoRoot().GetChildren() if c and c.IsValid()]
-        prim = children[0] if children else None
+        default_prim = children[0] if children else None
 
-    if not prim or not prim.IsValid():
+    if not default_prim or not default_prim.IsValid():
         return Gf.Matrix4d(1.0)
 
-    xf = UsdGeom.Xformable(prim)
+    # Look for "Instance" child under the default prim (e.g. /Root/Instance).
+    # This is where normalize_asset_transforms.py writes the alignment transform.
+    instance_prim = None
+    for child in default_prim.GetChildren():
+        if child.GetName() == "Instance":
+            instance_prim = child
+            break
+
+    # Use Instance prim if found, otherwise fall back to default prim
+    target_prim = instance_prim if (instance_prim and instance_prim.IsValid()) else default_prim
+
+    xf = UsdGeom.Xformable(target_prim)
     if not xf:
         return Gf.Matrix4d(1.0)
 
     res = xf.GetLocalTransformation(Usd.TimeCode.Default())
-    # USD bindings differ by version: some return (matrix, resetXformStack),
-    # some may return extra fields. We only need the local matrix.
     if isinstance(res, tuple):
         return res[0]
     return res
@@ -525,19 +541,17 @@ def rewrite_layout(
                         uniq = sorted(set(changed_pairs))
                         if len(uniq) == 1:
                             old_abs, new_abs = uniq[0]
-                            # world-based compensation to avoid parent/xformStack quirks
+                            # Compensate local transform so world placement is unchanged.
+                            # Derivation (row-vector, p' = p * M):
+                            #   M_old_inst * M_old_local = M_canon_inst * M_new_local
+                            #   => M_new_local = M_canon_inst^{-1} * M_old_inst * M_old_local
                             try:
                                 old_internal = _get_internal_cached(old_abs)
                                 canonical_internal = _get_internal_cached(new_abs)
-                                old_world = xform_cache.GetLocalToWorldTransform(prim)
-                                parent = prim.GetParent()
-                                parent_world = (
-                                    xform_cache.GetLocalToWorldTransform(parent)
-                                    if parent and parent.IsValid() and parent.GetPath() != Sdf.Path.absoluteRootPath
-                                    else Gf.Matrix4d(1.0)
-                                )
-                                new_world = old_world * old_internal * canonical_internal.GetInverse()
-                                new_local = parent_world.GetInverse() * new_world
+                                old_local = xform_cache.GetLocalTransformation(prim)
+                                if isinstance(old_local, tuple):
+                                    old_local = old_local[0]
+                                new_local = canonical_internal.GetInverse() * old_internal * old_local
                                 _set_local_matrix(prim, new_local)
                                 xform_compensated += 1
                                 changes.append(
