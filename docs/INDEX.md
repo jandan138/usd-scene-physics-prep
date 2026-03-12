@@ -12,6 +12,7 @@
 
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
+| [Codex Agent Team Playbook](architecture/codex_agent_team_playbook.md) | active | 2026-03-12 | [`CODEX.md`](CODEX.md) |
 | [Directory Structure](architecture/directory_structure.md) | Active | 2025-12-22 | [`data_clean.py`](set_physics/pxr_utils/data_clean.py) |
 | [Processing Pipeline](architecture/pipeline.md) | Active | 2025-12-22 | [`clean_data.py`](clean_data.py) |
 | [project_deep_analysis.md](architecture/project_deep_analysis.md) | Unknown | N/A | - |
@@ -117,4 +118,3 @@
 | [uid_asset_downloader.md](scripts/uid_asset_downloader.md) | Unknown | N/A | - |
 | [uid_asset_downloader.zh-CN.md](scripts/uid_asset_downloader.zh-CN.md) | Unknown | N/A | - |
 | [workflow_examples.md](examples/workflow_examples.md) | Unknown | N/A | - |
-
