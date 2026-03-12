@@ -63,6 +63,7 @@
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
 | [Bottle 去重失败深度调查报告](operations/bottle_dedup_investigation_report.md) | active | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [Anomalous Asset Mesh Investigation: test0 vs normalized](operations/anomalous_assets_mesh_investigation.md) | completed | 2026-03-12 | [`normalize_asset_transforms.py`](scripts/normalize_asset_transforms.py) |
 | [Dedup V3 Full-Run Execution: topo_filesize + 3-Way Union Merge + C1 Soft-Delete](operations/dedup_v3_fullrun_execution.md) | completed | 2026-03-12 | [`union_dedup_reports.py`](scripts/union_dedup_reports.py) |
 | [Dedup V3: Topology-Invariant + File-Size Mode Implementation Plan](operations/dedup_v3_topo_filesize_plan.md) | implemented | 2026-03-11 | [`union_dedup_reports.py`](scripts/report_asset_mesh_dedup.py, scripts/union_dedup_reports.py) |
 | [Dedup V3: topo_filesize Mode Implementation](operations/dedup_v3_implementation.md) | implemented | 2026-03-11 | [`dedup_by_category.py`](scripts/report_asset_mesh_dedup.py, scripts/union_dedup_reports.py, scripts/dlc/dedup_by_category.py) |
