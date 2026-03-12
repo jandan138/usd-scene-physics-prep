@@ -42,7 +42,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
-from pxr import Gf, Usd, UsdGeom
+from pxr import Gf, Usd, UsdGeom, UsdShade
 
 SHAPE_DESCRIPTOR_EPS = 0.01
 
@@ -60,6 +60,23 @@ class MeshSig:
     has_st: bool
     shape_invariant_sig_hex: str = ""
     shape_descriptor_key: str = ""
+    material_binding: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class TopoInvariantDescriptor:
+    """Per-mesh topology invariant (order-independent)."""
+    vertex_count: int
+    face_count: int
+    material_binding: Optional[str]  # bound material path relative to asset root
+
+
+@dataclass(frozen=True)
+class AssetTopoInvariant:
+    """Asset-level topology invariant signature."""
+    mesh_count: int
+    mesh_descriptors: Tuple[TopoInvariantDescriptor, ...]  # sorted
+    sig_hex: str  # SHA256 of the above
 
 
 @dataclass(frozen=True)
@@ -75,6 +92,9 @@ class AssetRecord:
     meshes: List[MeshSig]
     asset_shape_invariant_sig_hex: str = ""
     asset_shape_descriptor_key: str = ""
+    usd_file_size: Optional[int] = None
+    glb_file_size: Optional[int] = None
+    asset_topo_invariant_sig_hex: str = ""
 
 
 @dataclass(frozen=True)
@@ -441,6 +461,15 @@ def _compute_mesh_sigs(
 
     face_count = int(len(face_vertex_counts))
 
+    # Material binding (for topo_invariant mode)
+    try:
+        binding_api = UsdShade.MaterialBindingAPI(prim)
+        direct_binding = binding_api.GetDirectBinding()
+        mat_path = direct_binding.GetMaterialPath()
+        material_binding = str(mat_path) if mat_path and not mat_path.isEmpty else None
+    except Exception:
+        material_binding = None
+
     # --- Shape-invariant signature
     normalized_pts = _normalize_to_unit_bbox(points)
     shape_inv_sig = _shape_invariant_mesh_sig(normalized_pts, face_count, eps=float_eps if float_eps > 0 else SHAPE_DESCRIPTOR_EPS)
@@ -459,6 +488,7 @@ def _compute_mesh_sigs(
         has_st=has_st,
         shape_invariant_sig_hex=shape_inv_sig,
         shape_descriptor_key=shape_desc_key,
+        material_binding=material_binding,
     )
 
 
@@ -477,6 +507,18 @@ def _parse_category_uid(assets_root: str, usd_path: str) -> Tuple[Optional[str],
     if len(parts) >= 4 and parts[2] == "usd":
         return parts[0], parts[1]
     return None, None
+
+
+def _get_asset_file_sizes(usd_path: str) -> Tuple[Optional[int], Optional[int]]:
+    """Get USD and GLB file sizes for an asset.
+    Returns (usd_size_bytes, glb_size_bytes) -- None if file doesn't exist.
+    """
+    usd_size = os.path.getsize(usd_path) if os.path.isfile(usd_path) else None
+    uid = os.path.splitext(os.path.basename(usd_path))[0]
+    glb_dir = os.path.join(os.path.dirname(os.path.dirname(usd_path)), "glb")
+    glb_path = os.path.join(glb_dir, f"{uid}.glb")
+    glb_size = os.path.getsize(glb_path) if os.path.isfile(glb_path) else None
+    return usd_size, glb_size
 
 
 def _iter_asset_usd_files(assets_root: str) -> Iterable[str]:
@@ -768,6 +810,101 @@ def _shape_invariant_merge(
     return merged
 
 
+def _filesize_match(size_a: Optional[int], size_b: Optional[int], tolerance: float) -> bool:
+    """Check if two file sizes are within tolerance of each other."""
+    if size_a is None or size_b is None:
+        return False
+    if size_a == 0 and size_b == 0:
+        return True
+    max_size = max(size_a, size_b)
+    if max_size == 0:
+        return True
+    return abs(size_a - size_b) / max_size <= tolerance
+
+
+def _topo_filesize_merge(
+    records: List[AssetRecord],
+    filesize_tolerance: float = 0.02,
+) -> Dict[str, List[str]]:
+    """Find duplicate groups using topology-invariant sig + file-size matching.
+
+    Algorithm:
+    1. Pre-filter: group by asset_topo_invariant_sig_hex, drop singletons
+    2. Within each group: pairwise GLB file-size match (primary), USD fallback
+    3. Union-Find merge, collect connected components
+    """
+    import logging
+
+    topo_groups: Dict[str, List[AssetRecord]] = {}
+    skipped = 0
+    for r in records:
+        if r.mesh_count == 0 or not r.asset_topo_invariant_sig_hex:
+            skipped += 1
+            continue
+        topo_groups.setdefault(r.asset_topo_invariant_sig_hex, []).append(r)
+
+    # Drop singletons
+    topo_groups = {k: v for k, v in topo_groups.items() if len(v) >= 2}
+
+    total_candidates = sum(len(g) for g in topo_groups.values())
+    logging.info(
+        "topo_filesize_merge: %d pre-filter groups, %d candidate assets, %d skipped",
+        len(topo_groups), total_candidates, skipped,
+    )
+
+    new_group_id = 0
+    merged: Dict[str, List[str]] = {}
+
+    for sig_key, group in topo_groups.items():
+        n = len(group)
+        parent: Dict[int, int] = {i: i for i in range(n)}
+
+        def _find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def _union(a: int, b: int) -> None:
+            ra, rb = _find(a), _find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                if _find(i) == _find(j):
+                    continue
+
+                glb_ok = _filesize_match(
+                    group[i].glb_file_size, group[j].glb_file_size, filesize_tolerance
+                )
+                if glb_ok:
+                    _union(i, j)
+                elif group[i].glb_file_size is None and group[j].glb_file_size is None:
+                    # Fallback: both missing GLB, match on USD with tighter tolerance
+                    usd_ok = _filesize_match(
+                        group[i].usd_file_size, group[j].usd_file_size,
+                        filesize_tolerance / 2,
+                    )
+                    if usd_ok:
+                        _union(i, j)
+
+        # Collect clusters
+        clusters: Dict[int, List[str]] = {}
+        for i in range(n):
+            root = _find(i)
+            clusters.setdefault(root, []).append(group[i].usd_path)
+
+        for cluster_paths in clusters.values():
+            if len(cluster_paths) >= 2:
+                sig = f"topo_filesize_merge_{new_group_id}"
+                new_group_id += 1
+                merged[sig] = sorted(cluster_paths)
+
+    logging.info("topo_filesize_merge: done. %d duplicate groups found.", len(merged))
+    return merged
+
+
 def _tolerance_merge(
     records: List[AssetRecord],
     existing_dups: Dict[str, List[str]],
@@ -901,6 +1038,9 @@ def _write_report(
         # Use Hausdorff-based merge instead of simple hash grouping
         hausdorff_threshold = kwargs.get("hausdorff_threshold", 0.05)
         dups = _shape_invariant_merge(records, tolerance=hausdorff_threshold)
+    elif mode == "topo_filesize":
+        filesize_tol = kwargs.get("filesize_tolerance", 0.02)
+        dups = _topo_filesize_merge(records, filesize_tolerance=filesize_tol)
     else:
         assert duplicates_key is not None, f"Unknown mode: {mode}"
         dups = _make_duplicates_map(records, duplicates_key)
@@ -930,6 +1070,8 @@ def _write_report(
     }
     if mode == "shape_invariant":
         meta["hausdorff_threshold"] = kwargs.get("hausdorff_threshold", 0.05)
+    if mode == "topo_filesize":
+        meta["filesize_tolerance"] = kwargs.get("filesize_tolerance", 0.02)
 
     payload = {
         "meta": meta,
@@ -947,6 +1089,9 @@ def _write_report(
                 "asset_scale_sig": r.asset_scale_sig_hex,
                 "asset_full_matrix_sig": r.asset_full_matrix_sig_hex,
                 "asset_topo_sig": r.asset_topo_sig_hex,
+                "asset_topo_invariant_sig": getattr(r, 'asset_topo_invariant_sig_hex', ''),
+                "usd_file_size": getattr(r, 'usd_file_size', None),
+                "glb_file_size": getattr(r, 'glb_file_size', None),
                 "meshes": [
                     {
                         "prim_path": m.prim_path,
@@ -1018,10 +1163,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--mode",
-        choices=["all", "shape_invariant"],
+        choices=["all", "shape_invariant", "topo_filesize"],
         default="all",
         help="Dedup mode. 'all' generates 3 standard reports. "
-             "'shape_invariant' additionally generates a 4th scale/order-invariant report.",
+             "'shape_invariant' generates a scale/order-invariant report. "
+             "'topo_filesize' generates a topology+file-size invariant report.",
     )
     parser.add_argument(
         "--hausdorff-threshold",
@@ -1029,6 +1175,12 @@ def main() -> int:
         default=0.05,
         help="Hausdorff distance threshold for shape_invariant mode "
              "(fraction of unit bbox, default 0.05)",
+    )
+    parser.add_argument(
+        "--filesize-tolerance",
+        type=float,
+        default=0.02,
+        help="File size tolerance for topo_filesize mode (default 0.02 = 2%%)",
     )
     parser.add_argument(
         "--progress-jsonl",
@@ -1162,6 +1314,21 @@ def main() -> int:
             per_mesh_desc_keys = sorted(m.shape_descriptor_key for m in mesh_sigs)
             asset_shape_desc_key = "|".join(per_mesh_desc_keys) if per_mesh_desc_keys else ""
 
+            # Topo-invariant sig: order-independent topology + material bindings
+            topo_inv_descs = sorted(
+                [(m.vertex_count, m.face_count, m.material_binding or "<no_material>") for m in mesh_sigs],
+                key=lambda t: (t[0], t[1], t[2])
+            )
+            h_topo_inv = hashlib.sha256()
+            h_topo_inv.update(f"topo_invariant_v1:{len(mesh_sigs)}".encode())
+            for vc, fc, mat in topo_inv_descs:
+                h_topo_inv.update(struct.pack("<II", vc, fc))
+                h_topo_inv.update(mat.encode("utf-8"))
+            asset_topo_inv_sig = h_topo_inv.hexdigest()
+
+            # File sizes for topo_filesize mode
+            usd_file_size, glb_file_size = _get_asset_file_sizes(usd_path)
+
             records.append(
                 AssetRecord(
                     usd_path=usd_path,
@@ -1175,6 +1342,9 @@ def main() -> int:
                     meshes=mesh_sigs,
                     asset_shape_invariant_sig_hex=asset_shape_inv_sig,
                     asset_shape_descriptor_key=asset_shape_desc_key,
+                    asset_topo_invariant_sig_hex=asset_topo_inv_sig,
+                    usd_file_size=usd_file_size,
+                    glb_file_size=glb_file_size,
                 )
             )
         except Exception as e:
@@ -1236,6 +1406,22 @@ def main() -> int:
             hausdorff_threshold=hausdorff_thr,
         )
 
+    # Topo-filesize report (only when --mode topo_filesize)
+    out_topo_fs = None
+    if args.mode == "topo_filesize":
+        out_topo_fs = os.path.join(out_dir, f"{dataset}_asset_mesh_dedup_topo_filesize.json")
+        _write_report(
+            out_topo_fs,
+            mode="topo_filesize",
+            assets_root=assets_root,
+            dataset=dataset,
+            float_eps=float_eps,
+            records=records,
+            errors=errors,
+            started_at=started_at,
+            filesize_tolerance=float(args.filesize_tolerance),
+        )
+
     _emit_progress(total, phase="finalize")
 
     print("Wrote reports:", flush=True)
@@ -1244,6 +1430,8 @@ def main() -> int:
     print(f"  {out_full}", flush=True)
     if out_shape_inv:
         print(f"  {out_shape_inv}", flush=True)
+    if out_topo_fs:
+        print(f"  {out_topo_fs}", flush=True)
     if errors:
         print(f"WARNING: {len(errors)} files had errors (see report errors[])", flush=True)
 

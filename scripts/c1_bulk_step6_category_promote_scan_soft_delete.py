@@ -378,6 +378,20 @@ def main() -> int:
     if not mapping:
         raise SystemExit("Empty mapping JSON")
 
+    # Safety: exclude any "old" asset that is also a canonical target.
+    # This prevents false scan hits from transitive canonical conflicts
+    # (e.g., same asset appearing with different path forms in the report).
+    canonical_set: Set[str] = set(mapping.values())
+    conflicting = set(mapping.keys()) & canonical_set
+    if conflicting:
+        print(
+            f"WARNING: {len(conflicting)} old assets are also canonical targets — "
+            f"excluding from old set to avoid false scan hits",
+            flush=True,
+        )
+        for k in conflicting:
+            del mapping[k]
+
     old_asset_usd_rel_set: Set[str] = set(mapping.keys())
     old_uids = sorted({uid for k in mapping.keys() if (uid := _parse_uid_from_report_style_asset_usd(k))})
     canonical_uids = sorted({uid for v in mapping.values() if (uid := _parse_uid_from_report_style_asset_usd(v))})

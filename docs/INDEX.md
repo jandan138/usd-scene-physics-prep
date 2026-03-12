@@ -1,6 +1,6 @@
 # Project Documentation Index
 
-> Generated at: 2026-03-05
+> Generated at: 2026-03-12
 
 ## Overview
 
@@ -61,6 +61,21 @@
 
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
+| [Bottle 去重失败深度调查报告](operations/bottle_dedup_investigation_report.md) | active | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [Dedup V3 Full-Run Execution: topo_filesize + 3-Way Union Merge + C1 Soft-Delete](operations/dedup_v3_fullrun_execution.md) | completed | 2026-03-12 | [`union_dedup_reports.py`](scripts/union_dedup_reports.py) |
+| [Dedup V3: Topology-Invariant + File-Size Mode Implementation Plan](operations/dedup_v3_topo_filesize_plan.md) | implemented | 2026-03-11 | [`union_dedup_reports.py`](scripts/report_asset_mesh_dedup.py, scripts/union_dedup_reports.py) |
+| [Dedup V3: topo_filesize Mode Implementation](operations/dedup_v3_implementation.md) | implemented | 2026-03-11 | [`dedup_by_category.py`](scripts/report_asset_mesh_dedup.py, scripts/union_dedup_reports.py, scripts/dlc/dedup_by_category.py) |
+| [Design: MDL Path Fix (absolute → relative) for Normalized Dataset](operations/mdl_path_fix_design.md) | approved | 2026-03-10 | [`fix_normalized_mdl_paths.py`](specs_normalizer/utils/mdl_rewrite.py, scripts/fix_normalized_mdl_paths.py) |
+| [Fix: C1 Transitive Canonical Conflict (Abs/Rel Path Mismatch)](operations/c1_transitive_canonical_fix.md) | completed | 2026-03-11 | [`union_dedup_reports.py`](scripts/union_dedup_reports.py) |
+| [GRScenes-test1 资产去重评估与行动方案](operations/grscenes_test1_dedup_assessment.md) | active | 2026-03-08 | [`normalize_asset_transforms.py`](scripts/report_asset_mesh_dedup.py, scripts/normalize_asset_transforms.py) |
+| [MDL Path Fix: Absolute to Relative Path Rewriting for Normalized Dataset](operations/mdl_path_fix.md) | active | 2026-03-10 | [`mdl_rewrite.py`](scripts/fix_normalized_mdl_paths.py, specs_normalizer/utils/mdl_rewrite.py) |
+| [Matrix Multiply Order Bug Fix in normalize_asset_transforms.py](operations/matrix_multiply_bug_fix.md) | active | 2026-03-10 | [`normalize_asset_transforms.py`](scripts/normalize_asset_transforms.py) |
+| [Phase 2: Normalized 全量去重扫描与 C1 执行](operations/normalized_dedup_phase2_execution.md) | active | 2026-03-09 | [`c1_autorun_categories.py`](scripts/c1_autorun_categories.py) |
+| [Re-normalization V2 Pipeline Execution](operations/renormalization_v2_execution.md) | active | 2026-03-11 | [`normalize_asset_transforms.py`](scripts/normalize_asset_transforms.py) |
+| [Scale-Invariant Dedup Proposal: --mode shape_invariant](operations/dedup_scale_invariant_proposal.md) | draft | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [Shape-Invariant Dedup Mode Implementation](operations/shape_invariant_implementation.md) | implemented | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [Shape-Invariant Dedup Mode Proposal](operations/dedup_shape_invariant_proposal.md) | implemented | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [Shape-Invariant Full-Run Execution: DLC Scan + Union Merge + C1 Soft-Delete](operations/shape_invariant_fullrun_execution.md) | in_progress | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
 | [asset_dedup_c1_scaling_workflow.md](operations/asset_dedup_c1_scaling_workflow.md) | Unknown | N/A | - |
 | [asset_dedup_c1_scene_instancing_runbook.md](operations/asset_dedup_c1_scene_instancing_runbook.md) | Unknown | N/A | - |
 | [asset_mesh_dedup_code_guide.md](operations/asset_mesh_dedup_code_guide.md) | Unknown | N/A | - |
@@ -73,6 +88,7 @@
 | [troubleshooting_glb_payload_multimesh.md](operations/troubleshooting_glb_payload_multimesh.md) | Unknown | N/A | - |
 | [troubleshooting_interaction_preprocess.md](operations/troubleshooting_interaction_preprocess.md) | Unknown | N/A | - |
 | [windows_notes.md](operations/windows_notes.md) | Unknown | N/A | - |
+| [去重量化桶边界问题分析与修复](operations/dedup_quantize_boundary_analysis.md) | active | 2026-03-08 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
 
 ## References
 

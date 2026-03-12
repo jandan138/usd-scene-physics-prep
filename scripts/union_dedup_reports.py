@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Union merge of geom_only and shape_invariant dedup reports for the same category.
+"""Union merge of dedup reports for the same category.
 
-Computes the UNION of removable asset sets from both modes, producing a merged
+Computes the UNION of removable asset sets from multiple modes, producing a merged
 report that maximizes deduplication coverage.
 
 Usage:
-    # Single category
+    # Single category (2-way: geom_only + shape_invariant)
     python scripts/union_dedup_reports.py \
       --geom-only check_reports/normalized_v2_dedup/bottle/bottle_asset_mesh_dedup_geom_only.json \
       --shape-invariant check_reports/shape_invariant_test/bottle/bottle_asset_mesh_dedup_shape_invariant.json \
+      --output check_reports/union_merged/bottle/bottle_union_merged.json
+
+    # N-way merge (arbitrary number of reports)
+    python scripts/union_dedup_reports.py \
+      --reports report_a.json report_b.json report_c.json \
       --output check_reports/union_merged/bottle/bottle_union_merged.json
 
     # Batch mode
@@ -16,6 +21,7 @@ Usage:
       --batch \
       --geom-dir check_reports/normalized_v2_dedup/ \
       --shape-dir check_reports/shape_invariant_test/ \
+      [--topo-dir check_reports/topo_filesize/] \
       --output-dir check_reports/union_merged/ \
       --summary check_reports/union_merged/summary.json
 """
@@ -25,12 +31,43 @@ import glob
 import json
 import os
 import time
+from typing import List
 
 
 def normalize_path(p):
-    """Strip leading ./ and normalize to consistent relative form."""
+    """Normalize asset path to consistent relative report-style form.
+
+    Handles absolute paths by extracting the dataset-relative portion starting
+    from the dataset name (detected via GRScenes_assets marker).  Also strips
+    leading './' for plain relative paths.
+
+    This is critical for union merge correctness: geom_only reports typically use
+    relative paths while shape_invariant reports may use absolute paths.  Without
+    normalization the union-find treats the same physical asset as two different
+    strings, causing transitive canonical conflicts in downstream C1 pipelines.
+    """
+    p = p.replace("\\", "/").strip()
     if p.startswith("./"):
         p = p[2:]
+
+    # If the path is absolute and contains a known dataset marker, convert to
+    # relative report-style: <dataset_name>/GRScenes_assets/<cat>/<uid>/...
+    if "/" in p:
+        marker = "/GRScenes_assets/"
+        idx = p.find(marker)
+        if idx >= 0:
+            # Walk backwards from the marker to find the dataset directory name.
+            # The dataset name is the path component immediately before GRScenes_assets.
+            prefix = p[:idx]
+            # Find last '/' in prefix to get dataset dir name
+            slash = prefix.rfind("/")
+            if slash >= 0:
+                dataset_name = prefix[slash + 1:]
+            else:
+                dataset_name = prefix
+            if dataset_name:
+                p = dataset_name + marker + p[idx + len(marker):]
+
     return p
 
 
@@ -100,29 +137,20 @@ def union_merge(geom_report, shape_report):
         for m in members:
             uf.union(rep, m)
 
-    # For each shape-only add, link it into its shape_invariant group's
-    # representative. This may merge two previously separate geom groups
-    # if the shape group spans them.
-    for path in shape_only_adds:
-        if path not in shape_a2g:
-            continue
-        shape_gidx = shape_a2g[path]
-        shape_rep = shape_groups[shape_gidx][0]
-        # Link the shape-only add to the shape representative
-        uf.union(shape_rep, path)
+    # Link ALL shape_invariant group members (not just shape_only_adds).
+    # This ensures full transitive closure: if a shape group spans multiple
+    # geom groups, the union-find merges them into one connected component.
+    for rep, members in shape_groups:
+        for m in members:
+            uf.union(rep, m)
 
     # Collect connected components
     components = {}  # root -> list of members
     all_grouped = set()
     for _, members in geom_groups:
-        for m in members:
-            all_grouped.add(m)
-    for path in shape_only_adds:
-        all_grouped.add(path)
-        # Also add the shape representative so it's in the component
-        if path in shape_a2g:
-            shape_rep = shape_groups[shape_a2g[path]][0]
-            all_grouped.add(shape_rep)
+        all_grouped.update(members)
+    for _, members in shape_groups:
+        all_grouped.update(members)
 
     for asset in all_grouped:
         root = uf.find(asset)
@@ -211,6 +239,119 @@ def union_merge(geom_report, shape_report):
     return result
 
 
+def union_merge_n(reports: List[dict]) -> dict:
+    """Merge N dedup reports by union of all groups via union-find.
+
+    Each report contributes its duplicate groups to a shared union-find.
+    Connected components form the merged groups.
+    """
+    uf = UnionFind()
+    all_grouped = set()
+    all_removable = set()
+
+    # Track per-mode stats
+    mode_stats = {}
+    asset_count = 0
+    all_errors = []
+    all_assets = []
+
+    for report in reports:
+        mode = report.get("meta", {}).get("mode", "unknown")
+        _, _, groups = extract_removable_and_groups(report)
+
+        removable_count = 0
+        for rep, members in groups:
+            for m in members:
+                uf.union(rep, m)
+                all_grouped.add(m)
+            for m in members[1:]:
+                all_removable.add(m)
+                removable_count += 1
+
+        mode_stats[mode] = {
+            "removable": removable_count,
+            "group_count": len(groups),
+        }
+
+        meta = report.get("meta", {})
+        if meta.get("asset_usd_count", 0) > asset_count:
+            asset_count = meta["asset_usd_count"]
+            all_assets = report.get("assets", [])
+        all_errors.extend(report.get("errors", []))
+
+    # Collect connected components
+    components = {}
+    for asset in all_grouped:
+        root = uf.find(asset)
+        components.setdefault(root, []).append(asset)
+
+    # Build output groups
+    output_duplicates = []
+    actual_removable = set()
+
+    for root, members in components.items():
+        if len(members) < 2:
+            continue
+
+        keepers = [m for m in members if m not in all_removable]
+        removables = [m for m in members if m in all_removable]
+
+        if not removables:
+            continue
+
+        if not keepers:
+            chosen = members[0]
+            keepers = [chosen]
+            removables = [m for m in members if m != chosen]
+
+        rep = keepers[0]
+        group_paths = [rep] + sorted(removables) + sorted(keepers[1:])
+        output_duplicates.append({
+            "sig": "",
+            "count": len(group_paths),
+            "usd_paths": group_paths,
+        })
+        for p in removables:
+            actual_removable.add(p)
+
+    output_duplicates.sort(key=lambda g: g["usd_paths"][0])
+    for i, g in enumerate(output_duplicates):
+        g["sig"] = f"union_merge_{i}"
+
+    # Validation
+    representatives = {g["usd_paths"][0] for g in output_duplicates}
+    conflicts = representatives & actual_removable
+    if conflicts:
+        print(f"WARNING: {len(conflicts)} assets are both representative and removable!")
+        for c in sorted(conflicts)[:5]:
+            print(f"  - {c}")
+
+    meta = {
+        "dataset": "",
+        "mode": "union_merged",
+        "source_modes": list(mode_stats.keys()),
+        "per_mode_stats": mode_stats,
+        "union_removable": len(actual_removable),
+        "asset_usd_count": asset_count,
+        "duplicate_group_count": len(output_duplicates),
+        "generated_at_unix": int(time.time()),
+    }
+
+    # Try to get dataset from first report
+    for report in reports:
+        ds = report.get("meta", {}).get("dataset", "")
+        if ds:
+            meta["dataset"] = ds
+            break
+
+    return {
+        "meta": meta,
+        "duplicates": output_duplicates,
+        "assets": all_assets,
+        "errors": all_errors,
+    }
+
+
 def run_single(geom_path, shape_path, output_path):
     """Run union merge for a single category pair."""
     with open(geom_path) as f:
@@ -238,8 +379,13 @@ def run_single(geom_path, shape_path, output_path):
     return result
 
 
-def run_batch(geom_dir, shape_dir, output_dir, summary_path=None):
-    """Run union merge for all matching categories across two directories."""
+def run_batch(geom_dir, shape_dir, output_dir, summary_path=None, topo_dir=None):
+    """Run union merge for all matching categories across directories.
+
+    When topo_dir is provided and a topo_filesize report exists for a category,
+    uses union_merge_n() to merge all available reports (geom_only, shape_invariant,
+    topo_filesize) instead of the 2-way union_merge().
+    """
     # Find shape_invariant reports
     shape_pattern = os.path.join(shape_dir, "*", "*_asset_mesh_dedup_shape_invariant.json")
     shape_files = sorted(glob.glob(shape_pattern))
@@ -249,13 +395,12 @@ def run_batch(geom_dir, shape_dir, output_dir, summary_path=None):
         return
 
     summary = {"categories": {}, "totals": {}}
-    total_geom = 0
-    total_shape = 0
     total_union = 0
     total_assets = 0
+    per_mode_totals = {}
 
-    for shape_path in shape_files:
-        category = os.path.basename(os.path.dirname(shape_path))
+    for sf in shape_files:
+        category = os.path.basename(os.path.dirname(sf))
         geom_path = os.path.join(
             geom_dir, category,
             f"{category}_asset_mesh_dedup_geom_only.json"
@@ -269,39 +414,84 @@ def run_batch(geom_dir, shape_dir, output_dir, summary_path=None):
             f"{category}_union_merged.json"
         )
 
-        print(f"\n--- {category} ---")
-        result = run_single(geom_path, shape_path, output_path)
-        meta = result["meta"]
+        # Check for topo_filesize report
+        topo_path = None
+        if topo_dir:
+            topo_path = os.path.join(
+                topo_dir, category,
+                f"{category}_asset_mesh_dedup_topo_filesize.json"
+            )
+            if not os.path.exists(topo_path):
+                topo_path = None
 
-        summary["categories"][category] = {
+        print(f"\n--- {category} ---")
+
+        if topo_path:
+            # N-way merge with all available reports
+            report_paths = [geom_path, sf, topo_path]
+            reports = []
+            for rp in report_paths:
+                with open(rp) as f:
+                    reports.append(json.load(f))
+            result = union_merge_n(reports)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, "w") as f:
+                json.dump(result, f, indent=2)
+            meta = result["meta"]
+            total = meta["asset_usd_count"]
+            removable = meta["union_removable"]
+            pct = removable / total * 100 if total else 0
+            print(f"[{meta['dataset']}] N-way union removable: {removable}/{total} ({pct:.1f}%)")
+            print(f"  Source modes: {meta['source_modes']}")
+            print(f"  Groups: {meta['duplicate_group_count']}")
+        else:
+            # 2-way merge (legacy path)
+            result = run_single(geom_path, sf, output_path)
+
+        meta = result["meta"]
+        cat_stats = {
             "asset_usd_count": meta["asset_usd_count"],
-            "geom_only_removable": meta["geom_only_removable"],
-            "shape_invariant_removable": meta["shape_invariant_removable"],
             "union_removable": meta["union_removable"],
-            "shape_invariant_unique_adds": meta["shape_invariant_unique_adds"],
             "duplicate_group_count": meta["duplicate_group_count"],
+            "source_modes": meta.get("source_modes", ["geom_only", "shape_invariant"]),
         }
-        total_geom += meta["geom_only_removable"]
-        total_shape += meta["shape_invariant_removable"]
+
+        # Include per-mode stats if available
+        if "per_mode_stats" in meta:
+            cat_stats["per_mode_stats"] = meta["per_mode_stats"]
+        else:
+            cat_stats["geom_only_removable"] = meta.get("geom_only_removable", 0)
+            cat_stats["shape_invariant_removable"] = meta.get("shape_invariant_removable", 0)
+
+        summary["categories"][category] = cat_stats
         total_union += meta["union_removable"]
         total_assets += meta["asset_usd_count"]
+
+        # Accumulate per-mode totals
+        if "per_mode_stats" in meta:
+            for mode, stats in meta["per_mode_stats"].items():
+                per_mode_totals.setdefault(mode, 0)
+                per_mode_totals[mode] += stats["removable"]
+        else:
+            per_mode_totals.setdefault("geom_only", 0)
+            per_mode_totals["geom_only"] += meta.get("geom_only_removable", 0)
+            per_mode_totals.setdefault("shape_invariant", 0)
+            per_mode_totals["shape_invariant"] += meta.get("shape_invariant_removable", 0)
 
     summary["totals"] = {
         "categories_processed": len(summary["categories"]),
         "total_assets": total_assets,
-        "total_geom_only_removable": total_geom,
-        "total_shape_invariant_removable": total_shape,
         "total_union_removable": total_union,
-        "total_shape_only_adds": total_union - total_geom,
+        "per_mode_removable": per_mode_totals,
         "union_dedup_rate": f"{total_union / total_assets * 100:.1f}%" if total_assets else "0%",
     }
 
     print(f"\n=== BATCH SUMMARY ===")
     print(f"Categories: {len(summary['categories'])}")
     print(f"Total assets: {total_assets}")
-    print(f"Geom-only removable: {total_geom}")
-    print(f"Shape-invariant removable: {total_shape}")
-    print(f"Union removable: {total_union} (shape-only adds: {total_union - total_geom})")
+    for mode, count in sorted(per_mode_totals.items()):
+        print(f"  {mode} removable: {count}")
+    print(f"Union removable: {total_union}")
     if total_assets:
         print(f"Union dedup rate: {total_union / total_assets * 100:.1f}%")
 
@@ -316,19 +506,25 @@ def run_batch(geom_dir, shape_dir, output_dir, summary_path=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Union merge geom_only + shape_invariant dedup reports"
+        description="Union merge dedup reports (2-way or N-way)"
     )
     parser.add_argument("--batch", action="store_true",
                         help="Batch mode: process all matching categories")
 
-    # Single mode
+    # Single mode (2-way legacy)
     parser.add_argument("--geom-only", help="Path to geom_only report JSON")
     parser.add_argument("--shape-invariant", help="Path to shape_invariant report JSON")
     parser.add_argument("--output", help="Output path for merged report")
 
+    # N-way merge
+    parser.add_argument("--reports", nargs="+",
+                        help="List of report JSON paths for N-way merge "
+                             "(alternative to --geom-only/--shape-invariant)")
+
     # Batch mode
     parser.add_argument("--geom-dir", help="Directory containing geom_only reports")
     parser.add_argument("--shape-dir", help="Directory containing shape_invariant reports")
+    parser.add_argument("--topo-dir", help="Directory containing topo_filesize reports (optional)")
     parser.add_argument("--output-dir", help="Output directory for merged reports")
     parser.add_argument("--summary", help="Path for batch summary JSON")
 
@@ -337,7 +533,27 @@ def main():
     if args.batch:
         if not all([args.geom_dir, args.shape_dir, args.output_dir]):
             parser.error("--batch requires --geom-dir, --shape-dir, and --output-dir")
-        run_batch(args.geom_dir, args.shape_dir, args.output_dir, args.summary)
+        run_batch(args.geom_dir, args.shape_dir, args.output_dir, args.summary,
+                  topo_dir=args.topo_dir)
+    elif args.reports:
+        if not args.output:
+            parser.error("--reports requires --output")
+        reports = []
+        for rp in args.reports:
+            with open(rp) as f:
+                reports.append(json.load(f))
+        result = union_merge_n(reports)
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w") as f:
+            json.dump(result, f, indent=2)
+        meta = result["meta"]
+        total = meta["asset_usd_count"]
+        removable = meta["union_removable"]
+        pct = removable / total * 100 if total else 0
+        print(f"[{meta['dataset']}] N-way union removable: {removable}/{total} ({pct:.1f}%)")
+        print(f"  Source modes: {meta['source_modes']}")
+        print(f"  Groups: {meta['duplicate_group_count']}")
+        print(f"  Output: {args.output}")
     else:
         if not all([args.geom_only, args.shape_invariant, args.output]):
             parser.error("Single mode requires --geom-only, --shape-invariant, and --output")

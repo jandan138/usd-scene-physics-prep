@@ -1,11 +1,6 @@
 ---
 title: "Phase 2: Normalized 全量去重扫描与 C1 执行"
-code_reference:
-  - scripts/c1_build_bulk_mapping_from_dedup_report.py
-  - scripts/c1_bulk_step6_category_promote_scan_soft_delete.py
-  - scripts/c1_autorun_categories.py
-  - scripts/merge_dedup_reports.py
-  - scripts/summarize_dedup_reports.py
+code_reference: scripts/c1_autorun_categories.py
 created_at: 2026-03-09
 updated_at: 2026-03-09
 maintainer: claude

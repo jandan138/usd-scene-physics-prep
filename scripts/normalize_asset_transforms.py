@@ -25,16 +25,22 @@ Usage:
       --scenes-root GRScenes-test1/GRScenes100 \
       --output-root GRScenes-test1-normalized \
       [--category plate] [--dry-run] [--symlink-copy] \
-      [--report-dir check_reports/normalize]
+      [--report-dir check_reports/normalize] \
+      [--phase 1|2] [--centers-dir /path/to/centers]
 
   Use --symlink-copy to create symlinks instead of copying non-USD files
   (PNGs, GLBs, JSON). This drastically reduces I/O for large datasets.
   Avoid /tmp as output-root for large runs (not persistent across reboots).
+
+  Use --phase 1 to run only Phase 1 (asset normalization) and save centers JSON.
+  Use --phase 2 with --centers-dir to run only Phase 2 (scene compensation),
+  loading centers from JSON files produced by Phase 1.
 """
 
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import math
 import os
@@ -196,7 +202,7 @@ def compute_asset_center(src_usd: str) -> Dict[str, Any]:
         mesh = UsdGeom.Mesh(mesh_prim)
         points = mesh.GetPointsAttr().Get()
         M_chain = _get_chain_transform(instance, mesh_prim)
-        M_internal = M_instance * M_chain
+        M_internal = M_chain * M_instance
         for p in points:
             p_vec = Gf.Vec3d(p[0], p[1], p[2])
             p_root = M_internal.Transform(p_vec)
@@ -250,7 +256,7 @@ def normalize_asset(src_usd: str, dst_usd: str) -> Dict[str, Any]:
         raise RuntimeError(f"No meshes found under /Root/Instance in: {src_usd}")
 
     # For each mesh, compute the full internal transform chain:
-    # M_internal = M_instance * M_chain (chain = transforms between Instance and mesh)
+    # M_internal = M_chain * M_instance (chain = transforms between Instance and mesh)
     mesh_data: List[Tuple[Any, Gf.Matrix4d, Any, Optional[Any]]] = []
     all_rotated_points: List[Gf.Vec3d] = []
 
@@ -261,7 +267,7 @@ def normalize_asset(src_usd: str, dst_usd: str) -> Dict[str, Any]:
 
         # Chain transform from Instance's children down to this mesh
         M_chain = _get_chain_transform(instance, mesh_prim)
-        M_internal = M_instance * M_chain
+        M_internal = M_chain * M_instance
 
         # Transform each point to /Root space, then rotate Y→Z
         for p in points:
@@ -550,8 +556,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                      help="Use symlinks instead of file copies for non-USD files (reduces I/O)")
     ap.add_argument("--report-dir", default=None,
                      help="Directory for JSON reports")
+    ap.add_argument("--phase", choices=["1", "2"], default=None,
+                     help="Run only Phase 1 (normalize assets) or Phase 2 (compensate scenes). "
+                          "Default: both phases.")
+    ap.add_argument("--centers-dir", default=None,
+                     help="Directory containing centers_*.json files (required for --phase 2)")
 
     args = ap.parse_args(argv)
+
+    if args.phase == "2" and not args.centers_dir:
+        ap.error("--centers-dir is required when --phase 2 is specified")
 
     assets_root = os.path.abspath(args.assets_root)
     scenes_root = os.path.abspath(args.scenes_root)
@@ -566,101 +580,143 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"Category filter: {args.category}")
     if args.dry_run:
         print("DRY RUN — no files will be written")
+    if args.phase:
+        print(f"Phase: {args.phase} only")
     print()
+
+    # Ensure report directory exists early
+    report_dir = args.report_dir
+    if report_dir:
+        os.makedirs(report_dir, exist_ok=True)
 
     # -----------------------------------------------------------------------
     # Phase 1: Normalize assets
     # -----------------------------------------------------------------------
-    print("=" * 60)
-    print("Phase 1: Normalizing assets")
-    print("=" * 60)
-
-    asset_list = discover_assets(assets_root, args.category)
-    print(f"Found {len(asset_list)} assets to normalize")
+    run_phase1 = args.phase != "2"
+    run_phase2 = args.phase != "1"
 
     asset_centers: Dict[str, Gf.Vec3d] = {}  # rel_path → center
     asset_report: Dict[str, Any] = {}
     errors: List[Dict[str, Any]] = []
+    elapsed_p1 = 0.0
+    asset_total = 0
 
-    t0 = time.time()
-    for i, (cat, uid, src_usd) in enumerate(asset_list):
-        rel_path = f"{cat}/{uid}/usd/{uid}.usd"
-        dst_usd = os.path.join(output_assets, rel_path)
+    if run_phase1:
+        print("=" * 60)
+        print("Phase 1: Normalizing assets")
+        print("=" * 60)
 
-        if (i + 1) % 500 == 0 or i == 0:
-            elapsed = time.time() - t0
-            rate = (i + 1) / elapsed if elapsed > 0 else 0
-            print(f"  [{i+1}/{len(asset_list)}] {cat}/{uid} ({rate:.0f} assets/s)")
+        asset_list = discover_assets(assets_root, args.category)
+        asset_total = len(asset_list)
+        print(f"Found {asset_total} assets to normalize")
 
-        if args.dry_run:
-            # In dry-run, compute center without writing any files
+        t0 = time.time()
+        for i, (cat, uid, src_usd) in enumerate(asset_list):
+            rel_path = f"{cat}/{uid}/usd/{uid}.usd"
+            dst_usd = os.path.join(output_assets, rel_path)
+
+            if (i + 1) % 500 == 0 or i == 0:
+                elapsed = time.time() - t0
+                rate = (i + 1) / elapsed if elapsed > 0 else 0
+                print(f"  [{i+1}/{asset_total}] {cat}/{uid} ({rate:.0f} assets/s)")
+
+            if args.dry_run:
+                # In dry-run, compute center without writing any files
+                try:
+                    info = compute_asset_center(src_usd)
+                    asset_centers[rel_path] = info["center_vec"]
+                    asset_report[uid] = {
+                        "category": cat,
+                        "center": info["center"],
+                        "original_scale": info["original_scale"],
+                        "upAxis_changed": "Y->Z",
+                    }
+                except Exception as e:
+                    errors.append({"asset": rel_path, "phase": "normalize", "error": str(e)})
+                continue
+
             try:
-                info = compute_asset_center(src_usd)
-                asset_centers[rel_path] = info["center_vec"]
+                # Copy (or symlink) non-USD files (textures, json, images) to output
+                src_asset_dir = os.path.join(assets_root, cat, uid)
+                dst_asset_dir = os.path.join(output_assets, cat, uid)
+                if os.path.isdir(src_asset_dir):
+                    for item in os.listdir(src_asset_dir):
+                        src_item = os.path.join(src_asset_dir, item)
+                        dst_item = os.path.join(dst_asset_dir, item)
+                        if item == "usd":
+                            # Handle usd/ subdir: symlink or copy non-main USD files
+                            usd_dir = os.path.join(src_asset_dir, "usd")
+                            dst_usd_dir = os.path.join(dst_asset_dir, "usd")
+                            os.makedirs(dst_usd_dir, exist_ok=True)
+                            for usd_item in os.listdir(usd_dir):
+                                if usd_item == f"{uid}.usd":
+                                    continue  # will be written by normalize_asset
+                                src_ui = os.path.join(usd_dir, usd_item)
+                                dst_ui = os.path.join(dst_usd_dir, usd_item)
+                                if os.path.exists(dst_ui) or os.path.islink(dst_ui):
+                                    continue  # idempotent
+                                if args.symlink_copy:
+                                    os.symlink(os.path.abspath(src_ui), dst_ui)
+                                elif os.path.isfile(src_ui):
+                                    shutil.copy2(src_ui, dst_ui)
+                                elif os.path.isdir(src_ui):
+                                    shutil.copytree(src_ui, dst_ui, symlinks=True)
+                        else:
+                            if os.path.exists(dst_item) or os.path.islink(dst_item):
+                                continue  # idempotent
+                            os.makedirs(dst_asset_dir, exist_ok=True)
+                            if args.symlink_copy:
+                                os.symlink(os.path.abspath(src_item), dst_item)
+                            elif os.path.isfile(src_item):
+                                shutil.copy2(src_item, dst_item)
+                            elif os.path.isdir(src_item):
+                                shutil.copytree(src_item, dst_item, symlinks=True)
+
+                info = normalize_asset(src_usd, dst_usd)
+                center = Gf.Vec3d(*info["center"])
+                asset_centers[rel_path] = center
                 asset_report[uid] = {
                     "category": cat,
                     "center": info["center"],
                     "original_scale": info["original_scale"],
-                    "upAxis_changed": "Y->Z",
+                    "upAxis_changed": info["upAxis_changed"],
                 }
             except Exception as e:
                 errors.append({"asset": rel_path, "phase": "normalize", "error": str(e)})
-            continue
+                if len(errors) <= 10:
+                    print(f"  ERROR: {rel_path}: {e}", file=sys.stderr)
 
-        try:
-            # Copy (or symlink) non-USD files (textures, json, images) to output
-            src_asset_dir = os.path.join(assets_root, cat, uid)
-            dst_asset_dir = os.path.join(output_assets, cat, uid)
-            if os.path.isdir(src_asset_dir):
-                for item in os.listdir(src_asset_dir):
-                    src_item = os.path.join(src_asset_dir, item)
-                    dst_item = os.path.join(dst_asset_dir, item)
-                    if item == "usd":
-                        # Handle usd/ subdir: symlink or copy non-main USD files
-                        usd_dir = os.path.join(src_asset_dir, "usd")
-                        dst_usd_dir = os.path.join(dst_asset_dir, "usd")
-                        os.makedirs(dst_usd_dir, exist_ok=True)
-                        for usd_item in os.listdir(usd_dir):
-                            if usd_item == f"{uid}.usd":
-                                continue  # will be written by normalize_asset
-                            src_ui = os.path.join(usd_dir, usd_item)
-                            dst_ui = os.path.join(dst_usd_dir, usd_item)
-                            if os.path.exists(dst_ui) or os.path.islink(dst_ui):
-                                continue  # idempotent
-                            if args.symlink_copy:
-                                os.symlink(os.path.abspath(src_ui), dst_ui)
-                            elif os.path.isfile(src_ui):
-                                shutil.copy2(src_ui, dst_ui)
-                            elif os.path.isdir(src_ui):
-                                shutil.copytree(src_ui, dst_ui, symlinks=True)
-                    else:
-                        if os.path.exists(dst_item) or os.path.islink(dst_item):
-                            continue  # idempotent
-                        os.makedirs(dst_asset_dir, exist_ok=True)
-                        if args.symlink_copy:
-                            os.symlink(os.path.abspath(src_item), dst_item)
-                        elif os.path.isfile(src_item):
-                            shutil.copy2(src_item, dst_item)
-                        elif os.path.isdir(src_item):
-                            shutil.copytree(src_item, dst_item, symlinks=True)
+        elapsed_p1 = time.time() - t0
+        print(f"\nPhase 1 complete: {len(asset_centers)}/{asset_total} assets normalized "
+              f"({len(errors)} errors) in {elapsed_p1:.1f}s")
 
-            info = normalize_asset(src_usd, dst_usd)
-            center = Gf.Vec3d(*info["center"])
-            asset_centers[rel_path] = center
-            asset_report[uid] = {
-                "category": cat,
-                "center": info["center"],
-                "original_scale": info["original_scale"],
-                "upAxis_changed": info["upAxis_changed"],
-            }
-        except Exception as e:
-            errors.append({"asset": rel_path, "phase": "normalize", "error": str(e)})
-            if len(errors) <= 10:
-                print(f"  ERROR: {rel_path}: {e}", file=sys.stderr)
+        # Save asset centers to JSON (always after Phase 1, for Phase 2 to consume later)
+        centers_out_dir = report_dir or output_root
+        os.makedirs(centers_out_dir, exist_ok=True)
+        centers_file = os.path.join(centers_out_dir, f"centers_{args.category or 'all'}.json")
+        centers_data = {k: list(v) for k, v in asset_centers.items()}
+        with open(centers_file, "w") as f:
+            json.dump(centers_data, f)
+        print(f"Saved {len(centers_data)} asset centers to {centers_file}")
 
-    elapsed_p1 = time.time() - t0
-    print(f"\nPhase 1 complete: {len(asset_centers)}/{len(asset_list)} assets normalized "
-          f"({len(errors)} errors) in {elapsed_p1:.1f}s")
+    # If --phase 1, exit after Phase 1
+    if args.phase == "1":
+        print(f"\n--phase 1: Phase 1 complete, skipping Phase 2.")
+        return 1 if errors else 0
+
+    # If --phase 2, load centers from --centers-dir
+    if args.phase == "2":
+        centers_dir = args.centers_dir
+        center_files = glob.glob(os.path.join(centers_dir, "centers_*.json"))
+        if not center_files:
+            print(f"ERROR: No centers_*.json files found in {centers_dir}", file=sys.stderr)
+            return 1
+        for cf in center_files:
+            with open(cf) as f:
+                data = json.load(f)
+            for k, v in data.items():
+                asset_centers[k] = Gf.Vec3d(*v)
+        print(f"Loaded {len(asset_centers)} centers from {len(center_files)} files in {centers_dir}")
 
     # -----------------------------------------------------------------------
     # Phase 2: Compensate scenes
@@ -750,8 +806,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "output_root": output_root,
             "category_filter": args.category,
             "dry_run": args.dry_run,
+            "phase": args.phase,
             "assets_processed": len(asset_centers),
-            "assets_total": len(asset_list),
+            "assets_total": asset_total,
             "scenes_processed": len(layout_list),
             "prims_compensated": total_compensated,
             "errors_count": len(all_errors),
@@ -763,9 +820,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     }
 
     # Write report
-    if args.report_dir:
-        os.makedirs(args.report_dir, exist_ok=True)
-        report_path = os.path.join(args.report_dir, "normalize_report.json")
+    if report_dir:
+        report_path = os.path.join(report_dir, "normalize_report.json")
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
         print(f"\nReport written to: {report_path}")

@@ -19,6 +19,13 @@ Shape-invariant mode (adds scale/order-invariant dedup report):
         --merge-tolerance 0.005 --float-quantize-eps 1e-2 \
         --mode shape_invariant --hausdorff-threshold 0.05
 
+Topo-filesize mode (topology-invariant + file-size dedup report):
+    python scripts/dlc/dedup_by_category.py \
+        --chunk-id 0 --chunk-total 10 \
+        --assets-root GRScenes-test1/GRScenes_assets \
+        --out-dir check_reports/dedup_topo_filesize \
+        --mode topo_filesize --filesize-tolerance 0.02
+
 Local test (single category, chunk 0 of 79):
     ./scripts/isaac_python.sh scripts/dlc/dedup_by_category.py \
         --chunk-id 0 --chunk-total 79 \
@@ -77,14 +84,19 @@ def main() -> int:
     parser.add_argument("--float-quantize-eps", type=float, default=1e-2)
     parser.add_argument("--progress-every", type=int, default=100)
     parser.add_argument(
-        "--mode", choices=["all", "shape_invariant"], default="all",
+        "--mode", choices=["all", "shape_invariant", "topo_filesize"], default="all",
         help="Dedup mode passthrough to report_asset_mesh_dedup.py. "
-             "'shape_invariant' adds a 4th scale/order-invariant report.",
+             "'shape_invariant' adds a 4th scale/order-invariant report. "
+             "'topo_filesize' uses topology-invariant + file-size matching.",
     )
     parser.add_argument(
         "--hausdorff-threshold", type=float, default=0.05,
         help="Hausdorff distance threshold for shape_invariant mode "
              "(fraction of unit bbox, default 0.05)",
+    )
+    parser.add_argument(
+        "--filesize-tolerance", type=float, default=0.02,
+        help="File size tolerance for topo_filesize mode (default 0.02 = 2%%)",
     )
     args = parser.parse_args()
 
@@ -133,6 +145,7 @@ def main() -> int:
             "--progress-every", str(args.progress_every),
             "--mode", args.mode,
             "--hausdorff-threshold", str(args.hausdorff_threshold),
+            "--filesize-tolerance", str(args.filesize_tolerance),
         ]
 
         try:

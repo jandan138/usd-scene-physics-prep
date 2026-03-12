@@ -223,6 +223,21 @@ def main() -> int:
                 flush=True,
             )
 
+    # Safety net: remove transitive canonical conflicts.
+    # If an asset appears as canonical (value) in ANY group, it must NOT be in the
+    # old (key) set.  This can happen when the union merge report contains the same
+    # physical asset with different path representations (abs vs rel).
+    canonical_set = set(mapping.values())
+    conflict_keys = [k for k in mapping if k in canonical_set]
+    if conflict_keys:
+        print(
+            f"WARNING: removing {len(conflict_keys)} transitive canonical conflicts "
+            f"(old assets that are also canonical elsewhere)",
+            flush=True,
+        )
+        for k in conflict_keys:
+            del mapping[k]
+
     out_mapping = Path(args.out_mapping_json)
     out_stats = Path(args.out_stats_json)
     out_mapping.parent.mkdir(parents=True, exist_ok=True)
