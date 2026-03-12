@@ -481,10 +481,17 @@ def compensate_scene(
 # Discovery helpers
 # ---------------------------------------------------------------------------
 
-def discover_assets(assets_root: str, category: Optional[str] = None) -> List[Tuple[str, str, str]]:
+def discover_assets(
+    assets_root: str,
+    category: Optional[str] = None,
+) -> List[Tuple[str, str, str, str]]:
     """Discover all asset USD files.
 
-    Returns list of (category, uid, usd_path).
+    Supports both asset layouts used in this repo:
+      - normalized-style: <cat>/<uid>/usd/<uid>.usd
+      - flat legacy style: <cat>/<uid>/<uid>.usd
+
+    Returns list of (category, uid, rel_path_within_assets_root, usd_path).
     """
     results = []
     assets_root = os.path.abspath(assets_root)
@@ -507,11 +514,17 @@ def discover_assets(assets_root: str, category: Optional[str] = None) -> List[Tu
 
         for uid in sorted(os.listdir(cat_dir)):
             usd_dir = os.path.join(cat_dir, uid, "usd")
-            if not os.path.isdir(usd_dir):
-                continue
             usd_file = os.path.join(usd_dir, f"{uid}.usd")
+            flat_usd_file = os.path.join(cat_dir, uid, f"{uid}.usd")
+
+            # Prefer the normalized-style layout when both exist.
             if os.path.isfile(usd_file):
-                results.append((cat, uid, usd_file))
+                rel_path = f"{cat}/{uid}/usd/{uid}.usd"
+                results.append((cat, uid, rel_path, usd_file))
+                continue
+            if os.path.isfile(flat_usd_file):
+                rel_path = f"{cat}/{uid}/{uid}.usd"
+                results.append((cat, uid, rel_path, flat_usd_file))
 
     return results
 
@@ -611,8 +624,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"Found {asset_total} assets to normalize")
 
         t0 = time.time()
-        for i, (cat, uid, src_usd) in enumerate(asset_list):
-            rel_path = f"{cat}/{uid}/usd/{uid}.usd"
+        for i, (cat, uid, rel_path, src_usd) in enumerate(asset_list):
             dst_usd = os.path.join(output_assets, rel_path)
 
             if (i + 1) % 500 == 0 or i == 0:

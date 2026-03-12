@@ -1,0 +1,16 @@
+{
+  "src_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1",
+  "dst_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-prepared",
+  "report_dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/summary/prepare_flat_subset",
+  "assets_reshaped": 0,
+  "reshaped_preview": [],
+  "mapping_json": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/summary/prepare_flat_subset/flat_to_nested_asset_mapping.json",
+  "rewrite_summary": {
+    "usd_files_scanned": 1108,
+    "usd_files_changed": 0,
+    "total_refs_changed": 0,
+    "total_payloads_changed": 0,
+    "total_asset_attrs_changed": 0,
+    "changed_usds": []
+  }
+}

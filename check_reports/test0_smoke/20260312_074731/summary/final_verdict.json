@@ -1,0 +1,36 @@
+{
+  "run_id": "20260312_074731",
+  "status": "fail_normalize_s1",
+  "reason": "normalize-only gate failed before dedup",
+  "gates": {
+    "normalize_pairwise_gt_0.01": 1,
+    "normalize_ref_changed_gt_0.01": 1,
+    "audit_center_found": 1105,
+    "audit_common_ref_prim_count": 1105,
+    "audit_matrix_mismatch": 0
+  },
+  "worst_prim": {
+    "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+    "prim_path": "/Root/Meshes/Animation/refrigerator/model_8958330cdaa9b7dcda067c99f5916ca3_0",
+    "displacement": 0.061537,
+    "max_per_mesh_displacement": 1.244992,
+    "ref_changed": true,
+    "left_ref_sample": [
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+    ],
+    "right_ref_sample": [
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+    ],
+    "verts_left": 94821,
+    "verts_right": 94821,
+    "meshes_left": 70,
+    "meshes_right": 70
+  },
+  "reports": {
+    "pairwise_normalize_only": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_test0_vs_normalized_pre_dedup.json",
+    "audit_normalize_phase2": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_normalize_phase2_audit.json",
+    "phase1_dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1",
+    "phase2_report": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase2/normalize_report.json"
+  },
+  "next_action": "inspect the refrigerator outlier before any dedup-only run"
+}

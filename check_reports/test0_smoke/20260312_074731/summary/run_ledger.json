@@ -1,0 +1,35 @@
+{
+  "run_id": "20260312_074731",
+  "status": "stopped_after_normalize",
+  "stages": {
+    "baseline": {
+      "status": "completed"
+    },
+    "subset_s1": {
+      "status": "completed"
+    },
+    "normalize": {
+      "status": "completed_with_gate_failure",
+      "pairwise_gt_0.01": 1,
+      "matrix_mismatch": 0
+    },
+    "dedup": {
+      "status": "skipped_due_to_normalize_gate"
+    },
+    "final_verdict": {
+      "status": "completed",
+      "value": "fail_normalize_s1"
+    }
+  },
+  "scenes": {
+    "s1": [
+      "home/MV7J6NIKTKJZ2AABAAAAADA8_usd"
+    ],
+    "s3": [
+      "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+      "home/MV7J6NIKTKJZ2AABAAAAADI8_usd",
+      "home/MVUCSQAKTKJ5EAABAAAAADA8_usd"
+    ]
+  },
+  "stop_note": "User requested immediate stop; do not run any more mutating commands on shared run artifacts."
+}

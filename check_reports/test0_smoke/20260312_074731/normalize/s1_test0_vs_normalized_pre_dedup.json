@@ -1,0 +1,1693 @@
+{
+  "label": "s1_test0_vs_normalized_pre_dedup",
+  "left_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1",
+  "right_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized",
+  "left_mode": "current",
+  "right_mode": "current",
+  "scene_filter": "MV7J6NIKTKJZ2AABAAAAADA8_usd",
+  "elapsed_seconds": 149.8,
+  "matched_scene_count": 1,
+  "left_only_scenes": [],
+  "right_only_scenes": [],
+  "aggregate": {
+    "scenes_ok": 1,
+    "scenes_error": 0,
+    "total_common_prims": 1105,
+    "total_compared": 1105,
+    "total_no_mesh": 0,
+    "total_only_in_left": 0,
+    "total_only_in_right": 0,
+    "total_ref_changed": 1105,
+    "total_ref_same": 0,
+    "displaced_breakdown": {
+      "gt_0.01": 1,
+      "gt_0.1": 0,
+      "gt_1.0": 0,
+      "gt_10.0": 0
+    },
+    "max_per_mesh_breakdown": {
+      "gt_0.01": 1,
+      "gt_0.1": 1,
+      "gt_1.0": 1,
+      "gt_10.0": 0
+    },
+    "ref_changed_breakdown": {
+      "gt_0.01": 1,
+      "gt_0.1": 0,
+      "gt_1.0": 0,
+      "gt_10.0": 0
+    },
+    "ref_same_breakdown": {
+      "gt_0.01": 0,
+      "gt_0.1": 0,
+      "gt_1.0": 0,
+      "gt_10.0": 0
+    },
+    "category_maxima": {
+      "bed": 0.0,
+      "blanket": 0.0,
+      "book": 0.0,
+      "bottle": 0.0,
+      "bowl": 0.0,
+      "cabinet": 0.0,
+      "ceiling": 0.0,
+      "chair": 0.0,
+      "chestofdrawers": 0.0,
+      "clothes": 0.0,
+      "couch": 1e-06,
+      "cup": 0.0,
+      "curtain": 1e-06,
+      "decoration": 0.0,
+      "desk": 1e-06,
+      "dishwasher": 0.0,
+      "door": 0.0,
+      "electriccooker": 0.0,
+      "faucet": 0.0,
+      "ground": 4e-06,
+      "hearth": 0.0,
+      "keyboard": 0.0,
+      "laptop": 0.0,
+      "light": 0.0,
+      "microwave": 0.0,
+      "mirror": 0.0,
+      "monitor": 0.0,
+      "mouse": 0.0,
+      "nightstand": 6.4e-05,
+      "other": 5e-06,
+      "oven": 0.0,
+      "pan": 0.0,
+      "person": 0.0,
+      "pillow": 0.0,
+      "plant": 1e-06,
+      "plate": 0.0,
+      "pot": 0.0,
+      "refrigerator": 0.061537,
+      "shelf": 0.0,
+      "shoe": 0.0,
+      "shoecabinet": 0.0,
+      "sideboardcabinet": 0.0,
+      "sofachair": 0.0,
+      "stool": 0.0,
+      "table": 0.0,
+      "teatable": 1e-06,
+      "toilet": 1e-06,
+      "towel": 0.0,
+      "tray": 0.0,
+      "tv": 0.0,
+      "tvstand": 1e-06,
+      "wall": 3e-06,
+      "washingmachine": 0.0,
+      "window": 0.0
+    },
+    "global_top_50_worst": [
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/refrigerator/model_8958330cdaa9b7dcda067c99f5916ca3_0",
+        "displacement": 0.061537,
+        "max_per_mesh_displacement": 1.244992,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+        ],
+        "verts_left": 94821,
+        "verts_right": 94821,
+        "meshes_left": 70,
+        "meshes_right": 70
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/nightstand/model_627f5d31c8996749a1f33bfef27562f3_0",
+        "displacement": 6.4e-05,
+        "max_per_mesh_displacement": 6.4e-05,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/627f5d31c8996749a1f33bfef27562f3/usd/627f5d31c8996749a1f33bfef27562f3.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/627f5d31c8996749a1f33bfef27562f3/usd/627f5d31c8996749a1f33bfef27562f3.usd"
+        ],
+        "verts_left": 21736,
+        "verts_right": 21736,
+        "meshes_left": 11,
+        "meshes_right": 11
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/nightstand/model_b630d155c5ef47d3bee26ff3be755280_0",
+        "displacement": 6.4e-05,
+        "max_per_mesh_displacement": 6.4e-05,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/b630d155c5ef47d3bee26ff3be755280/usd/b630d155c5ef47d3bee26ff3be755280.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/b630d155c5ef47d3bee26ff3be755280/usd/b630d155c5ef47d3bee26ff3be755280.usd"
+        ],
+        "verts_left": 21736,
+        "verts_right": 21736,
+        "meshes_left": 11,
+        "meshes_right": 11
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/other/model_c468b6512fcd96529349b4767e33a670_0",
+        "displacement": 5e-06,
+        "max_per_mesh_displacement": 5e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/other/c468b6512fcd96529349b4767e33a670/usd/c468b6512fcd96529349b4767e33a670.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/other/c468b6512fcd96529349b4767e33a670/usd/c468b6512fcd96529349b4767e33a670.usd"
+        ],
+        "verts_left": 990,
+        "verts_right": 990,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/nightstand/model_8795d38fe7047caec20aad0c638457be_0",
+        "displacement": 4e-06,
+        "max_per_mesh_displacement": 5e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/8795d38fe7047caec20aad0c638457be/usd/8795d38fe7047caec20aad0c638457be.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/8795d38fe7047caec20aad0c638457be/usd/8795d38fe7047caec20aad0c638457be.usd"
+        ],
+        "verts_left": 2922,
+        "verts_right": 2922,
+        "meshes_left": 19,
+        "meshes_right": 19
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/ground/model_f31bd128158d7aef2fa0f70c2ac04946_0",
+        "displacement": 4e-06,
+        "max_per_mesh_displacement": 4e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/f31bd128158d7aef2fa0f70c2ac04946/usd/f31bd128158d7aef2fa0f70c2ac04946.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/f31bd128158d7aef2fa0f70c2ac04946/usd/f31bd128158d7aef2fa0f70c2ac04946.usd"
+        ],
+        "verts_left": 6,
+        "verts_right": 6,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/ground/model_f977b256457dce3f4a6b1f5182e11ed2_0",
+        "displacement": 4e-06,
+        "max_per_mesh_displacement": 4e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/f977b256457dce3f4a6b1f5182e11ed2/usd/f977b256457dce3f4a6b1f5182e11ed2.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/f977b256457dce3f4a6b1f5182e11ed2/usd/f977b256457dce3f4a6b1f5182e11ed2.usd"
+        ],
+        "verts_left": 6,
+        "verts_right": 6,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_0186dd1e544362dc20b2aee6fe1bccf6_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/0186dd1e544362dc20b2aee6fe1bccf6/usd/0186dd1e544362dc20b2aee6fe1bccf6.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/0186dd1e544362dc20b2aee6fe1bccf6/usd/0186dd1e544362dc20b2aee6fe1bccf6.usd"
+        ],
+        "verts_left": 11,
+        "verts_right": 11,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_4efb6376639d000b5153457f7026f237_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/4efb6376639d000b5153457f7026f237/usd/4efb6376639d000b5153457f7026f237.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/4efb6376639d000b5153457f7026f237/usd/4efb6376639d000b5153457f7026f237.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_635f04d72112a1a98d91c4e930c0d122_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/635f04d72112a1a98d91c4e930c0d122/usd/635f04d72112a1a98d91c4e930c0d122.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/635f04d72112a1a98d91c4e930c0d122/usd/635f04d72112a1a98d91c4e930c0d122.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_8259db8870ea616219b72a769f229c46_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/8259db8870ea616219b72a769f229c46/usd/8259db8870ea616219b72a769f229c46.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/8259db8870ea616219b72a769f229c46/usd/8259db8870ea616219b72a769f229c46.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_86faa2e2a286941079441a6ce42c5599_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/86faa2e2a286941079441a6ce42c5599/usd/86faa2e2a286941079441a6ce42c5599.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/86faa2e2a286941079441a6ce42c5599/usd/86faa2e2a286941079441a6ce42c5599.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_e5e4a9eaf2506ae3f42e065a2fad264d_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/e5e4a9eaf2506ae3f42e065a2fad264d/usd/e5e4a9eaf2506ae3f42e065a2fad264d.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/e5e4a9eaf2506ae3f42e065a2fad264d/usd/e5e4a9eaf2506ae3f42e065a2fad264d.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_fd906e8047022c55f3226f91d0118916_0",
+        "displacement": 3e-06,
+        "max_per_mesh_displacement": 3e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/fd906e8047022c55f3226f91d0118916/usd/fd906e8047022c55f3226f91d0118916.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/fd906e8047022c55f3226f91d0118916/usd/fd906e8047022c55f3226f91d0118916.usd"
+        ],
+        "verts_left": 16,
+        "verts_right": 16,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/ground/model_0bda2ad90a5e66746af1ff4a02a73804_0",
+        "displacement": 2e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/0bda2ad90a5e66746af1ff4a02a73804/usd/0bda2ad90a5e66746af1ff4a02a73804.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/0bda2ad90a5e66746af1ff4a02a73804/usd/0bda2ad90a5e66746af1ff4a02a73804.usd"
+        ],
+        "verts_left": 6,
+        "verts_right": 6,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_4abde2e8035a98803916406d6f6d44d0_0",
+        "displacement": 2e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/4abde2e8035a98803916406d6f6d44d0/usd/4abde2e8035a98803916406d6f6d44d0.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/4abde2e8035a98803916406d6f6d44d0/usd/4abde2e8035a98803916406d6f6d44d0.usd"
+        ],
+        "verts_left": 8,
+        "verts_right": 8,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Base/wall/model_e50562edb9c7a93478f9682d0060de16_0",
+        "displacement": 2e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/e50562edb9c7a93478f9682d0060de16/usd/e50562edb9c7a93478f9682d0060de16.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/e50562edb9c7a93478f9682d0060de16/usd/e50562edb9c7a93478f9682d0060de16.usd"
+        ],
+        "verts_left": 20,
+        "verts_right": 20,
+        "meshes_left": 1,
+        "meshes_right": 1
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/desk/model_64a72e14d9b7e061a46e6fc802452525_0",
+        "displacement": 1e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/desk/64a72e14d9b7e061a46e6fc802452525/usd/64a72e14d9b7e061a46e6fc802452525.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/desk/64a72e14d9b7e061a46e6fc802452525/usd/64a72e14d9b7e061a46e6fc802452525.usd"
+        ],
+        "verts_left": 7771,
+        "verts_right": 7771,
+        "meshes_left": 11,
+        "meshes_right": 11
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/teatable/model_a85b5da55ef38046c5db2e63096775d4_0",
+        "displacement": 1e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/teatable/a85b5da55ef38046c5db2e63096775d4/usd/a85b5da55ef38046c5db2e63096775d4.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/teatable/a85b5da55ef38046c5db2e63096775d4/usd/a85b5da55ef38046c5db2e63096775d4.usd"
+        ],
+        "verts_left": 7672,
+        "verts_right": 7672,
+        "meshes_left": 14,
+        "meshes_right": 14
+      },
+      {
+        "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+        "prim_path": "/Root/Meshes/Animation/toilet/model_5c6c2095caa336684d220a114d3b08b5_0",
+        "displacement": 1e-06,
+        "max_per_mesh_displacement": 2e-06,
+        "ref_changed": true,
+        "left_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/toilet/5c6c2095caa336684d220a114d3b08b5/usd/5c6c2095caa336684d220a114d3b08b5.usd"
+        ],
+        "right_ref_sample": [
+          "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/toilet/5c6c2095caa336684d220a114d3b08b5/usd/5c6c2095caa336684d220a114d3b08b5.usd"
+        ],
+        "verts_left": 32139,
+        "verts_right": 32139,
+        "meshes_left": 9,
+        "meshes_right": 9
+      }
+    ],
+    "scene_errors": []
+  },
+  "per_scene": [
+    {
+      "scene_id": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+      "left_layout": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/layout.usd",
+      "right_layout": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/layout.usd",
+      "status": "ok",
+      "error": null,
+      "total_prims_left": 1105,
+      "total_prims_right": 1105,
+      "total_common": 1105,
+      "total_compared": 1105,
+      "total_no_mesh": 0,
+      "only_in_left": 0,
+      "only_in_right": 0,
+      "only_in_left_paths": [],
+      "only_in_right_paths": [],
+      "displacement_stats": {
+        "mean": 5.6e-05,
+        "median": 0.0,
+        "max": 0.061537,
+        "p95": 0.0,
+        "p99": 3e-06
+      },
+      "displaced_breakdown": {
+        "gt_0.01": 1,
+        "gt_0.1": 0,
+        "gt_1.0": 0,
+        "gt_10.0": 0
+      },
+      "max_per_mesh_breakdown": {
+        "gt_0.01": 1,
+        "gt_0.1": 1,
+        "gt_1.0": 1,
+        "gt_10.0": 0
+      },
+      "ref_changed_count": 1105,
+      "ref_changed_breakdown": {
+        "gt_0.01": 1,
+        "gt_0.1": 0,
+        "gt_1.0": 0,
+        "gt_10.0": 0
+      },
+      "ref_changed_displacement_stats": {
+        "mean": 5.6e-05,
+        "median": 0.0,
+        "max": 0.061537,
+        "p95": 0.0,
+        "p99": 3e-06
+      },
+      "ref_same_count": 0,
+      "ref_same_breakdown": {
+        "gt_0.01": 0,
+        "gt_0.1": 0,
+        "gt_1.0": 0,
+        "gt_10.0": 0
+      },
+      "ref_same_displacement_stats": {},
+      "category_breakdown": {
+        "bed": {
+          "count": 4,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "blanket": {
+          "count": 4,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "book": {
+          "count": 7,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "bottle": {
+          "count": 8,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "bowl": {
+          "count": 9,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "cabinet": {
+          "count": 13,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "ceiling": {
+          "count": 16,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "chair": {
+          "count": 13,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "chestofdrawers": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "clothes": {
+          "count": 7,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "couch": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 1e-06,
+            "median": 1e-06,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "cup": {
+          "count": 22,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "curtain": {
+          "count": 21,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 1e-06,
+            "p95": 0.0,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "decoration": {
+          "count": 15,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "desk": {
+          "count": 3,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "dishwasher": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "door": {
+          "count": 8,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "electriccooker": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "faucet": {
+          "count": 4,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "ground": {
+          "count": 254,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 4e-06,
+            "p95": 0.0,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "hearth": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "keyboard": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "laptop": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "light": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "microwave": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "mirror": {
+          "count": 3,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "monitor": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "mouse": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "nightstand": {
+          "count": 4,
+          "displacement_stats": {
+            "mean": 3.3e-05,
+            "median": 3.4e-05,
+            "max": 6.4e-05,
+            "p95": 6.4e-05,
+            "p99": 6.4e-05
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "other": {
+          "count": 149,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 5e-06,
+            "p95": 0.0,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "oven": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "pan": {
+          "count": 2,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "person": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "pillow": {
+          "count": 7,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "plant": {
+          "count": 5,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "plate": {
+          "count": 18,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "pot": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "refrigerator": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.061537,
+            "median": 0.061537,
+            "max": 0.061537,
+            "p95": 0.061537,
+            "p99": 0.061537
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 1,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "shelf": {
+          "count": 3,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "shoe": {
+          "count": 7,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "shoecabinet": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "sideboardcabinet": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "sofachair": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "stool": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "table": {
+          "count": 2,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "teatable": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 1e-06,
+            "median": 1e-06,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "toilet": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 1e-06,
+            "median": 1e-06,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "towel": {
+          "count": 9,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "tray": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "tv": {
+          "count": 3,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "tvstand": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 1e-06,
+            "median": 1e-06,
+            "max": 1e-06,
+            "p95": 1e-06,
+            "p99": 1e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "wall": {
+          "count": 452,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 3e-06,
+            "p95": 0.0,
+            "p99": 3e-06
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "washingmachine": {
+          "count": 1,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        },
+        "window": {
+          "count": 9,
+          "displacement_stats": {
+            "mean": 0.0,
+            "median": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "p99": 0.0
+          },
+          "displaced_breakdown": {
+            "gt_0.01": 0,
+            "gt_0.1": 0,
+            "gt_1.0": 0,
+            "gt_10.0": 0
+          }
+        }
+      },
+      "top_20_worst": [
+        {
+          "prim_path": "/Root/Meshes/Animation/refrigerator/model_8958330cdaa9b7dcda067c99f5916ca3_0",
+          "displacement": 0.061537,
+          "max_per_mesh_displacement": 1.244992,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/refrigerator/8958330cdaa9b7dcda067c99f5916ca3/usd/8958330cdaa9b7dcda067c99f5916ca3.usd"
+          ],
+          "verts_left": 94821,
+          "verts_right": 94821,
+          "meshes_left": 70,
+          "meshes_right": 70
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/nightstand/model_627f5d31c8996749a1f33bfef27562f3_0",
+          "displacement": 6.4e-05,
+          "max_per_mesh_displacement": 6.4e-05,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/627f5d31c8996749a1f33bfef27562f3/usd/627f5d31c8996749a1f33bfef27562f3.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/627f5d31c8996749a1f33bfef27562f3/usd/627f5d31c8996749a1f33bfef27562f3.usd"
+          ],
+          "verts_left": 21736,
+          "verts_right": 21736,
+          "meshes_left": 11,
+          "meshes_right": 11
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/nightstand/model_b630d155c5ef47d3bee26ff3be755280_0",
+          "displacement": 6.4e-05,
+          "max_per_mesh_displacement": 6.4e-05,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/b630d155c5ef47d3bee26ff3be755280/usd/b630d155c5ef47d3bee26ff3be755280.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/b630d155c5ef47d3bee26ff3be755280/usd/b630d155c5ef47d3bee26ff3be755280.usd"
+          ],
+          "verts_left": 21736,
+          "verts_right": 21736,
+          "meshes_left": 11,
+          "meshes_right": 11
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/other/model_c468b6512fcd96529349b4767e33a670_0",
+          "displacement": 5e-06,
+          "max_per_mesh_displacement": 5e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/other/c468b6512fcd96529349b4767e33a670/usd/c468b6512fcd96529349b4767e33a670.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/other/c468b6512fcd96529349b4767e33a670/usd/c468b6512fcd96529349b4767e33a670.usd"
+          ],
+          "verts_left": 990,
+          "verts_right": 990,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/nightstand/model_8795d38fe7047caec20aad0c638457be_0",
+          "displacement": 4e-06,
+          "max_per_mesh_displacement": 5e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/nightstand/8795d38fe7047caec20aad0c638457be/usd/8795d38fe7047caec20aad0c638457be.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/nightstand/8795d38fe7047caec20aad0c638457be/usd/8795d38fe7047caec20aad0c638457be.usd"
+          ],
+          "verts_left": 2922,
+          "verts_right": 2922,
+          "meshes_left": 19,
+          "meshes_right": 19
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/ground/model_f31bd128158d7aef2fa0f70c2ac04946_0",
+          "displacement": 4e-06,
+          "max_per_mesh_displacement": 4e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/f31bd128158d7aef2fa0f70c2ac04946/usd/f31bd128158d7aef2fa0f70c2ac04946.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/f31bd128158d7aef2fa0f70c2ac04946/usd/f31bd128158d7aef2fa0f70c2ac04946.usd"
+          ],
+          "verts_left": 6,
+          "verts_right": 6,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/ground/model_f977b256457dce3f4a6b1f5182e11ed2_0",
+          "displacement": 4e-06,
+          "max_per_mesh_displacement": 4e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/f977b256457dce3f4a6b1f5182e11ed2/usd/f977b256457dce3f4a6b1f5182e11ed2.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/f977b256457dce3f4a6b1f5182e11ed2/usd/f977b256457dce3f4a6b1f5182e11ed2.usd"
+          ],
+          "verts_left": 6,
+          "verts_right": 6,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_0186dd1e544362dc20b2aee6fe1bccf6_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/0186dd1e544362dc20b2aee6fe1bccf6/usd/0186dd1e544362dc20b2aee6fe1bccf6.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/0186dd1e544362dc20b2aee6fe1bccf6/usd/0186dd1e544362dc20b2aee6fe1bccf6.usd"
+          ],
+          "verts_left": 11,
+          "verts_right": 11,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_4efb6376639d000b5153457f7026f237_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/4efb6376639d000b5153457f7026f237/usd/4efb6376639d000b5153457f7026f237.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/4efb6376639d000b5153457f7026f237/usd/4efb6376639d000b5153457f7026f237.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_635f04d72112a1a98d91c4e930c0d122_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/635f04d72112a1a98d91c4e930c0d122/usd/635f04d72112a1a98d91c4e930c0d122.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/635f04d72112a1a98d91c4e930c0d122/usd/635f04d72112a1a98d91c4e930c0d122.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_8259db8870ea616219b72a769f229c46_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/8259db8870ea616219b72a769f229c46/usd/8259db8870ea616219b72a769f229c46.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/8259db8870ea616219b72a769f229c46/usd/8259db8870ea616219b72a769f229c46.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_86faa2e2a286941079441a6ce42c5599_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/86faa2e2a286941079441a6ce42c5599/usd/86faa2e2a286941079441a6ce42c5599.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/86faa2e2a286941079441a6ce42c5599/usd/86faa2e2a286941079441a6ce42c5599.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_e5e4a9eaf2506ae3f42e065a2fad264d_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/e5e4a9eaf2506ae3f42e065a2fad264d/usd/e5e4a9eaf2506ae3f42e065a2fad264d.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/e5e4a9eaf2506ae3f42e065a2fad264d/usd/e5e4a9eaf2506ae3f42e065a2fad264d.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_fd906e8047022c55f3226f91d0118916_0",
+          "displacement": 3e-06,
+          "max_per_mesh_displacement": 3e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/fd906e8047022c55f3226f91d0118916/usd/fd906e8047022c55f3226f91d0118916.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/fd906e8047022c55f3226f91d0118916/usd/fd906e8047022c55f3226f91d0118916.usd"
+          ],
+          "verts_left": 16,
+          "verts_right": 16,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/ground/model_0bda2ad90a5e66746af1ff4a02a73804_0",
+          "displacement": 2e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/ground/0bda2ad90a5e66746af1ff4a02a73804/usd/0bda2ad90a5e66746af1ff4a02a73804.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/ground/0bda2ad90a5e66746af1ff4a02a73804/usd/0bda2ad90a5e66746af1ff4a02a73804.usd"
+          ],
+          "verts_left": 6,
+          "verts_right": 6,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_4abde2e8035a98803916406d6f6d44d0_0",
+          "displacement": 2e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/4abde2e8035a98803916406d6f6d44d0/usd/4abde2e8035a98803916406d6f6d44d0.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/4abde2e8035a98803916406d6f6d44d0/usd/4abde2e8035a98803916406d6f6d44d0.usd"
+          ],
+          "verts_left": 8,
+          "verts_right": 8,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Base/wall/model_e50562edb9c7a93478f9682d0060de16_0",
+          "displacement": 2e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/wall/e50562edb9c7a93478f9682d0060de16/usd/e50562edb9c7a93478f9682d0060de16.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/wall/e50562edb9c7a93478f9682d0060de16/usd/e50562edb9c7a93478f9682d0060de16.usd"
+          ],
+          "verts_left": 20,
+          "verts_right": 20,
+          "meshes_left": 1,
+          "meshes_right": 1
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/desk/model_64a72e14d9b7e061a46e6fc802452525_0",
+          "displacement": 1e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/desk/64a72e14d9b7e061a46e6fc802452525/usd/64a72e14d9b7e061a46e6fc802452525.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/desk/64a72e14d9b7e061a46e6fc802452525/usd/64a72e14d9b7e061a46e6fc802452525.usd"
+          ],
+          "verts_left": 7771,
+          "verts_right": 7771,
+          "meshes_left": 11,
+          "meshes_right": 11
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/teatable/model_a85b5da55ef38046c5db2e63096775d4_0",
+          "displacement": 1e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/teatable/a85b5da55ef38046c5db2e63096775d4/usd/a85b5da55ef38046c5db2e63096775d4.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/teatable/a85b5da55ef38046c5db2e63096775d4/usd/a85b5da55ef38046c5db2e63096775d4.usd"
+          ],
+          "verts_left": 7672,
+          "verts_right": 7672,
+          "meshes_left": 14,
+          "meshes_right": 14
+        },
+        {
+          "prim_path": "/Root/Meshes/Animation/toilet/model_5c6c2095caa336684d220a114d3b08b5_0",
+          "displacement": 1e-06,
+          "max_per_mesh_displacement": 2e-06,
+          "ref_changed": true,
+          "left_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets/toilet/5c6c2095caa336684d220a114d3b08b5/usd/5c6c2095caa336684d220a114d3b08b5.usd"
+          ],
+          "right_ref_sample": [
+            "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets/toilet/5c6c2095caa336684d220a114d3b08b5/usd/5c6c2095caa336684d220a114d3b08b5.usd"
+          ],
+          "verts_left": 32139,
+          "verts_right": 32139,
+          "meshes_left": 9,
+          "meshes_right": 9
+        }
+      ]
+    }
+  ]
+}

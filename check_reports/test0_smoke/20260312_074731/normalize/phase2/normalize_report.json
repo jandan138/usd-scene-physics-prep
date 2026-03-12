@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "assets_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets",
+    "scenes_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100",
+    "output_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized",
+    "category_filter": null,
+    "dry_run": false,
+    "phase": "2",
+    "assets_processed": 1105,
+    "assets_total": 0,
+    "scenes_processed": 1,
+    "prims_compensated": 1105,
+    "errors_count": 0,
+    "elapsed_phase1_sec": 0.0,
+    "elapsed_phase2_sec": 0.57
+  },
+  "assets": {},
+  "errors": []
+}

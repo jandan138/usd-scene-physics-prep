@@ -1,0 +1,59 @@
+{
+  "run_id": "20260312_074731",
+  "prepared_at": "2026-03-12T07:49:55Z",
+  "owner": "Worker-4",
+  "status": "ready_when_subset_exists",
+  "scope": "S1 normalize-only command plan",
+  "preconditions": [
+    {
+      "name": "subset_root_exists",
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1",
+      "required": true
+    },
+    {
+      "name": "subset_assets_root_exists",
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets",
+      "required": true
+    },
+    {
+      "name": "subset_scenes_root_exists",
+      "path": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100",
+      "required": true
+    }
+  ],
+  "paths": {
+    "repo_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep",
+    "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1",
+    "subset_assets_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets",
+    "subset_scenes_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100",
+    "normalized_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized",
+    "phase1_report_dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1",
+    "phase2_report_dir": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase2",
+    "centers_dir_for_phase2": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1"
+  },
+  "executor": {
+    "preferred": "./scripts/isaac_python.sh",
+    "reason": "The script imports pxr and repository guidance says USD/Isaac-dependent scripts should run via the Isaac Sim Python wrapper."
+  },
+  "commands": {
+    "prepare_dirs": "mkdir -p /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1 /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase2",
+    "phase1": "./scripts/isaac_python.sh scripts/normalize_asset_transforms.py --assets-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets --scenes-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100 --output-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized --phase 1 --report-dir /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1",
+    "phase2": "./scripts/isaac_python.sh scripts/normalize_asset_transforms.py --assets-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes_assets --scenes-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100 --output-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized --phase 2 --centers-dir /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1 --report-dir /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase2"
+  },
+  "expected_outputs": {
+    "phase1": [
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1/centers_all.json",
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase1/normalize_report.json",
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes_assets"
+    ],
+    "phase2": [
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/phase2/normalize_report.json",
+      "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized/GRScenes100"
+    ]
+  },
+  "notes": [
+    "The script writes centers_*.json into --report-dir during --phase 1. With no category filter, the filename is centers_all.json.",
+    "The script writes normalize_report.json in each phase-specific report directory. Use separate report dirs to avoid overwriting Phase 1 and Phase 2 reports.",
+    "Do not pass --phase omitted for this run. The split Phase 1 then Phase 2 flow is required so the later audit can verify the pre-dedup normalized state cleanly."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "run_id": "20260312_074731",
+  "stage": "subset_s1",
+  "scene_uid": "MV7J6NIKTKJZ2AABAAAAADA8",
+  "scene_category": "home",
+  "source_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0",
+  "subset_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1",
+  "subset_manifest": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/subset_manifest.json",
+  "include_scene_usds": "layout-only",
+  "counts": {
+    "assets": 1105,
+    "scene_files_copied": 0,
+    "scene_files_skipped": 4,
+    "asset_files_copied": 0,
+    "asset_files_skipped": 2210,
+    "usd_files_scanned": 1106
+  },
+  "verify": {
+    "usd_count": 0,
+    "missing_count": 0
+  },
+  "status": "ready_with_flat_asset_layout",
+  "note": "Subset build succeeded, but the source dataset and subset use flat asset paths (<uid>/<uid>.usd). A compatibility preparation step is required before normalize_asset_transforms.py can discover assets."
+}

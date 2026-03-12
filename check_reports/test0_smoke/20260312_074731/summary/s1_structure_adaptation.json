@@ -1,0 +1,20 @@
+{
+  "asset_symlinks_created": 1105,
+  "asset_symlinks_existing": 0,
+  "scene_files_scanned": 3,
+  "scene_refs_rewritten": 3308,
+  "scene_files_changed": [
+    {
+      "file": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/layout.usd",
+      "refs_rewritten": 1105
+    },
+    {
+      "file": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/start_result_interaction.usd",
+      "refs_rewritten": 1105
+    },
+    {
+      "file": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1/GRScenes100/home/MV7J6NIKTKJZ2AABAAAAADA8_usd/start_result_navigation.usd",
+      "refs_rewritten": 1098
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "run_id": "20260312_074731",
+  "cwd": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep",
+  "datasets": {
+    "GRScenes-test0": true,
+    "GRScenes-test1": true,
+    "GRScenes-test1-normalized": true
+  },
+  "scripts": {
+    "scripts/build_scene_uid_subset_package.py": true,
+    "scripts/normalize_asset_transforms.py": true,
+    "scripts/placement_pairwise_compare.py": true,
+    "scripts/audit_normalize_phase2.py": true,
+    "scripts/report_asset_mesh_dedup.py": true,
+    "scripts/c1_build_bulk_mapping_from_dedup_report.py": true,
+    "scripts/c1_bulk_apply_layout_dedup.py": true,
+    "scripts/c1_step6_promote_scan_soft_delete.py": true
+  },
+  "pxr_via_isaac_python": "ok"
+}

@@ -1,0 +1,184 @@
+{
+  "desk": {
+    "returncode": 0,
+    "elapsed_sec": 34.0,
+    "centers_files": [
+      "centers_desk.json"
+    ]
+  },
+  "curtain": {
+    "returncode": 0,
+    "elapsed_sec": 64.1,
+    "centers_files": [
+      "centers_curtain.json"
+    ]
+  },
+  "pan": {
+    "returncode": 0,
+    "elapsed_sec": 8.0,
+    "centers_files": [
+      "centers_pan.json"
+    ]
+  },
+  "pillow": {
+    "returncode": 0,
+    "elapsed_sec": 14.0,
+    "centers_files": [
+      "centers_pillow.json"
+    ]
+  },
+  "decoration": {
+    "returncode": 0,
+    "elapsed_sec": 108.1,
+    "centers_files": [
+      "centers_decoration.json"
+    ]
+  },
+  "plate": {
+    "returncode": 0,
+    "elapsed_sec": 8.0,
+    "centers_files": [
+      "centers_plate.json"
+    ]
+  },
+  "refrigerator": {
+    "returncode": 0,
+    "elapsed_sec": 6.0,
+    "centers_files": [
+      "centers_refrigerator.json"
+    ]
+  },
+  "shelf": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_shelf.json"
+    ]
+  },
+  "clothes": {
+    "returncode": 0,
+    "elapsed_sec": 126.3,
+    "centers_files": [
+      "centers_clothes.json"
+    ]
+  },
+  "plant": {
+    "returncode": 0,
+    "elapsed_sec": 42.2,
+    "centers_files": [
+      "centers_plant.json"
+    ]
+  },
+  "shoecabinet": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_shoecabinet.json"
+    ]
+  },
+  "sofachair": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_sofachair.json"
+    ]
+  },
+  "sideboardcabinet": {
+    "returncode": 0,
+    "elapsed_sec": 4.0,
+    "centers_files": [
+      "centers_sideboardcabinet.json"
+    ]
+  },
+  "table": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_table.json"
+    ]
+  },
+  "teatable": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_teatable.json"
+    ]
+  },
+  "other": {
+    "returncode": 0,
+    "elapsed_sec": 104.4,
+    "centers_files": [
+      "centers_other.json"
+    ]
+  },
+  "shoe": {
+    "returncode": 0,
+    "elapsed_sec": 14.3,
+    "centers_files": [
+      "centers_shoe.json"
+    ]
+  },
+  "stool": {
+    "returncode": 0,
+    "elapsed_sec": 8.1,
+    "centers_files": [
+      "centers_stool.json"
+    ]
+  },
+  "toilet": {
+    "returncode": 0,
+    "elapsed_sec": 4.1,
+    "centers_files": [
+      "centers_toilet.json"
+    ]
+  },
+  "tvstand": {
+    "returncode": 0,
+    "elapsed_sec": 2.0,
+    "centers_files": [
+      "centers_tvstand.json"
+    ]
+  },
+  "towel": {
+    "returncode": 0,
+    "elapsed_sec": 8.1,
+    "centers_files": [
+      "centers_towel.json"
+    ]
+  },
+  "tv": {
+    "returncode": 0,
+    "elapsed_sec": 12.1,
+    "centers_files": [
+      "centers_tv.json"
+    ]
+  },
+  "washingmachine": {
+    "returncode": 0,
+    "elapsed_sec": 6.0,
+    "centers_files": [
+      "centers_washingmachine.json"
+    ]
+  },
+  "wall": {
+    "returncode": 0,
+    "elapsed_sec": 24.1,
+    "centers_files": [
+      "centers_wall.json"
+    ]
+  },
+  "tray": {
+    "returncode": 0,
+    "elapsed_sec": 36.2,
+    "centers_files": [
+      "centers_tray.json"
+    ]
+  },
+  "window": {
+    "returncode": 0,
+    "elapsed_sec": 48.1,
+    "centers_files": [
+      "centers_window.json"
+    ]
+  }
+}

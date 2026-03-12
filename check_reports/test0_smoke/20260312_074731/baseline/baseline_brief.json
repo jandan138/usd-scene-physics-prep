@@ -1,0 +1,27 @@
+{
+  "run_id": "20260312_074731",
+  "goal": "Validate whether a normalize + dedup run starting from GRScenes-test0 can preserve layout correctness while achieving dedup.",
+  "do_not_follow_test1": true,
+  "do_not_patch_algorithm": true,
+  "evidence_root": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/placement_evidence_closure",
+  "evidence_files": [
+    "sample_test0_vs_test1.json",
+    "sample_test1_vs_pre_c1.json",
+    "sample_normalize_phase2_audit.json"
+  ],
+  "known_findings": [
+    "test1 is not a healthy baseline and already differs from test0 before normalize.",
+    "The sample problematic scene is home/MV7J6NIKTKJZ2AABAAAAADA8_usd.",
+    "The existing normalize phase-2 audit sample for the problematic scene reports center_found coverage and matrix_mismatch=0 inside the pre-dedup normalized chain."
+  ],
+  "smoke_scene_selection": {
+    "s1": [
+      "home/MV7J6NIKTKJZ2AABAAAAADA8_usd"
+    ],
+    "s3": [
+      "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+      "home/MV7J6NIKTKJZ2AABAAAAADI8_usd",
+      "home/MVUCSQAKTKJ5EAABAAAAADA8_usd"
+    ]
+  }
+}

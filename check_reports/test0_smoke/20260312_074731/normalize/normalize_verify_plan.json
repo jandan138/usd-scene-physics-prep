@@ -1,0 +1,28 @@
+{
+  "run_id": "20260312_074731",
+  "s1_scene": "home/MV7J6NIKTKJZ2AABAAAAADA8_usd",
+  "pairwise_normalize_only": {
+    "cmd": "./scripts/isaac_python.sh scripts/placement_pairwise_compare.py --left-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1 --right-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized --left-mode current --right-mode current --label s1_test0_vs_normalized_pre_dedup --out /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_test0_vs_normalized_pre_dedup.json --scene-filter MV7J6NIKTKJZ2AABAAAAADA8_usd --workers 1",
+    "out": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_test0_vs_normalized_pre_dedup.json"
+  },
+  "audit_normalize_phase2": {
+    "cmd": "./scripts/isaac_python.sh scripts/audit_normalize_phase2.py --source-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1 --normalized-root /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-smoke-S1-normalized --centers-dir /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize --out /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_normalize_phase2_audit.json --scene-filter MV7J6NIKTKJZ2AABAAAAADA8_usd --workers 1",
+    "out": "/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/check_reports/test0_smoke/20260312_074731/normalize/s1_normalize_phase2_audit.json"
+  },
+  "normalize_gate": {
+    "required_fields": [
+      "pairwise.aggregate.displaced_breakdown.gt_0.01",
+      "pairwise.aggregate.ref_same_breakdown.gt_0.01",
+      "audit.aggregate.totals.common_ref_prim_count",
+      "audit.aggregate.totals.center_found",
+      "audit.aggregate.totals.matrix_mismatch",
+      "audit.missing_pre_c1_scenes"
+    ],
+    "pass_conditions": [
+      "pairwise aggregate displaced_breakdown.gt_0.01 should be 0 or near 0",
+      "audit aggregate totals center_found must equal common_ref_prim_count",
+      "audit aggregate totals matrix_mismatch must equal 0",
+      "audit missing_pre_c1_scenes must be empty"
+    ]
+  }
+}
