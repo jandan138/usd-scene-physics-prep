@@ -588,7 +588,7 @@ def patch_single_scene(
     # --- 1f. Atomic save ---
     if not dry_run and any_changed:
         tmp_path = layout_path + ".tmp"
-        stage.Export(tmp_path)
+        stage.GetRootLayer().Export(tmp_path)
         os.rename(tmp_path, layout_path)
 
     # --- 1g. Write per-scene report ---
