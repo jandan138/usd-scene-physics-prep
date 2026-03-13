@@ -165,10 +165,13 @@ This confirms the design rationale for `topo_filesize`: it catches duplicates th
 ### Execution
 
 ```bash
+C1_BULK_DIR=check_reports/union_merged_3way/c1_bulk
+
 python3 scripts/c1_autorun_categories.py \
   --dataset-root GRScenes-test1-normalized \
   --bak-root GRScenes-test1-normalized_bak \
   --report check_reports/union_merged_3way/all_categories_union_merged.json \
+  --c1-bulk-dir "$C1_BULK_DIR" \
   --group-label c1_union_3way \
   --out-version v1 \
   --no-skip-done

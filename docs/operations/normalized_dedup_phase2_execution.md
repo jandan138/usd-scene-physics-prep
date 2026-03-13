@@ -118,10 +118,13 @@ python scripts/merge_dedup_reports.py \
 ### 命令
 
 ```bash
+C1_BULK_DIR=check_reports/normalized_dedup_tolerance/c1_bulk
+
 ./scripts/isaac_python.sh scripts/c1_autorun_categories.py \
   --dataset-root GRScenes-test1-normalized \
   --bak-root GRScenes-test1-normalized_bak \
-  --report check_reports/normalized_dedup_tolerance/merged_geom_only.json
+  --report check_reports/normalized_dedup_tolerance/merged_geom_only.json \
+  --c1-bulk-dir "$C1_BULK_DIR"
 ```
 
 ### autorun 流程（per category）
@@ -135,7 +138,8 @@ python scripts/merge_dedup_reports.py \
 - `--skip-done` 默认开启，已完成类别自动跳过（可断点续跑）
 - step6 有 scan gate：post-promote 和 post-soft-delete 都要求 hit=0
 - 备份在 `GRScenes-test1-normalized_bak/_dedup_assets/`
-- ledger 记录在 `check_reports/c1_bulk/_autorun/`
+- 建议通过 `--c1-bulk-dir` 使用 namespaced C1 工作目录，避免不同数据集或不同 dedup run 复用同一组 mapping / step6 状态
+- ledger 记录在 `<c1-bulk-dir>/_autorun/`
 
 ---
 
@@ -147,7 +151,7 @@ python scripts/merge_dedup_reports.py \
 | `check_reports/normalized_dedup_tolerance/summary.csv` | 汇总 CSV |
 | `check_reports/normalized_dedup_tolerance/summary.json` | 汇总 JSON |
 | `check_reports/normalized_dedup_tolerance/merged_geom_only.json` | 合并报告 |
-| `check_reports/c1_bulk/` | autorun 产出（mapping, batch reports, step6 reports） |
+| `check_reports/normalized_dedup_tolerance/c1_bulk/` | 示例 autorun 产出根目录（mapping, batch reports, step6 reports） |
 | `GRScenes-test1-normalized_bak/` | soft-deleted 资产备份 |
 
 ---

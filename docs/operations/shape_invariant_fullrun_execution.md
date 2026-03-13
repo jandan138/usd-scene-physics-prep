@@ -153,8 +153,9 @@ with open('check_reports/union_merged_full/all_categories_union_merged.json', 'w
 "
 
 # 2. Delete old geom_only mappings
-rm -f check_reports/c1_bulk/*_geom_only_mapping.json
-rm -f check_reports/c1_bulk/*_geom_only_mapping.stats.json
+C1_BULK_DIR=check_reports/union_merged_full/c1_bulk
+rm -f "$C1_BULK_DIR"/*_geom_only_mapping.json
+rm -f "$C1_BULK_DIR"/*_geom_only_mapping.stats.json
 ```
 
 Command:
@@ -163,6 +164,7 @@ python3 scripts/c1_autorun_categories.py \
   --dataset-root GRScenes-test1-normalized \
   --bak-root GRScenes-test1-normalized_bak \
   --report check_reports/union_merged_full/all_categories_union_merged.json \
+  --c1-bulk-dir "$C1_BULK_DIR" \
   --group-label c1_union \
   --out-version v2 \
   --no-skip-done
@@ -170,7 +172,7 @@ python3 scripts/c1_autorun_categories.py \
 
 ### Key Gotchas
 
-1. **`--no-skip-done`**: Phase 2 step6 dirs marked complete → would skip 26 categories
+1. **Use a namespaced `--c1-bulk-dir`**: isolates mappings and step6 state from earlier runs or other datasets
 2. **Delete old mappings**: `*_geom_only_mapping.json` files → stale mappings reused
 3. **Single JSON report**: Union merge outputs per-category → must concatenate
 4. **`--group-label c1_union`**: Distinguish from Phase 2's `c1_autorun` label

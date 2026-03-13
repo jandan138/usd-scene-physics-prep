@@ -13,7 +13,8 @@ Typical usage:
   python3 scripts/c1_autorun_categories.py \
     --dataset-root GRScenes-test1 \
     --bak-root GRScenes-test1_bak \
-    --report check_reports/test1_asset_mesh_dedup_geom_only.json
+    --report check_reports/test1_asset_mesh_dedup_geom_only.json \
+    --c1-bulk-dir check_reports/c1_bulk
 
 Defaults are tuned for safety (skip door_* variants, skip already-done, stop on errors).
 """
@@ -205,6 +206,11 @@ def main() -> int:
     ap.add_argument("--dataset-root", required=True, help="Dataset root dir (e.g. GRScenes-test1)")
     ap.add_argument("--bak-root", required=True, help="Backup root dir (e.g. GRScenes-test1_bak)")
     ap.add_argument("--report", required=True, help="Big geom-only dedup report JSON")
+    ap.add_argument(
+        "--c1-bulk-dir",
+        default="check_reports/c1_bulk",
+        help="Autorun workspace root for mappings, batch reports, step6 dirs, and ledger",
+    )
 
     ap.add_argument("--group-label", default="c1_autorun", help="Group label used for backups and out-name")
     ap.add_argument("--out-version", default="v1", help="Out version tag used in file/dir naming")
@@ -234,6 +240,7 @@ def main() -> int:
     dataset_root = (REPO_ROOT / args.dataset_root).resolve()
     bak_root = (REPO_ROOT / args.bak_root).resolve()
     report_path = (REPO_ROOT / args.report).resolve()
+    c1_bulk_dir = (REPO_ROOT / args.c1_bulk_dir).resolve()
 
     if not ISAAC_PY.exists():
         raise FileNotFoundError(f"Missing Isaac wrapper: {ISAAC_PY}")
@@ -241,7 +248,6 @@ def main() -> int:
         if not p.exists():
             raise FileNotFoundError(f"Missing required script: {p}")
 
-    c1_bulk_dir = (REPO_ROOT / "check_reports" / "c1_bulk").resolve()
     c1_bulk_dir.mkdir(parents=True, exist_ok=True)
 
     include_re = re.compile(args.include_regex) if args.include_regex else None
@@ -273,6 +279,7 @@ def main() -> int:
             "dataset_root": str(dataset_root.relative_to(REPO_ROOT)),
             "bak_root": str(bak_root.relative_to(REPO_ROOT)),
             "report": str(report_path.relative_to(REPO_ROOT)),
+            "c1_bulk_dir": str(c1_bulk_dir.relative_to(REPO_ROOT)),
             "group_label": args.group_label,
             "out_version": args.out_version,
             "categories": categories,
