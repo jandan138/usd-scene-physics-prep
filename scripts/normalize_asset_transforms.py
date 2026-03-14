@@ -11,7 +11,8 @@ This script performs two phases:
 
   Phase 2 — Compensate each scene layout USD:
     - For each prim that references a normalized asset, adjust its xformOp:transform
-    - Formula: M_scene_new = M_scene_old * R_y2z_inv * T(center)
+    - Remap scene-authored descendant xform overrides beneath referenced roots
+    - Formula: M_scene_new = T(center) * R_y2z_inv * M_scene_old
     - This preserves the final world-space placement of every object
 
 Math:
@@ -28,8 +29,10 @@ Usage:
       [--report-dir check_reports/normalize] \
       [--phase 1|2] [--centers-dir /path/to/centers]
 
-  Use --symlink-copy to create symlinks instead of copying non-USD files
-  (PNGs, GLBs, JSON). This drastically reduces I/O for large datasets.
+  Use --symlink-copy to create symlinks instead of copying support files
+  (PNGs, GLBs, JSON, auxiliary USDs). The primary normalized USD is always
+  written as a regular file to avoid write-through into the source asset tree.
+  This drastically reduces I/O for large datasets.
   Avoid /tmp as output-root for large runs (not persistent across reboots).
 
   Use --phase 1 to run only Phase 1 (asset normalization) and save centers JSON.
@@ -74,6 +77,14 @@ _R_Y2Z_INV.SetRotate(Gf.Rotation(Gf.Vec3d(1, 0, 0), -90))
 _R_Y2Z_ROT = Gf.Matrix4d(1.0)
 _R_Y2Z_ROT.SetRotate(Gf.Rotation(Gf.Vec3d(1, 0, 0), 90))
 
+_XFORM_PROPS = {
+    "xformOpOrder",
+    "xformOp:transform",
+    "xformOp:translate",
+    "xformOp:orient",
+    "xformOp:scale",
+}
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -88,6 +99,39 @@ def _get_local_matrix(prim) -> Gf.Matrix4d:
     if isinstance(res, tuple):
         return res[0]
     return res
+
+
+def _is_flat_layout_main_usd(item_name: str, uid: str, src_item: str) -> bool:
+    """Return True when a flat-layout asset entry is the main USD payload.
+
+    Legacy GRScenes assets may store the primary USD directly under
+    ``<category>/<uid>/<uid>.usd`` instead of under ``usd/<uid>.usd``.
+    That file must never be symlinked into the output tree because Phase 1
+    later exports the normalized asset to the destination path.
+    """
+    return item_name == f"{uid}.usd" and os.path.isfile(src_item)
+
+
+def _guard_normalize_output_path(src_usd: str, dst_usd: str) -> None:
+    """Refuse unsafe export targets that could write back into the source tree."""
+    src_abs = os.path.abspath(src_usd)
+    dst_abs = os.path.abspath(dst_usd)
+
+    if os.path.islink(dst_abs):
+        raise RuntimeError(
+            f"Refusing to export normalized asset through symlink target: {dst_abs}"
+        )
+
+    if not os.path.lexists(dst_abs):
+        return
+
+    try:
+        if os.path.samefile(src_abs, dst_abs):
+            raise RuntimeError(
+                f"Refusing to export normalized asset onto source file: src={src_abs} dst={dst_abs}"
+            )
+    except FileNotFoundError:
+        return
 
 
 def _get_chain_transform(ancestor, descendant) -> Gf.Matrix4d:
@@ -138,6 +182,49 @@ def _set_local_matrix(prim, m: Gf.Matrix4d) -> None:
     prim.GetAttribute("xformOp:transform").Set(m)
 
 
+def _clear_scene_layer_xform_props(prim, layer_identifier: str) -> None:
+    """Remove scene-layer xform properties without touching referenced asset layers."""
+    stack = prim.GetPrimStack()
+    if not stack:
+        return
+    top_spec = stack[0]
+    if top_spec.layer.identifier != layer_identifier:
+        return
+    for prop_name in list(top_spec.properties.keys()):
+        if prop_name == "xformOpOrder" or prop_name.startswith("xformOp:"):
+            prim.RemoveProperty(prop_name)
+
+
+def _replace_scene_layer_with_matrix_xform(
+    prim,
+    m: Gf.Matrix4d,
+    layer_identifier: str,
+) -> None:
+    """Replace scene-layer xform opinions with a single matrix xform."""
+    _clear_scene_layer_xform_props(prim, layer_identifier)
+    _set_local_matrix(prim, m)
+
+
+def _set_identity_trs_with_scale(prim, scale: Gf.Vec3d) -> None:
+    """Author translate/orient/scale ops with identity TR and explicit scale.
+
+    Keeping a named xformOp:scale preserves scene-layer overrides that target
+    referenced child prims such as /Instance.
+    """
+    _clear_xform_ops(prim)
+    xf = UsdGeom.Xformable(prim)
+    if not xf:
+        return
+
+    translate_op = xf.AddTranslateOp(UsdGeom.XformOp.PrecisionDouble)
+    orient_op = xf.AddOrientOp(UsdGeom.XformOp.PrecisionDouble)
+    scale_op = xf.AddScaleOp(UsdGeom.XformOp.PrecisionDouble)
+
+    translate_op.Set(Gf.Vec3d(0.0, 0.0, 0.0))
+    orient_op.Set(Gf.Quatd(1.0, 0.0, 0.0, 0.0))
+    scale_op.Set(scale)
+
+
 def _clear_xform_ops(prim) -> None:
     """Remove all xformOp attributes and set empty xformOpOrder."""
     xf = UsdGeom.Xformable(prim)
@@ -169,6 +256,181 @@ def _resolve_ref_asset_path(base_dir: str, asset_path: str) -> str:
     if os.path.isabs(s):
         return os.path.normpath(s)
     return os.path.normpath(os.path.join(base_dir, s))
+
+
+def _is_flat_main_usd_entry(item: str, uid: str, src_item: str) -> bool:
+    """Return True when an asset-dir entry is the legacy flat-layout main USD."""
+    return item == f"{uid}.usd" and os.path.isfile(src_item)
+
+
+def _ensure_safe_output_usd_target(src_usd: str, dst_usd: str) -> None:
+    """Reject output targets that would write through to the source asset."""
+    src_abs = os.path.abspath(src_usd)
+    dst_abs = os.path.abspath(dst_usd)
+
+    if os.path.lexists(dst_abs) and os.path.islink(dst_abs):
+        raise RuntimeError(
+            f"Refusing to export normalized asset to symlink target: {dst_abs}"
+        )
+
+    if os.path.exists(src_abs) and os.path.exists(dst_abs):
+        try:
+            if os.path.samefile(src_abs, dst_abs):
+                raise RuntimeError(
+                    f"Refusing to export normalized asset when source and output are the same file: {src_abs}"
+                )
+        except FileNotFoundError:
+            pass
+
+
+def _ref_relative_path(root_path: str, child_path: str) -> str:
+    if not child_path.startswith(root_path):
+        raise ValueError(f"{child_path} is not under {root_path}")
+    return child_path[len(root_path):] or "/"
+
+
+def _collect_scene_descendant_xform_overrides(
+    scene_stage,
+    scene_path: str,
+    ref_root_prim,
+) -> List[Dict[str, Any]]:
+    """Collect scene-authored xform overrides beneath one referenced root prim."""
+    findings: List[Dict[str, Any]] = []
+    if ref_root_prim is None or not ref_root_prim.IsValid():
+        return findings
+
+    scene_path = os.path.abspath(scene_path)
+    root_path = str(ref_root_prim.GetPath())
+    for prim in Usd.PrimRange(ref_root_prim):
+        if prim.GetPath() == ref_root_prim.GetPath():
+            continue
+        stack = prim.GetPrimStack()
+        if len(stack) < 2:
+            continue
+
+        top_spec = stack[0]
+        if top_spec.layer.identifier != scene_path:
+            continue
+
+        referenced_specs = [
+            spec for spec in stack[1:]
+            if "GRScenes_assets" in spec.layer.identifier
+        ]
+        if not referenced_specs:
+            continue
+
+        scene_props = sorted(set(top_spec.properties.keys()) & _XFORM_PROPS)
+        if not scene_props:
+            continue
+
+        findings.append({
+            "rel_path": _ref_relative_path(root_path, str(prim.GetPath())),
+            "scene_prim_path": str(prim.GetPath()),
+            "scene_local_matrix": _get_local_matrix(prim),
+            "scene_layer_props": scene_props,
+        })
+
+    findings.sort(key=lambda item: item["rel_path"])
+    return findings
+
+
+def _get_cached_asset_stage_pair(
+    src_asset_abs: str,
+    dst_asset_abs: str,
+    cache: Dict[Tuple[str, str], Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Open and cache source/normalized asset stages plus xform caches."""
+    key = (src_asset_abs, dst_asset_abs)
+    if key in cache:
+        return cache[key]
+
+    src_stage = Usd.Stage.Open(src_asset_abs)
+    dst_stage = Usd.Stage.Open(dst_asset_abs)
+    if src_stage is None:
+        raise RuntimeError(f"Failed to open source asset stage: {src_asset_abs}")
+    if dst_stage is None:
+        raise RuntimeError(f"Failed to open normalized asset stage: {dst_asset_abs}")
+
+    pair = {
+        "src_stage": src_stage,
+        "dst_stage": dst_stage,
+        "src_cache": UsdGeom.XformCache(),
+        "dst_cache": UsdGeom.XformCache(),
+    }
+    cache[key] = pair
+    return pair
+
+
+def _asset_descendant_path(rel_path: str) -> Sdf.Path:
+    if rel_path in ("", "/"):
+        return Sdf.Path("/Root")
+    return Sdf.Path("/Root" + rel_path)
+
+
+def _compute_descendant_override_remap(
+    asset_stage_pair: Dict[str, Any],
+    rel_desc_path: str,
+    source_scene_local_matrix: Gf.Matrix4d,
+    center: Gf.Vec3d,
+) -> Gf.Matrix4d:
+    """Remap a source-scene descendant xform override into normalized local space."""
+    asset_desc_path = _asset_descendant_path(rel_desc_path)
+    src_stage = asset_stage_pair["src_stage"]
+    dst_stage = asset_stage_pair["dst_stage"]
+    src_cache = asset_stage_pair["src_cache"]
+    dst_cache = asset_stage_pair["dst_cache"]
+
+    src_asset_prim = src_stage.GetPrimAtPath(asset_desc_path)
+    dst_asset_prim = dst_stage.GetPrimAtPath(asset_desc_path)
+    if not src_asset_prim or not src_asset_prim.IsValid():
+        raise RuntimeError(f"Missing source asset prim: {asset_desc_path}")
+    if not dst_asset_prim or not dst_asset_prim.IsValid():
+        raise RuntimeError(f"Missing normalized asset prim: {asset_desc_path}")
+
+    src_asset_local = _get_local_matrix(src_asset_prim)
+    dst_asset_local = _get_local_matrix(dst_asset_prim)
+
+    parent_path = asset_desc_path.GetParentPath()
+    src_parent = src_stage.GetPrimAtPath(parent_path)
+    dst_parent = dst_stage.GetPrimAtPath(parent_path)
+    if not src_parent or not src_parent.IsValid():
+        raise RuntimeError(f"Missing source parent prim: {parent_path}")
+    if not dst_parent or not dst_parent.IsValid():
+        raise RuntimeError(f"Missing normalized parent prim: {parent_path}")
+
+    t_center = Gf.Matrix4d(1.0)
+    t_center.SetTranslate(center)
+    f_root = t_center * _R_Y2Z_INV
+
+    w_asset_old_parent = src_cache.GetLocalToWorldTransform(src_parent)
+    w_asset_new_parent = dst_cache.GetLocalToWorldTransform(dst_parent)
+    f_parent = w_asset_new_parent * f_root * w_asset_old_parent.GetInverse()
+
+    delta_old = src_asset_local.GetInverse() * source_scene_local_matrix
+    delta_new = f_parent * delta_old * f_parent.GetInverse()
+    return dst_asset_local * delta_new
+
+
+def _apply_descendant_override_remaps(
+    dst_stage,
+    ref_root_path: str,
+    remaps: List[Dict[str, Any]],
+    layer_identifier: str,
+) -> int:
+    """Write remapped descendant overrides into the destination scene layer."""
+    applied = 0
+    for remap in remaps:
+        dst_prim_path = ref_root_path + remap["rel_path"]
+        dst_prim = dst_stage.GetPrimAtPath(dst_prim_path)
+        if not dst_prim or not dst_prim.IsValid():
+            raise RuntimeError(f"Missing destination descendant prim: {dst_prim_path}")
+        _replace_scene_layer_with_matrix_xform(
+            dst_prim,
+            remap["new_local_matrix"],
+            layer_identifier,
+        )
+        applied += 1
+    return applied
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +496,8 @@ def normalize_asset(src_usd: str, dst_usd: str) -> Dict[str, Any]:
 
     Returns a dict with normalization metadata (center, scale, etc.).
     """
+    _ensure_safe_output_usd_target(src_usd, dst_usd)
+
     stage = Usd.Stage.Open(src_usd)
     if stage is None:
         raise RuntimeError(f"Failed to open: {src_usd}")
@@ -350,15 +614,16 @@ def normalize_asset(src_usd: str, dst_usd: str) -> Dict[str, Any]:
             continue  # handle Instance separately below
         _clear_xform_ops(prim)
 
-    # 7. Set Instance to clean Scale-only transform
-    M_new_instance = _make_scale_matrix(original_scale)
-    _set_local_matrix(instance, M_new_instance)
+    # 7. Set Instance to clean Scale-only transform while preserving a named
+    # xformOp:scale so scene-layer child overrides continue to compose.
+    _set_identity_trs_with_scale(instance, original_scale)
 
     # 8. Set stage metadata
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
 
     # 9. Export
     os.makedirs(os.path.dirname(dst_usd), exist_ok=True)
+    _guard_normalize_output_path(src_usd, dst_usd)
     stage.Export(dst_usd)
 
     return {
@@ -389,14 +654,23 @@ def compensate_scene(
     os.makedirs(os.path.dirname(dst_layout), exist_ok=True)
     shutil.copy2(src_layout, dst_layout)
 
+    source_stage = Usd.Stage.Open(src_layout)
     stage = Usd.Stage.Open(dst_layout)
+    if source_stage is None:
+        raise RuntimeError(f"Failed to open: {src_layout}")
     if stage is None:
         raise RuntimeError(f"Failed to open: {dst_layout}")
 
     base_dir = os.path.dirname(os.path.abspath(dst_layout))
+    source_scene_layer = os.path.abspath(src_layout)
+    destination_layer = stage.GetRootLayer().identifier
     compensated = 0
+    descendant_overrides_found = 0
+    descendant_overrides_remapped = 0
     skipped = 0
     errors = []
+    descendant_override_examples: List[Dict[str, Any]] = []
+    asset_stage_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
     for prim in stage.Traverse():
         if not prim or not prim.IsValid():
@@ -447,6 +721,13 @@ def compensate_scene(
 
             # Get current scene transform
             M_scene_old = _get_local_matrix(prim)
+            source_ref_prim = source_stage.GetPrimAtPath(prim.GetPath())
+            descendant_override_specs = _collect_scene_descendant_xform_overrides(
+                source_stage,
+                source_scene_layer,
+                source_ref_prim,
+            )
+            descendant_overrides_found += len(descendant_override_specs)
 
             # Compensate: M_scene_new = T(center) * R_y2z_inv * M_scene_old
             # Derivation (row-vector, p * M):
@@ -462,6 +743,69 @@ def compensate_scene(
                 compensated += 1
             except Exception as e:
                 errors.append({"prim": str(prim.GetPath()), "error": str(e)})
+                continue
+
+            if not descendant_override_specs:
+                continue
+
+            src_asset_abs = os.path.join(assets_root_abs, rel_key)
+            dst_asset_abs = os.path.join(output_assets_root_abs, rel_key)
+            try:
+                asset_stage_pair = _get_cached_asset_stage_pair(
+                    src_asset_abs,
+                    dst_asset_abs,
+                    asset_stage_cache,
+                )
+            except Exception as e:
+                errors.append({
+                    "prim": str(prim.GetPath()),
+                    "error": f"descendant_override_stage_open_failed: {e}",
+                })
+                continue
+
+            remaps = []
+            for spec in descendant_override_specs:
+                try:
+                    new_local = _compute_descendant_override_remap(
+                        asset_stage_pair=asset_stage_pair,
+                        rel_desc_path=spec["rel_path"],
+                        source_scene_local_matrix=spec["scene_local_matrix"],
+                        center=center,
+                    )
+                    remaps.append({
+                        "rel_path": spec["rel_path"],
+                        "scene_prim_path": spec["scene_prim_path"],
+                        "scene_layer_props": spec["scene_layer_props"],
+                        "new_local_matrix": new_local,
+                    })
+                except Exception as e:
+                    errors.append({
+                        "prim": spec["scene_prim_path"],
+                        "error": f"descendant_override_remap_failed: {e}",
+                    })
+
+            try:
+                applied = _apply_descendant_override_remaps(
+                    dst_stage=stage,
+                    ref_root_path=str(prim.GetPath()),
+                    remaps=remaps,
+                    layer_identifier=destination_layer,
+                )
+                descendant_overrides_remapped += applied
+                for remap in remaps[:5]:
+                    if len(descendant_override_examples) >= 20:
+                        break
+                    descendant_override_examples.append({
+                        "ref_root_path": str(prim.GetPath()),
+                        "descendant_rel_path": remap["rel_path"],
+                        "scene_prim_path": remap["scene_prim_path"],
+                        "scene_layer_props": remap["scene_layer_props"],
+                    })
+            except Exception as e:
+                errors.append({
+                    "prim": str(prim.GetPath()),
+                    "error": f"descendant_override_apply_failed: {e}",
+                })
 
     # Update references to point to normalized asset paths
     # The layout references use relative paths like ../../../GRScenes_assets/...
@@ -472,6 +816,9 @@ def compensate_scene(
 
     return {
         "compensated": compensated,
+        "descendant_overrides_found": descendant_overrides_found,
+        "descendant_overrides_remapped": descendant_overrides_remapped,
+        "descendant_override_examples": descendant_override_examples,
         "skipped": skipped,
         "errors": errors,
     }
@@ -566,7 +913,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--dry-run", action="store_true",
                      help="Simulate: report what would be done without writing files")
     ap.add_argument("--symlink-copy", action="store_true",
-                     help="Use symlinks instead of file copies for non-USD files (reduces I/O)")
+                     help="Use symlinks instead of file copies for support files; "
+                          "primary normalized USDs are still written as regular files")
     ap.add_argument("--report-dir", default=None,
                      help="Directory for JSON reports")
     ap.add_argument("--phase", choices=["1", "2"], default=None,
@@ -655,6 +1003,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     for item in os.listdir(src_asset_dir):
                         src_item = os.path.join(src_asset_dir, item)
                         dst_item = os.path.join(dst_asset_dir, item)
+                        if _is_flat_layout_main_usd(item, uid, src_item):
+                            # The main legacy USD is written by normalize_asset().
+                            # Never pre-create it as a symlink or copy target.
+                            continue
                         if item == "usd":
                             # Handle usd/ subdir: symlink or copy non-main USD files
                             usd_dir = os.path.join(src_asset_dir, "usd")
@@ -674,6 +1026,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                                 elif os.path.isdir(src_ui):
                                     shutil.copytree(src_ui, dst_ui, symlinks=True)
                         else:
+                            if _is_flat_main_usd_entry(item, uid, src_item):
+                                continue  # will be written by normalize_asset
                             if os.path.exists(dst_item) or os.path.islink(dst_item):
                                 continue  # idempotent
                             os.makedirs(dst_asset_dir, exist_ok=True)
@@ -743,6 +1097,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     scene_errors: List[Dict[str, Any]] = []
     total_compensated = 0
+    total_descendant_overrides_found = 0
+    total_descendant_overrides_remapped = 0
+    descendant_override_examples: List[Dict[str, Any]] = []
 
     t1 = time.time()
     for i, src_layout in enumerate(layout_list):
@@ -794,6 +1151,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 output_assets_root_abs=output_assets,
             )
             total_compensated += result["compensated"]
+            total_descendant_overrides_found += int(
+                result.get("descendant_overrides_found", 0)
+            )
+            total_descendant_overrides_remapped += int(
+                result.get("descendant_overrides_remapped", 0)
+            )
+            for item in result.get("descendant_override_examples", []):
+                if len(descendant_override_examples) >= 20:
+                    break
+                descendant_override_examples.append({
+                    "layout": rel_layout,
+                    **item,
+                })
             if result["errors"]:
                 scene_errors.extend([
                     {"layout": rel_layout, "phase": "compensate", **e}
@@ -823,11 +1193,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "assets_total": asset_total,
             "scenes_processed": len(layout_list),
             "prims_compensated": total_compensated,
+            "descendant_overrides_found": total_descendant_overrides_found,
+            "descendant_overrides_remapped": total_descendant_overrides_remapped,
             "errors_count": len(all_errors),
             "elapsed_phase1_sec": round(elapsed_p1, 2),
             "elapsed_phase2_sec": round(elapsed_p2, 2),
         },
         "assets": asset_report,
+        "descendant_override_examples": descendant_override_examples,
         "errors": all_errors,
     }
 
@@ -847,6 +1220,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     print(f"\nSummary: {len(asset_centers)} assets normalized, "
           f"{total_compensated} scene prims compensated, "
+          f"{total_descendant_overrides_remapped} descendant overrides remapped, "
           f"{len(all_errors)} errors")
 
     return 1 if all_errors else 0
