@@ -139,6 +139,9 @@ def _get_chain_transform(ancestor, descendant) -> Gf.Matrix4d:
 
     This gives the transform that maps points in descendant's local space
     into ancestor's local space (NOT including ancestor's own transform).
+
+    Row-vector convention: p_ancestor = p_descendant * M_chain, where
+    M_chain = M_descendant_local * M_parent_local * ... * M_ancestor_child_local.
     """
     chain = []
     cur = descendant
@@ -149,7 +152,7 @@ def _get_chain_transform(ancestor, descendant) -> Gf.Matrix4d:
 
     result = Gf.Matrix4d(1.0)
     for p in chain:
-        result = result * _get_local_matrix(p)
+        result = _get_local_matrix(p) * result
     return result
 
 
