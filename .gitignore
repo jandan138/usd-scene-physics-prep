@@ -26,37 +26,40 @@ venv/
 ENV/
 env/
 GRScenes-test0/
+GRScenes-test0-*/
 GRScenes-test1/
+GRScenes-test1-*/
 GRScenes-test1_bak/
 GRScenes-test1_bak_20260131_104203/
-GRScenes-test1-normalized/
 
 # Local run artifacts
 logs/
-check_reports/mdl_bak_*/
-check_reports/c1_bulk/
-check_reports/*_report_test*.json
-check_reports/*_dryrun*.json
-check_reports/*glb_report*.json
-check_reports/subset_*_glb_report.json
-check_reports/scene_subset_*_glb_report.json
-check_reports/fix_mdl_textures_case_report_test1.json
-check_reports/subset_20_gt10mb_glb_report.json
-check_reports/*asset_mesh_dedup*.json
-check_reports/*asset_mesh_dedup*.jsonl
-check_reports/*asset_mesh_dedup*.log
-check_reports/*asset_mesh_dedup*.pid
+check_reports/
 scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
 
-# Derived summaries (keep the raw counts / apply+validate reports instead)
-check_reports/GRScenes_assets_category_cnt_stats.*
+# One-off analysis / debug scripts (root-level scratch)
+analyze_*.py
+capture_*.py
+check_normalized.py
+compare_bottles.py
+debug_normalize.py
+inspect_usd.py
+render_and_analyze.py
+render_preview.py
+scan_mdl_issues.py
+simple_render.py
 
-# Intermediate suggestion reports (keep v3 only)
-check_reports/test1_grscenes_assets_category_underscore_suggestions.json
-check_reports/test1_grscenes_assets_category_underscore_suggestions.md
-check_reports/test1_grscenes_assets_category_underscore_suggestions_v2.json
-check_reports/test1_grscenes_assets_category_underscore_suggestions_v2.md
+# Render output
+render_output/
 
-# Keep specific check_reports under version control (auditable maintenance outputs)
-!check_reports/test1_category_merge_*.json
+# Subset packages (generated data)
+subsets/
+
+# Claude / Codex tool state
+.claude/scheduled_tasks.lock
+.claude/.efc_*
+.codex/
+
+# Skills (claude code custom skills)
+skills/
