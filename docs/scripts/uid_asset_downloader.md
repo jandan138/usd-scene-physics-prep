@@ -1,3 +1,12 @@
+---
+title: UID Asset Downloader (build subset package)
+code_reference: scripts/build_uid_subset_package.py
+created_at: '2026-01-19'
+updated_at: '2026-01-19'
+maintainer: Codex
+status: Active
+---
+
 # UID Asset Downloader (build subset package)
 
 > Last Updated: 2026-01-19

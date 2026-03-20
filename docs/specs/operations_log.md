@@ -1,3 +1,16 @@
+---
+title: 操作记录（Materials / Assets / Scenes）
+code_reference:
+- specs_normalizer/normalize.py
+- scripts/check_phase2_assets.py
+- scripts/check_phase3_scenes.py
+- scripts/fix_mdl_textures_case.py
+created_at: '2025-12-02'
+updated_at: '2026-01-13'
+maintainer: Codex
+status: Active
+---
+
 # 操作记录（Materials / Assets / Scenes）
 
 > 最后更新：2026-01-13

@@ -1,3 +1,15 @@
+---
+title: 资产去重落地方案 C1 执行手册（Scene 侧引用归一 + Instancing）
+code_reference:
+- scripts/rewrite_layout_asset_refs_with_compensation.py
+- scripts/c1_build_bulk_mapping_from_dedup_report.py
+- scripts/c1_bulk_apply_layout_dedup.py
+created_at: '2026-01-28'
+updated_at: '2026-01-28'
+maintainer: Codex
+status: Active
+---
+
 # 资产去重落地方案 C1 执行手册（Scene 侧引用归一 + Instancing）
 
 > 目标读者：想把“重复几何”省掉，但又不想把场景搞坏的人

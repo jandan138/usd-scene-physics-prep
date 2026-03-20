@@ -1,3 +1,15 @@
+---
+title: DLC Normalize Mode Failure Analysis / DLC Normalize 模式故障分析
+code_reference:
+- scripts/dlc/run_task.sh
+- specs_normalizer/utils/mdl_rewrite.py
+- specs_normalizer/exporters/scenes.py
+created_at: '2026-03-04'
+updated_at: '2026-03-04'
+maintainer: Codex
+status: Active
+---
+
 # DLC Normalize Mode Failure Analysis / DLC Normalize 模式故障分析
 
 **Job ID (Failed)**: `dlcp6js3t2v2d71w`

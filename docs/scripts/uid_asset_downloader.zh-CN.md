@@ -1,3 +1,12 @@
+---
+title: UID 资产下载脚本（按 UID 构建子集包）
+code_reference: scripts/build_uid_subset_package.py
+created_at: '2026-01-19'
+updated_at: '2026-01-19'
+maintainer: Codex
+status: Active
+---
+
 # UID 资产下载脚本（按 UID 构建子集包）
 
 > 最后更新：2026-01-19

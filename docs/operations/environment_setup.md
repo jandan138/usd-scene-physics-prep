@@ -1,3 +1,15 @@
+---
+title: 环境准备建议
+code_reference:
+- set_physics/simready.py
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+created_at: '2025-11-26'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # 环境准备建议
 
 > 最后更新：2025-12-22

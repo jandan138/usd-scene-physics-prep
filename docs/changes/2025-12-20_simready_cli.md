@@ -1,3 +1,12 @@
+---
+title: 2025-12-20：新增一键生成 Sim-Ready USD 的 CLI
+code_reference: set_physics/simready.py
+created_at: '2025-12-28'
+updated_at: '2025-12-28'
+maintainer: Codex
+status: completed
+---
+
 # 2025-12-20：新增一键生成 Sim-Ready USD 的 CLI
 
 ## 背景与目标

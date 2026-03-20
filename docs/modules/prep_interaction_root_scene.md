@@ -1,3 +1,16 @@
+---
+title: '`prep_interaction_root_scene.py`（原理与代码导读）'
+code_reference:
+- scripts/prep_interaction_root_scene.py
+- scripts/list_draggable_prims.py
+- scripts/oneoff_force_draggable.py
+- set_physics/preprocess_for_interaction.py
+created_at: '2025-12-22'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # `prep_interaction_root_scene.py`（原理与代码导读）
 
 > 最后更新：2025-12-22

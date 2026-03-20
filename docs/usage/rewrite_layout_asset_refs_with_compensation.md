@@ -1,3 +1,12 @@
+---
+title: layout.usd 资产引用归一 + transform 补偿（Step 3B 工具）
+code_reference: scripts/rewrite_layout_asset_refs_with_compensation.py
+created_at: '2026-01-28'
+updated_at: '2026-01-28'
+maintainer: Codex
+status: Active
+---
+
 # layout.usd 资产引用归一 + transform 补偿（Step 3B 工具）
 
 最后更新：2026-01-27

@@ -1,3 +1,16 @@
+---
+title: 数据目录结构规范解读（Materials / Assets / Scenes）
+code_reference:
+- set_physics/pxr_utils/data_clean.py
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+- set_physics/tools/thumb_img.py
+created_at: '2025-11-26'
+updated_at: '2026-01-13'
+maintainer: Codex
+status: Active
+---
+
 # 数据目录结构规范解读（Materials / Assets / Scenes）
 
 > 最后更新：2026-01-13

@@ -1,3 +1,15 @@
+---
+title: 排错：GLB payload 多 Mesh（`geometry_01` 等）未绑定 collider 导致穿透
+code_reference:
+- scripts/prep_interaction_root_scene.py
+- scripts/list_draggable_prims.py
+- scripts/oneoff_force_draggable.py
+created_at: '2025-12-22'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # 排错：GLB payload 多 Mesh（`geometry_01` 等）未绑定 collider 导致穿透
 
 > 最后更新：2025-12-22

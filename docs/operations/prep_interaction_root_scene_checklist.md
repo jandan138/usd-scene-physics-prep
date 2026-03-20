@@ -1,3 +1,15 @@
+---
+title: '`/root` 交互预处理：自检与排错清单（`prep_interaction_root_scene.py`）'
+code_reference:
+- scripts/prep_interaction_root_scene.py
+- scripts/list_draggable_prims.py
+- scripts/isaac_python.sh
+created_at: '2025-12-22'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # `/root` 交互预处理：自检与排错清单（`prep_interaction_root_scene.py`）
 
 > 最后更新：2025-12-22

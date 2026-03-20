@@ -1,3 +1,20 @@
+---
+title: 交互预处理排错（SimBench/GRSceneUSD task10）
+code_reference:
+- set_physics/simready.py
+- set_physics/preprocess_for_interaction.py
+- scripts/isaac_python.sh
+- scripts/prep_interaction_root_scene.py
+- scripts/list_draggable_prims.py
+- scripts/oneoff_make_static_collider_only.py
+- scripts/inspect_usd_physics_props.py
+- scripts/oneoff_stabilize_contact_ccd_damping.py
+created_at: '2025-12-22'
+updated_at: '2025-12-23'
+maintainer: Codex
+status: Active
+---
+
 # 交互预处理排错（SimBench/GRSceneUSD task10）
 
 > 最后更新：2025-12-23

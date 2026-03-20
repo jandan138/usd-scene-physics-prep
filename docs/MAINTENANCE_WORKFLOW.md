@@ -1,3 +1,12 @@
+---
+title: 项目维护与更新流程 (Maintenance Workflow)
+code_reference: scripts/doc_manager.py
+created_at: '2025-12-28'
+updated_at: '2025-12-28'
+maintainer: Codex
+status: Active
+---
+
 # 项目维护与更新流程 (Maintenance Workflow)
 
 本文档定义了本项目在代码与文档更新时的标准化流程，旨在确保文档系统的一致性与时效性。

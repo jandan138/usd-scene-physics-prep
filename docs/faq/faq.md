@@ -1,3 +1,16 @@
+---
+title: 常见问题
+code_reference:
+- set_physics/pxr_utils/data_clean.py
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+- set_physics/simready.py
+created_at: '2025-11-26'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # 常见问题
 
 > 最后更新：2025-12-22

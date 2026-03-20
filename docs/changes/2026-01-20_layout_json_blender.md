@@ -1,3 +1,12 @@
+---
+title: 2026-01-20 — Generate layout.json for Blender (scene subset)
+code_reference: scripts/generate_layout_json_from_usd.py
+created_at: '2026-01-20'
+updated_at: '2026-01-20'
+maintainer: Codex
+status: completed
+---
+
 # 2026-01-20 — Generate layout.json for Blender (scene subset)
 
 ## Summary

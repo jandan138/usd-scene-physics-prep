@@ -10,6 +10,7 @@
 import os
 import json
 import re
+import traceback
 from ..utils.fs import ensure_dir, copy_file
 from ..utils.scene_rewrite import rewrite_scene_refs_inplace, _remap_model_path
 
@@ -29,6 +30,29 @@ def choose_layout(scene_dir):
         if os.path.isfile(p) and f.lower().endswith((".usd", ".usda", ".usdc")):
             return p
     return None
+
+
+def _count_legacy_model_refs(usd_path):
+    try:
+        from pxr import Usd
+    except Exception:
+        return 0
+
+    stage = Usd.Stage.Open(usd_path)
+    if stage is None:
+        return 0
+
+    legacy_count = 0
+    for prim in stage.Traverse():
+        for metadata_name in ("references", "payload"):
+            entries = prim.GetMetadata(metadata_name)
+            if entries is None or not hasattr(entries, "GetAddedOrExplicitItems"):
+                continue
+            for item in entries.GetAddedOrExplicitItems():
+                asset_path = getattr(item, "assetPath", "") or ""
+                if asset_path.startswith("models/"):
+                    legacy_count += 1
+    return legacy_count
 
 # 导出场景到规范结构
 def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotations, scene_ids=None, asset_name=None):
@@ -82,9 +106,11 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
             if not uf.lower().endswith((".usda", ".usd", ".usdc")):
                 continue
             usdf = os.path.join(out_dir, uf)
+            primary_error = None
             try:
                 rewrite_scene_refs_inplace(usdf, mats_abs, models_abs, relative_base=out_dir)
-            except Exception:
+            except Exception as e:
+                primary_error = e
                 # 文本兜底重写
                 try:
                     with open(usdf, "rb") as f:
@@ -184,10 +210,20 @@ def export_scenes(src_root, dst_root, scene_name, scene_category, with_annotatio
                         # 没变化，清理临时文件
                         if os.path.exists(tmp_usda):
                             os.remove(tmp_usda)
-                            
+
                 except Exception as e:
-                    print(f"Fallback rewrite failed for {usdf}: {e}")
-                    pass
+                    raise RuntimeError(
+                        "Scene ref rewrite failed and fallback rewrite also failed for "
+                        f"{usdf}\nprimary_error={primary_error}\n"
+                        f"fallback_error={e}\n{traceback.format_exc()}"
+                    ) from e
+
+            legacy_ref_count = _count_legacy_model_refs(usdf)
+            if legacy_ref_count:
+                raise RuntimeError(
+                    f"Scene rewrite verification failed for {usdf}: "
+                    f"{legacy_ref_count} legacy 'models/...' refs remain"
+                )
         if with_annotations:                                        # 可选生成注释
             ann = {"sid": sid}
             if Usd:                                                 # 若 USD 可用则统计 Meshes 子层级

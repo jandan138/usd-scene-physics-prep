@@ -1,3 +1,16 @@
+---
+title: 导出统一结构对齐报告（阶段一至三）
+code_reference:
+- scripts/check_phase2_assets.py
+- scripts/check_phase3_scenes.py
+- scripts/fix_mdl_textures_case.py
+- specs_normalizer/normalize.py
+created_at: '2025-12-08'
+updated_at: '2026-01-13'
+maintainer: Codex
+status: Active
+---
+
 # 导出统一结构对齐报告（阶段一至三）
 
 > 最后更新：2026-01-13

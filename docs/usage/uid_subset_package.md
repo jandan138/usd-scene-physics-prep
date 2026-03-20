@@ -1,3 +1,12 @@
+---
+title: UID 子集导出（只打包指定资产）
+code_reference: scripts/build_uid_subset_package.py
+created_at: '2026-01-15'
+updated_at: '2026-01-20'
+maintainer: Codex
+status: Active
+---
+
 # UID 子集导出（只打包指定资产）
 
 > Last Updated: 2026-01-15

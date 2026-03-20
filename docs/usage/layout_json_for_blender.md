@@ -1,3 +1,14 @@
+---
+title: 从 layout.usd 生成 layout.json，并在 Blender 中加载（基于 GLB 资产）
+code_reference:
+- scripts/convert_subset_usd_to_glb.py
+- scripts/generate_layout_json_from_usd.py
+created_at: '2026-01-20'
+updated_at: '2026-01-20'
+maintainer: Codex
+status: Active
+---
+
 # 从 layout.usd 生成 layout.json，并在 Blender 中加载（基于 GLB 资产）
 
 > 适用场景：你有一个“资产库/子集包”（例如 scene subset），其中 **所有物体资产**（`GRScenes_assets/**`）已经具备 `usd/<uid>.usd` 和 `glb/<uid>.glb`，但 **scene 侧**只有 `layout.usd`（例如 `GRScenes100/**/<scene_uid>_usd/layout.usd`）。

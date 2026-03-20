@@ -235,6 +235,11 @@ def main() -> int:
     )
     ap.add_argument("--no-set-instanceable", dest="set_instanceable", action="store_false")
 
+    ap.add_argument("--v-matrix-mode", choices=["none", "auto"], default="none",
+                    help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
+    ap.add_argument("--mode-reports-dir", default=None,
+                    help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
+
     args = ap.parse_args()
 
     dataset_root = (REPO_ROOT / args.dataset_root).resolve()
@@ -282,6 +287,8 @@ def main() -> int:
             "c1_bulk_dir": str(c1_bulk_dir.relative_to(REPO_ROOT)),
             "group_label": args.group_label,
             "out_version": args.out_version,
+            "v_matrix_mode": args.v_matrix_mode,
+            "mode_reports_dir": args.mode_reports_dir,
             "categories": categories,
         },
     )
@@ -354,7 +361,11 @@ def main() -> int:
             plan.out_name,
             "--report-dir",
             str(plan.batch_report_dir.relative_to(REPO_ROOT)),
+            "--v-matrix-mode",
+            args.v_matrix_mode,
         ]
+        if args.mode_reports_dir:
+            cmd.extend(["--mode-reports-dir", str((REPO_ROOT / args.mode_reports_dir).resolve().relative_to(REPO_ROOT))])
         if args.set_instanceable:
             cmd.append("--set-instanceable")
         rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "02_bulk_apply.log")

@@ -1,3 +1,18 @@
+---
+title: 规范化导出工具使用说明（specs_normalizer）
+code_reference:
+- specs_normalizer/__main__.py
+- specs_normalizer/normalize.py
+- specs_normalizer/exporters/materials.py
+- specs_normalizer/exporters/assets.py
+- specs_normalizer/exporters/scenes.py
+- specs_normalizer/validators/structure.py
+created_at: '2025-11-26'
+updated_at: '2026-01-13'
+maintainer: Codex
+status: Active
+---
+
 # 规范化导出工具使用说明（specs_normalizer）
 
 > 最后更新：2026-01-13

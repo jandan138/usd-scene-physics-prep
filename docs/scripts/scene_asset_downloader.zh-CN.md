@@ -1,3 +1,12 @@
+---
+title: 场景 UID 下载脚本（场景 + 所有引用的资产 + 材质）
+code_reference: scripts/build_scene_uid_subset_package.py
+created_at: '2026-01-19'
+updated_at: '2026-01-19'
+maintainer: Codex
+status: Active
+---
+
 # 场景 UID 下载脚本（场景 + 所有引用的资产 + 材质）
 
 > 最后更新：2026-01-19

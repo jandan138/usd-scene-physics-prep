@@ -1,3 +1,14 @@
+---
+title: Windows 使用注意
+code_reference:
+- set_physics/pxr_utils/data_clean.py
+- set_physics/pxr_utils/usd_physics.py
+created_at: '2025-11-26'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # Windows 使用注意
 
 > 最后更新：2025-12-22

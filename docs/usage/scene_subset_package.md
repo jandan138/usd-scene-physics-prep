@@ -1,3 +1,12 @@
+---
+title: Scene 子集导出（按场景 UID 打包场景 + 所有引用资产）
+code_reference: scripts/build_scene_uid_subset_package.py
+created_at: '2026-01-19'
+updated_at: '2026-01-19'
+maintainer: Codex
+status: Active
+---
+
 # Scene 子集导出（按场景 UID 打包场景 + 所有引用资产）
 
 > Last Updated: 2026-01-19

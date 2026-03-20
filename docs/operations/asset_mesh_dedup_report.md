@@ -1,3 +1,14 @@
+---
+title: GRScenes 资产 Mesh 去重报告（仅分析，不修改数据）
+code_reference:
+- scripts/report_asset_mesh_dedup.py
+- scripts/summarize_asset_mesh_dedup_report.py
+created_at: '2026-01-26'
+updated_at: '2026-01-26'
+maintainer: Codex
+status: Active
+---
+
 # GRScenes 资产 Mesh 去重报告（仅分析，不修改数据）
 
 > 最后更新：2026-01-26

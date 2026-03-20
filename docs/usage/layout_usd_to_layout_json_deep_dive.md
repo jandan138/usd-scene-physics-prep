@@ -1,3 +1,12 @@
+---
+title: layout.usd → layout.json：流程原理 + 代码解析（非常详细）
+code_reference: scripts/generate_layout_json_from_usd.py
+created_at: '2026-01-20'
+updated_at: '2026-01-20'
+maintainer: Codex
+status: Active
+---
+
 # layout.usd → layout.json：流程原理 + 代码解析（非常详细）
 
 > 本文是“原理/实现细节”文档：解释我们如何从 `layout.usd` 抽取物体实例、计算世界变换、并生成 Blender 可消费的 `layout.json`。

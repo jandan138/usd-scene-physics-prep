@@ -1,3 +1,15 @@
+---
+title: 物理原理与实现解析（PhysX / Isaac Sim / USD）
+code_reference:
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+- set_physics/pxr_utils/usd_physics.py
+created_at: '2025-12-28'
+updated_at: '2025-12-28'
+maintainer: Codex
+status: Active
+---
+
 # 物理原理与实现解析（PhysX / Isaac Sim / USD）
 
 本篇文档面向“把一个 USD 场景变成 Isaac Sim 可直接仿真的 sim-ready 场景”这个目标，解释：

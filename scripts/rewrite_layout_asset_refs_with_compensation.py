@@ -16,9 +16,9 @@ Mathematically (row-vector convention, p' = p * M):
   => M_layout_new = inverse(M_canonicalInternal) * M_oldInternal * M_layout_old  (left-multiply)
 
 Important limitations (intentional):
-- We treat "asset internal" as the local transform on the Instance child of the asset stage's defaultPrim
-  (/Root/Instance), where normalize_asset_transforms.py writes the alignment transform.
-  Falls back to defaultPrim if no Instance child exists.
+- We compute "asset internal" as the full chain transform from defaultPrim through Instance down to the
+  first mesh's parent prim.  This captures intermediate prims like Group_00, Component_N etc. that carry
+  positioning transforms.  Falls back to Instance-only or identity when no mesh or no Instance child exists.
 - The script will author a single `xformOp:transform` on the instance prim to represent the compensated transform.
   This may replace existing TRS op stacks; it preserves the composed matrix but not the exact op decomposition.
 
@@ -164,13 +164,24 @@ def _format_new_asset_path(base_dir: str, old_asset_path_raw: str, new_abs: str)
 
 
 def _get_asset_internal_matrix(asset_usd_abs: str) -> Gf.Matrix4d:
-    """Return local xform of asset's /Root/Instance as 'asset internal' matrix.
+    """Compute full internal transform from defaultPrim through Instance down to first mesh parent.
 
-    normalize_asset_transforms.py writes the alignment transform (recenter +
-    Y-up->Z-up rotation) on the Instance child of the defaultPrim.  We must
-    read that prim -- NOT the defaultPrim itself, whose transform is typically
-    identity.  Falls back to defaultPrim when no Instance child exists.
+    This captures the complete transform chain that positions mesh geometry
+    in the asset's local coordinate space, including intermediate prims
+    like Group_00, Component_N, etc.
+
+    The dedup compensation formula ``M_new_local = M_canon_internal⁻¹ * M_old_internal * M_old_local``
+    requires ``M_internal`` to represent the same coordinate space transformation for both
+    old and canonical assets.  By walking the chain to the first mesh's parent we capture
+    the full positioning transform regardless of hierarchy depth.
     """
+    # Import shared helpers (avoids duplicating chain-walk logic)
+    import sys as _sys
+    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    if _scripts_dir not in _sys.path:
+        _sys.path.insert(0, _scripts_dir)
+    from usd_xform_utils import get_local_matrix, get_chain_transform, find_all_meshes
+
     stage = Usd.Stage.Open(asset_usd_abs, load=Usd.Stage.LoadNone)
     if stage is None:
         raise RuntimeError(f"Failed to open asset USD: {asset_usd_abs}")
@@ -184,24 +195,32 @@ def _get_asset_internal_matrix(asset_usd_abs: str) -> Gf.Matrix4d:
         return Gf.Matrix4d(1.0)
 
     # Look for "Instance" child under the default prim (e.g. /Root/Instance).
-    # This is where normalize_asset_transforms.py writes the alignment transform.
     instance_prim = None
     for child in default_prim.GetChildren():
         if child.GetName() == "Instance":
             instance_prim = child
             break
 
-    # Use Instance prim if found, otherwise fall back to default prim
-    target_prim = instance_prim if (instance_prim and instance_prim.IsValid()) else default_prim
-
-    xf = UsdGeom.Xformable(target_prim)
-    if not xf:
+    if not instance_prim or not instance_prim.IsValid():
         return Gf.Matrix4d(1.0)
 
-    res = xf.GetLocalTransformation(Usd.TimeCode.Default())
-    if isinstance(res, tuple):
-        return res[0]
-    return res
+    meshes = find_all_meshes(instance_prim)
+    if not meshes:
+        # No mesh → fallback to Instance-only (preserves old behavior for meshless assets)
+        return get_local_matrix(instance_prim)
+
+    # Use first mesh's parent as the chain endpoint.
+    # The chain: Instance → Group_00 → ... → mesh_parent
+    # This gives M such that p_defaultPrim = p_mesh_local * M
+    first_mesh = meshes[0]
+    mesh_parent = first_mesh.GetParent()
+
+    # get_chain_transform(ancestor, descendant) walks from ancestor's child to descendant inclusive
+    if mesh_parent.GetPath() == instance_prim.GetPath():
+        # Mesh is direct child of Instance → just Instance transform (common case)
+        return get_local_matrix(instance_prim)
+
+    return get_chain_transform(default_prim, mesh_parent)
 
 
 def _ensure_matrix_xform(prim) -> None:
@@ -458,6 +477,8 @@ def rewrite_layout(
     dry_run: bool,
     report_out: Optional[str],
     max_preview: int,
+    v_matrix_mode: str = "none",
+    mode_reports_dir: Optional[str] = None,
 ) -> Dict[str, Any]:
     if _PXR_IMPORT_ERROR is not None:
         raise RuntimeError(f"pxr.Usd not available: {_PXR_IMPORT_ERROR}")
@@ -465,6 +486,36 @@ def rewrite_layout(
     layout_usd = _norm_abs(layout_usd)
 
     started_at = time.time()
+
+    # --- V matrix setup ---
+    _v_mode_index = None
+    _v_matrix_cache: Dict[Tuple[str, str], Gf.Matrix4d] = {}
+    if v_matrix_mode == "auto" and apply_compensation:
+        import importlib.util as _ilu
+        _cvt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "compute_vertex_transform.py")
+        _spec = _ilu.spec_from_file_location("compute_vertex_transform", _cvt_path)
+        _cvt = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_cvt)
+        if mode_reports_dir:
+            _v_mode_index = _cvt.build_mode_index(mode_reports_dir)
+        else:
+            _v_mode_index = {}
+
+    def _get_V_cached(old_abs: str, new_abs: str) -> Gf.Matrix4d:
+        """Get V matrix for a pair, with caching."""
+        if v_matrix_mode != "auto":
+            return Gf.Matrix4d(1.0)
+        key = (old_abs, new_abs)
+        cached = _v_matrix_cache.get(key)
+        if cached is not None:
+            return cached
+        mode = _cvt.determine_compensation_mode(old_abs, new_abs, _v_mode_index)
+        try:
+            V = _cvt.compute_V_for_pair(old_abs, new_abs, mode, mode_index=_v_mode_index)
+        except Exception:
+            V = Gf.Matrix4d(1.0)
+        _v_matrix_cache[key] = V
+        return V
 
     # Copy-on-write unless writing in-place.
     # If dry-run, do NOT copy/write; just report the intended output path.
@@ -551,7 +602,8 @@ def rewrite_layout(
                                 old_local = xform_cache.GetLocalTransformation(prim)
                                 if isinstance(old_local, tuple):
                                     old_local = old_local[0]
-                                new_local = canonical_internal.GetInverse() * old_internal * old_local
+                                V = _get_V_cached(old_abs, new_abs)
+                                new_local = canonical_internal.GetInverse() * V * old_internal * old_local
                                 _set_local_matrix(prim, new_local)
                                 xform_compensated += 1
                                 changes.append(
@@ -560,6 +612,7 @@ def rewrite_layout(
                                         "kind": "xform_compensation",
                                         "old_asset_abs": old_abs,
                                         "canonical_asset_abs": new_abs,
+                                        "v_matrix_mode": v_matrix_mode,
                                     }
                                 )
                             except Exception as e:
@@ -672,6 +725,8 @@ def rewrite_layout(
         "set_instanceable": bool(set_instanceable),
         "elapsed_sec": max(0.0, time.time() - started_at),
         "asset_internal_matrices_computed": len(asset_internal_cache),
+        "v_matrix_mode": v_matrix_mode,
+        "v_matrices_computed": len(_v_matrix_cache),
         "counts": {
             "refs_changed": refs_changed,
             "payloads_changed": payloads_changed,
@@ -757,6 +812,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Optional JSON report output path (summary + full change list).",
     )
     ap.add_argument(
+        "--v-matrix-mode",
+        choices=["none", "auto"],
+        default="none",
+        help="V matrix compensation mode: 'none' (legacy, V=Identity) or 'auto' (mode-dispatched V).",
+    )
+    ap.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory containing geom_only/, topo_filesize/, shape_invariant/ dedup reports. Required when --v-matrix-mode=auto.",
+    )
+    ap.add_argument(
         "--preview",
         type=int,
         default=30,
@@ -785,6 +851,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         dry_run=bool(args.dry_run),
         report_out=args.report_out,
         max_preview=max(0, int(args.preview)),
+        v_matrix_mode=args.v_matrix_mode,
+        mode_reports_dir=args.mode_reports_dir,
     )
 
     print(json.dumps(summary, ensure_ascii=False, indent=2))

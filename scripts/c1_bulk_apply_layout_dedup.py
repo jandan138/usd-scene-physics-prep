@@ -55,6 +55,10 @@ def main() -> int:
     ap.add_argument("--set-instanceable", action="store_true")
     ap.add_argument("--no-compensation", action="store_true")
     ap.add_argument("--max-preview", type=int, default=0)
+    ap.add_argument("--v-matrix-mode", choices=["none", "auto"], default="none",
+                    help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
+    ap.add_argument("--mode-reports-dir", default=None,
+                    help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
     args = ap.parse_args()
 
     rw = _load_rewriter_module()
@@ -115,6 +119,8 @@ def main() -> int:
                 dry_run=bool(args.dry_run),
                 report_out=report_out,
                 max_preview=int(args.max_preview),
+                v_matrix_mode=args.v_matrix_mode,
+                mode_reports_dir=args.mode_reports_dir,
             )
             summary["scene_file"] = scene_fn
 

@@ -1,3 +1,12 @@
+---
+title: 为只有 USD 的资产目录生成 GLB（按目录标准输出）
+code_reference: scripts/convert_subset_usd_to_glb.py
+created_at: '2026-01-20'
+updated_at: '2026-01-20'
+maintainer: Codex
+status: Active
+---
+
 # 为只有 USD 的资产目录生成 GLB（按目录标准输出）
 
 > Last Updated: 2026-01-20

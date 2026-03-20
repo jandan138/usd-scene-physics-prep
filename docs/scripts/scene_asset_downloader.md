@@ -1,3 +1,12 @@
+---
+title: Scene UID Downloader (scene + all referenced assets)
+code_reference: scripts/build_scene_uid_subset_package.py
+created_at: '2026-01-19'
+updated_at: '2026-01-19'
+maintainer: Codex
+status: Active
+---
+
 # Scene UID Downloader (scene + all referenced assets)
 
 > Last Updated: 2026-01-19

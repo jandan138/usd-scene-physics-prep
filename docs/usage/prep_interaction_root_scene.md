@@ -1,3 +1,17 @@
+---
+title: '`/root` 场景交互 sim-ready：`prep_interaction_root_scene.py`（用法）'
+code_reference:
+- scripts/prep_interaction_root_scene.py
+- scripts/isaac_python.sh
+- scripts/list_draggable_prims.py
+- scripts/oneoff_force_draggable.py
+- scripts/oneoff_make_static_collider_only.py
+created_at: '2025-12-22'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # `/root` 场景交互 sim-ready：`prep_interaction_root_scene.py`（用法）
 
 > 最后更新：2025-12-22

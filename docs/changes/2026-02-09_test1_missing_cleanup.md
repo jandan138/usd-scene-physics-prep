@@ -1,3 +1,14 @@
+---
+title: '2026-02-09 — GRScenes-test1: 目录别名统一、door_* 缺失引用清理、Material/mdl 缺失排查'
+code_reference:
+- scripts/oneoff_clear_missing_door_references.py
+- scripts/oneoff_fix_missing_mdl_assets.py
+created_at: '2026-02-09'
+updated_at: '2026-02-09'
+maintainer: Codex
+status: completed
+---
+
 # 2026-02-09 — GRScenes-test1: 目录别名统一、door_* 缺失引用清理、Material/mdl 缺失排查
 
 ## 背景

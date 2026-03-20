@@ -1,3 +1,14 @@
+---
+title: Isaac Sim / Omniverse Kit 的 MDL 渲染与路径配置（通俗版）
+code_reference:
+- scripts/isaac_python.sh
+- scripts/fix_usd_paths_api.py
+created_at: '2026-01-23'
+updated_at: '2026-01-23'
+maintainer: Codex
+status: Active
+---
+
 # Isaac Sim / Omniverse Kit 的 MDL 渲染与路径配置（通俗版）
 
 > 最后更新：2026-01-23

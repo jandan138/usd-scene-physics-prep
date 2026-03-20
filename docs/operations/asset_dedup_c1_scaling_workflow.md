@@ -1,3 +1,15 @@
+---
+title: C1 规模化执行与审核流程（可控批处理版）
+code_reference:
+- scripts/c1_build_bulk_mapping_from_dedup_report.py
+- scripts/c1_bulk_apply_layout_dedup.py
+- scripts/c1_bulk_step6_category_promote_scan_soft_delete.py
+created_at: '2026-01-31'
+updated_at: '2026-01-31'
+maintainer: Codex
+status: Active
+---
+
 # C1 规模化执行与审核流程（可控批处理版）
 
 > 目标：把“重复几何”按组（sig）批量落地到场景侧，同时做到：

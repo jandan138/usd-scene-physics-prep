@@ -1,3 +1,16 @@
+---
+title: 工作流示例
+code_reference:
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+- set_physics/get_all_references.py
+- set_physics/export_scene.py
+created_at: '2025-11-26'
+updated_at: '2025-12-22'
+maintainer: Codex
+status: Active
+---
+
 # 工作流示例
 
 > 最后更新：2025-12-22

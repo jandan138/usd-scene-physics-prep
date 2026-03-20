@@ -1,3 +1,14 @@
+---
+title: '`report_asset_mesh_dedup.py` 代码导读（中文）'
+code_reference:
+- scripts/report_asset_mesh_dedup.py
+- scripts/report_asset_mesh_dedup_zh_annotated.py
+created_at: '2026-01-26'
+updated_at: '2026-01-26'
+maintainer: Codex
+status: Active
+---
+
 # `report_asset_mesh_dedup.py` 代码导读（中文）
 
 > 最后更新：2026-01-26

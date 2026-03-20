@@ -1,3 +1,16 @@
+---
+title: 目录结构对比：原始输出 vs 规范结构
+code_reference:
+- set_physics/pxr_utils/data_clean.py
+- set_physics/preprocess_for_interaction.py
+- set_physics/preprocess_for_navigation.py
+- specs_normalizer/normalize.py
+created_at: '2025-11-26'
+updated_at: '2026-01-13'
+maintainer: Codex
+status: Active
+---
+
 # 目录结构对比：原始输出 vs 规范结构
 
 > 最后更新：2026-01-13

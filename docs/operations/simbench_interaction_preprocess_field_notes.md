@@ -1,3 +1,26 @@
+---
+title: SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总
+code_reference:
+- scripts/isaac_python.sh
+- scripts/prep_interaction_root_scene.py
+- scripts/list_draggable_prims.py
+- scripts/oneoff_force_draggable.py
+- scripts/oneoff_make_static_collider_only.py
+- scripts/inspect_usd_physics_props.py
+- scripts/check_usd_external_assets.py
+- scripts/oneoff_fix_mass_invalid_values.py
+- scripts/oneoff_bind_physics_material.py
+- scripts/oneoff_add_proxy_box_collider.py
+- scripts/oneoff_stabilize_contact_ccd_damping.py
+- scripts/oneoff_add_spoon_multi_box_proxy.py
+- set_physics/simready.py
+- set_physics/preprocess_for_interaction.py
+created_at: '2025-12-22'
+updated_at: '2025-12-23'
+maintainer: Codex
+status: Active
+---
+
 # SimBench（GRSceneUSD task9/task10）交互预处理：实战踩坑汇总
 
 > 最后更新：2025-12-23

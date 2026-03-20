@@ -18,6 +18,16 @@ INDEX_FILE = os.path.join(DOCS_DIR, "INDEX.md")
 
 REQUIRED_FIELDS = ["title", "created_at", "updated_at", "maintainer"]
 
+def normalize_code_references(code_ref) -> List[str]:
+    """Normalize code_reference metadata into a flat list of string paths."""
+    if not code_ref:
+        return []
+    if isinstance(code_ref, str):
+        return [code_ref]
+    if isinstance(code_ref, (list, tuple)):
+        return [str(item) for item in code_ref if item]
+    return [str(code_ref)]
+
 def parse_front_matter(file_path: str) -> Optional[Dict]:
     """Extract and parse YAML front matter from a markdown file."""
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -131,7 +141,7 @@ def generate_index():
             "path": rel_path.replace("\\", "/"),
             "status": status,
             "updated": updated,
-            "code_ref": code_ref
+            "code_ref": normalize_code_references(code_ref)
         }
         categories[category].append(entry)
         
@@ -151,7 +161,12 @@ def generate_index():
             entries.sort(key=lambda x: x["title"])
             
             for entry in entries:
-                code_link = f"[`{os.path.basename(entry['code_ref'])}`]({entry['code_ref']})" if entry['code_ref'] else "-"
+                if entry["code_ref"]:
+                    code_link = ", ".join(
+                        f"[`{os.path.basename(path)}`]({path})" for path in entry["code_ref"]
+                    )
+                else:
+                    code_link = "-"
                 f.write(f"| [{entry['title']}]({entry['path']}) | {entry['status']} | {entry['updated']} | {code_link} |\n")
             f.write("\n")
             

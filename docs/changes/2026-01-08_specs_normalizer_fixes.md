@@ -1,3 +1,14 @@
+---
+title: Specs Normalizer Enhancements and Fixes (2026-01-08)
+code_reference:
+- specs_normalizer/normalize.py
+- scripts/fix_usd_textures_case.py
+created_at: '2026-01-08'
+updated_at: '2026-01-08'
+maintainer: Codex
+status: completed
+---
+
 # Specs Normalizer Enhancements and Fixes (2026-01-08)
 
 ## 1. Features

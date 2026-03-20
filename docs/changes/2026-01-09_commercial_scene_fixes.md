@@ -1,3 +1,14 @@
+---
+title: Commercial Scene Export Fixes (2026-01-09)
+code_reference:
+- specs_normalizer/exporters/scenes.py
+- scripts/fix_usd_paths_api.py
+created_at: '2026-01-09'
+updated_at: '2026-01-09'
+maintainer: Codex
+status: completed
+---
+
 # Commercial Scene Export Fixes (2026-01-09)
 
 ## Overview

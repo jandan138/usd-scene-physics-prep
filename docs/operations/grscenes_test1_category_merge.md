@@ -1,3 +1,12 @@
+---
+title: GRScenes-test1 类别别名合并操作指南（维护向）
+code_reference: scripts/merge_asset_categories_test1.py
+created_at: '2026-01-23'
+updated_at: '2026-01-23'
+maintainer: Codex
+status: Active
+---
+
 ```markdown
 # GRScenes-test1 类别别名合并操作指南（维护向）
 

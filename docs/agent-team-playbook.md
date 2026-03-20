@@ -1,3 +1,12 @@
+---
+title: Claude Code Agent Team 系统设计与复现手册
+code_reference: docs/architecture/codex_agent_team_playbook.md
+created_at: '2026-03-03'
+updated_at: '2026-03-03'
+maintainer: Codex
+status: Active
+---
+
 # Claude Code Agent Team 系统设计与复现手册
 
 > **目的**：本文档是一份可执行的 playbook。另一个 Claude 实例读完后，能在新项目中从零搭建出同等严谨的 Agent Team 系统。

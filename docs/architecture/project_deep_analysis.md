@@ -1,3 +1,14 @@
+---
+title: 项目深度分析报告
+code_reference:
+- set_physics/preprocess_for_interaction.py
+- set_physics/pxr_utils/data_clean.py
+created_at: '2025-12-28'
+updated_at: '2025-12-28'
+maintainer: Codex
+status: Active
+---
+
 # 项目深度分析报告
 
 > 生成日期: 2025-12-28
