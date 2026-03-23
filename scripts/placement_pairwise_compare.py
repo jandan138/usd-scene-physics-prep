@@ -431,16 +431,30 @@ def compare_scene(
             per_mesh_disps.append(float(np.linalg.norm(c_left - c_right)))
 
         max_mesh_disp = max(per_mesh_disps) if per_mesh_disps else 0.0
+
+        # Per-vertex RMSE: detects rotations that centroid displacement misses
+        per_mesh_rmse = []
+        for mesh_path in common_meshes:
+            pts_l = left_mesh_map[mesh_path]
+            pts_r = right_mesh_map[mesh_path]
+            if pts_l.shape != pts_r.shape:
+                # Different vertex counts — skip (already flagged by ref_changed)
+                continue
+            rmse = float(np.sqrt(np.mean(np.sum((pts_l - pts_r) ** 2, axis=1))))
+            per_mesh_rmse.append(rmse)
+        vertex_rmse = max(per_mesh_rmse) if per_mesh_rmse else None
+
         ref_changed = left_refs != right_refs
 
         parts = path.split("/")
         category = parts[4] if len(parts) >= 5 else "unknown"
         category_disps[category].append(displacement)
 
-        compared.append({
+        entry = {
             "prim_path": path,
             "displacement": round(displacement, 6),
             "max_per_mesh_displacement": round(max_mesh_disp, 6),
+            "vertex_rmse": round(vertex_rmse, 6) if vertex_rmse is not None else None,
             "ref_changed": ref_changed,
             "left_ref_sample": left_refs[:2],
             "right_ref_sample": right_refs[:2],
@@ -448,11 +462,13 @@ def compare_scene(
             "verts_right": verts_right,
             "meshes_left": nmesh_left,
             "meshes_right": nmesh_right,
-        })
+        }
+        compared.append(entry)
 
     compared.sort(key=lambda x: x["displacement"], reverse=True)
     all_disps = [c["displacement"] for c in compared]
     all_max_mesh = [c["max_per_mesh_displacement"] for c in compared]
+    all_vertex_rmse = [c["vertex_rmse"] for c in compared if c["vertex_rmse"] is not None]
     ref_changed_disps = [c["displacement"] for c in compared if c["ref_changed"]]
     ref_same_disps = [c["displacement"] for c in compared if not c["ref_changed"]]
 
@@ -477,6 +493,9 @@ def compare_scene(
         "displacement_stats": _displacement_stats(all_disps),
         "displaced_breakdown": _breakdown(all_disps, DISP_THRESHOLDS),
         "max_per_mesh_breakdown": _breakdown(all_max_mesh, DISP_THRESHOLDS),
+        "vertex_rmse_stats": _displacement_stats(all_vertex_rmse),
+        "vertex_rmse_breakdown": _breakdown(all_vertex_rmse, DISP_THRESHOLDS),
+        "vertex_rmse_count": len(all_vertex_rmse),
         "ref_changed_count": len(ref_changed_disps),
         "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
         "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
@@ -503,6 +522,8 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
 
     total_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_mesh_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
+    total_vertex_rmse = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
+    total_vertex_rmse_count = 0
     total_ref_changed_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_ref_same_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
 
@@ -514,6 +535,9 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
             total_disp[key] += int(value)
         for key, value in r.get("max_per_mesh_breakdown", {}).items():
             total_mesh_disp[key] += int(value)
+        for key, value in r.get("vertex_rmse_breakdown", {}).items():
+            total_vertex_rmse[key] += int(value)
+        total_vertex_rmse_count += int(r.get("vertex_rmse_count", 0))
         for key, value in r.get("ref_changed_breakdown", {}).items():
             total_ref_changed_disp[key] += int(value)
         for key, value in r.get("ref_same_breakdown", {}).items():
@@ -545,6 +569,8 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
         "total_ref_same": total_ref_same,
         "displaced_breakdown": total_disp,
         "max_per_mesh_breakdown": total_mesh_disp,
+        "vertex_rmse_breakdown": total_vertex_rmse,
+        "total_vertex_rmse_count": total_vertex_rmse_count,
         "ref_changed_breakdown": total_ref_changed_disp,
         "ref_same_breakdown": total_ref_same_disp,
         "category_maxima": {
@@ -639,10 +665,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 scene_results.append(result)
                 if result.get("status") == "ok":
                     displaced = result.get("displaced_breakdown", {}).get("gt_0.01", 0)
+                    vrmse_bad = result.get("vertex_rmse_breakdown", {}).get("gt_0.01", 0)
                     compared = result.get("total_compared", 0)
                     print(
                         f"  [{done}/{len(pairs)}] {scene_id}: ok "
-                        f"compared={compared} displaced>0.01={displaced}"
+                        f"compared={compared} displaced>0.01={displaced} "
+                        f"vertex_rmse>0.01={vrmse_bad}"
                     )
                 else:
                     print(f"  [{done}/{len(pairs)}] {scene_id}: ERROR {result.get('error')}")
@@ -680,6 +708,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Displaced > 0.1:         {aggregate['displaced_breakdown']['gt_0.1']}")
     print(f"Displaced > 1.0:         {aggregate['displaced_breakdown']['gt_1.0']}")
     print(f"Displaced > 10.0:        {aggregate['displaced_breakdown']['gt_10.0']}")
+    print(f"Vertex RMSE prims:       {aggregate['total_vertex_rmse_count']}")
+    print(f"Vertex RMSE > 0.01:      {aggregate['vertex_rmse_breakdown']['gt_0.01']}")
+    print(f"Vertex RMSE > 0.1:       {aggregate['vertex_rmse_breakdown']['gt_0.1']}")
+    print(f"Vertex RMSE > 1.0:       {aggregate['vertex_rmse_breakdown']['gt_1.0']}")
+    print(f"Vertex RMSE > 10.0:      {aggregate['vertex_rmse_breakdown']['gt_10.0']}")
     print(f"Ref changed prims:       {aggregate['total_ref_changed']}")
     print(f"Ref changed > 0.01:      {aggregate['ref_changed_breakdown']['gt_0.01']}")
     print(f"Ref same prims:          {aggregate['total_ref_same']}")

@@ -698,8 +698,7 @@ def numpy_to_gf_matrix4d(m: np.ndarray):
     _ensure_pxr()
     gf_m = Gf.Matrix4d()
     for i in range(4):
-        for j in range(4):
-            gf_m[i][j] = float(m[i][j])
+        gf_m.SetRow(i, Gf.Vec4d(*m[i].tolist()))
     return gf_m
 
 
