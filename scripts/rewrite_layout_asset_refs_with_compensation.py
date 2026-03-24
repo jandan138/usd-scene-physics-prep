@@ -10,10 +10,12 @@ Core idea:
   final world placement stays unchanged.
 
 Mathematically (row-vector convention, p' = p * M):
-- p_world = p_mesh * M_assetInternal * M_layout * M_parent_world
-- After swapping old asset ref to canonical, world position must be unchanged:
-  M_oldInternal * M_layout_old = M_canonicalInternal * M_layout_new
-  => M_layout_new = inverse(M_canonicalInternal) * M_oldInternal * M_layout_old  (left-multiply)
+- p_world = p_mesh * M_internal * M_layout = p_instance * M_layout
+- Two compensation regimes:
+  1) geom_only (V=I, mesh vertices identical): internal-transform compensation
+     M_layout_new = M_canon_int^{-1} * M_old_int * M_layout_old
+  2) non-geom_only (V in instance-space from extract_instance_space_vertices):
+     V maps p_canon_inst -> p_old_inst, so M_layout_new = V * M_layout_old
 
 Important limitations (intentional):
 - We compute "asset internal" as the full chain transform from defaultPrim through Instance down to the
@@ -501,10 +503,10 @@ def rewrite_layout(
         else:
             _v_mode_index = {}
 
-    def _get_V_cached(old_abs: str, new_abs: str) -> Gf.Matrix4d:
-        """Get V matrix for a pair, with caching."""
+    def _get_V_cached(old_abs: str, new_abs: str) -> Tuple[Gf.Matrix4d, str]:
+        """Get V matrix and dedup mode for a pair, with caching."""
         if v_matrix_mode != "auto":
-            return Gf.Matrix4d(1.0)
+            return Gf.Matrix4d(1.0), "identity"
         key = (old_abs, new_abs)
         cached = _v_matrix_cache.get(key)
         if cached is not None:
@@ -514,8 +516,8 @@ def rewrite_layout(
             V = _cvt.compute_V_for_pair(old_abs, new_abs, mode, mode_index=_v_mode_index)
         except Exception:
             V = Gf.Matrix4d(1.0)
-        _v_matrix_cache[key] = V
-        return V
+        _v_matrix_cache[key] = (V, mode)
+        return V, mode
 
     # Copy-on-write unless writing in-place.
     # If dry-run, do NOT copy/write; just report the intended output path.
@@ -593,17 +595,23 @@ def rewrite_layout(
                         if len(uniq) == 1:
                             old_abs, new_abs = uniq[0]
                             # Compensate local transform so world placement is unchanged.
-                            # Derivation (row-vector, p' = p * M):
-                            #   M_old_inst * M_old_local = M_canon_inst * M_new_local
-                            #   => M_new_local = M_canon_inst^{-1} * M_old_inst * M_old_local
+                            # Two regimes depending on V's coordinate space:
+                            #   geom_only: V=I in mesh-local space, need internal compensation
+                            #     M_new_local = M_canon_int^{-1} * M_old_int * M_old_local
+                            #   non-geom_only (topo_filesize/shape_invariant/transitive):
+                            #     V is in instance-space (from extract_instance_space_vertices)
+                            #     M_new_local = V * M_old_local
                             try:
-                                old_internal = _get_internal_cached(old_abs)
-                                canonical_internal = _get_internal_cached(new_abs)
                                 old_local = xform_cache.GetLocalTransformation(prim)
                                 if isinstance(old_local, tuple):
                                     old_local = old_local[0]
-                                V = _get_V_cached(old_abs, new_abs)
-                                new_local = canonical_internal.GetInverse() * V * old_internal * old_local
+                                V, dedup_mode = _get_V_cached(old_abs, new_abs)
+                                if dedup_mode in ("geom_only", "identity"):
+                                    old_internal = _get_internal_cached(old_abs)
+                                    canonical_internal = _get_internal_cached(new_abs)
+                                    new_local = canonical_internal.GetInverse() * old_internal * old_local
+                                else:
+                                    new_local = V * old_local
                                 _set_local_matrix(prim, new_local)
                                 xform_compensated += 1
                                 changes.append(
@@ -613,6 +621,7 @@ def rewrite_layout(
                                         "old_asset_abs": old_abs,
                                         "canonical_asset_abs": new_abs,
                                         "v_matrix_mode": v_matrix_mode,
+                                        "dedup_mode": dedup_mode,
                                     }
                                 )
                             except Exception as e:
