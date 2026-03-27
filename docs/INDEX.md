@@ -1,6 +1,6 @@
 # Project Documentation Index
 
-> Generated at: 2026-03-14
+> Generated at: 2026-03-27
 
 ## Overview
 
@@ -65,6 +65,7 @@
 | :--- | :--- | :--- | :--- |
 | [Anomalous Asset Mesh Investigation: test0 vs normalized](operations/anomalous_assets_mesh_investigation.md) | completed | 2026-03-12 | [`normalize_asset_transforms.py`](scripts/normalize_asset_transforms.py) |
 | [Bottle 去重失败深度调查报告](operations/bottle_dedup_investigation_report.md) | active | 2026-03-11 | [`report_asset_mesh_dedup.py`](scripts/report_asset_mesh_dedup.py) |
+| [GRScenes-test0 BBox-Gated Dedup Implementation Spec](operations/grscenes_test0_bbox_gated_dedup_implementation.md) | active | 2026-03-27 | [`c1_build_bulk_mapping_from_dedup_report.py`](scripts/c1_build_bulk_mapping_from_dedup_report.py), [`rewrite_layout_asset_refs_with_compensation.py`](scripts/rewrite_layout_asset_refs_with_compensation.py), [`placement_pairwise_compare.py`](scripts/placement_pairwise_compare.py) |
 | [C1 规模化执行与审核流程（可控批处理版）](operations/asset_dedup_c1_scaling_workflow.md) | Active | 2026-01-31 | [`c1_build_bulk_mapping_from_dedup_report.py`](scripts/c1_build_bulk_mapping_from_dedup_report.py), [`c1_bulk_apply_layout_dedup.py`](scripts/c1_bulk_apply_layout_dedup.py), [`c1_bulk_step6_category_promote_scan_soft_delete.py`](scripts/c1_bulk_step6_category_promote_scan_soft_delete.py) |
 | [Dedup V3 Full-Run Execution: topo_filesize + 3-Way Union Merge + C1 Soft-Delete](operations/dedup_v3_fullrun_execution.md) | completed | 2026-03-12 | [`union_dedup_reports.py`](scripts/union_dedup_reports.py) |
 | [Dedup V3: Topology-Invariant + File-Size Mode Implementation Plan](operations/dedup_v3_topo_filesize_plan.md) | implemented | 2026-03-11 | [`union_dedup_reports.py`](scripts/report_asset_mesh_dedup.py, scripts/union_dedup_reports.py) |
@@ -140,4 +141,3 @@
 | [工作流示例](examples/workflow_examples.md) | Active | 2025-12-22 | [`preprocess_for_interaction.py`](set_physics/preprocess_for_interaction.py), [`preprocess_for_navigation.py`](set_physics/preprocess_for_navigation.py), [`get_all_references.py`](set_physics/get_all_references.py), [`export_scene.py`](set_physics/export_scene.py) |
 | [常见问题](faq/faq.md) | Active | 2025-12-22 | [`data_clean.py`](set_physics/pxr_utils/data_clean.py), [`preprocess_for_interaction.py`](set_physics/preprocess_for_interaction.py), [`preprocess_for_navigation.py`](set_physics/preprocess_for_navigation.py), [`simready.py`](set_physics/simready.py) |
 | [项目维护与更新流程 (Maintenance Workflow)](MAINTENANCE_WORKFLOW.md) | Active | 2025-12-28 | [`doc_manager.py`](scripts/doc_manager.py) |
-
