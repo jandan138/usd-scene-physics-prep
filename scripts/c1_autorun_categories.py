@@ -239,6 +239,12 @@ def main() -> int:
                     help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
     ap.add_argument("--mode-reports-dir", default=None,
                     help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
+    ap.add_argument(
+        "--input-layout-name",
+        default=None,
+        help="If set, pass --input-layout-name to c1_bulk_apply so it reads from a snapshot "
+             "instead of layout.usd (e.g. layout.pre_c1_normalize_only.20260315_chain_fix_v1.usd).",
+    )
 
     args = ap.parse_args()
 
@@ -366,6 +372,8 @@ def main() -> int:
         ]
         if args.mode_reports_dir:
             cmd.extend(["--mode-reports-dir", str((REPO_ROOT / args.mode_reports_dir).resolve().relative_to(REPO_ROOT))])
+        if args.input_layout_name:
+            cmd.extend(["--input-layout-name", args.input_layout_name])
         if args.set_instanceable:
             cmd.append("--set-instanceable")
         rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "02_bulk_apply.log")

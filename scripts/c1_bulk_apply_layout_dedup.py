@@ -59,6 +59,13 @@ def main() -> int:
                     help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
     ap.add_argument("--mode-reports-dir", default=None,
                     help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
+    ap.add_argument(
+        "--input-layout-name",
+        default=None,
+        help="If set, read from this filename instead of 'layout.usd' for the layout rewrite step "
+             "(output is still written to --out-name). Useful for re-running from a snapshot, "
+             "e.g. layout.pre_c1_normalize_only.20260315_chain_fix_v1.usd",
+    )
     args = ap.parse_args()
 
     rw = _load_rewriter_module()
@@ -94,7 +101,12 @@ def main() -> int:
         layout_changed = False
 
         for scene_fn in scene_files:
-            src = scene_dir / scene_fn
+            # When --input-layout-name is set, read from the snapshot instead of layout.usd,
+            # but keep the output name and layout_changed tracking unchanged.
+            if scene_fn == "layout.usd" and args.input_layout_name:
+                src = scene_dir / args.input_layout_name
+            else:
+                src = scene_dir / scene_fn
             if not src.exists():
                 continue
 
