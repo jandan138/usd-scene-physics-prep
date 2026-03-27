@@ -38,6 +38,7 @@ ISAAC_PY = REPO_ROOT / "scripts" / "isaac_python.sh"
 SCRIPT_BUILD_MAPPING = REPO_ROOT / "scripts" / "c1_build_bulk_mapping_from_dedup_report.py"
 SCRIPT_BULK_APPLY = REPO_ROOT / "scripts" / "c1_bulk_apply_layout_dedup.py"
 SCRIPT_STEP6 = REPO_ROOT / "scripts" / "c1_bulk_step6_category_promote_scan_soft_delete.py"
+SCRIPT_AUDIT = REPO_ROOT / "scripts" / "placement_pairwise_compare.py"
 
 
 @dataclass(frozen=True)
@@ -50,12 +51,34 @@ class CategoryPlan:
     step6_report_dir: Path
 
 
+@dataclass(frozen=True)
+class BBoxCategoryPlan:
+    category: str
+    category_root: Path
+    cert_dir: Path
+    apply_dir: Path
+    audit_dir: Path
+    step6_dir: Path
+    mapping_json: Path
+    mapping_stats_json: Path
+    certificate_jsonl: Path
+    certificate_summary_json: Path
+    certified_graph_json: Path
+    reject_ledger_jsonl: Path
+    audit_report_json: Path
+    audit_verdict_json: Path
+    out_name: str
+
+
 def _run(cmd: list[str], *, cwd: Path, log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     with log_path.open("w", encoding="utf-8") as f:
         f.write("# cmd\n")
         f.write(" ".join(cmd) + "\n\n")
         f.flush()
+        env = os.environ.copy()
+        env.setdefault("TF_LOG", "0")
+        env.setdefault("TF_WARN_OUTPUT_FILE", str(log_path))
         proc = subprocess.Popen(
             cmd,
             cwd=str(cwd),
@@ -63,6 +86,7 @@ def _run(cmd: list[str], *, cwd: Path, log_path: Path) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            env=env,
         )
         assert proc.stdout is not None
         for line in proc.stdout:
@@ -178,6 +202,41 @@ def _write_ledger(ledger_path: Path, event: dict) -> None:
         f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
+def _changed_scene_ids_from_batch_summary(batch_summary_path: Path, dataset_root: Path) -> list[str]:
+    if not batch_summary_path.exists():
+        return []
+    try:
+        payload = json.loads(batch_summary_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+
+    changed: set[str] = set()
+    base = dataset_root / "GRScenes100"
+    for item in payload.get("per_layout", []):
+        if item.get("scene_file") != "layout.usd":
+            continue
+        counts = item.get("counts") or {}
+        if not any(int(counts.get(k, 0)) for k in ("refs_changed", "payloads_changed", "asset_attrs_changed")):
+            continue
+        layout_in = item.get("layout_in")
+        if not isinstance(layout_in, str):
+            continue
+        try:
+            rel = Path(layout_in).resolve().relative_to(base.resolve())
+        except Exception:
+            continue
+        if len(rel.parts) >= 3:
+            changed.add(f"{rel.parts[0]}/{rel.parts[1]}")
+    return sorted(changed)
+
+
+def _load_category_allowlist(path: Optional[str]) -> Optional[set[str]]:
+    if not path:
+        return None
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    return {str(item) for item in payload if isinstance(item, str)}
+
+
 def build_plan(
     category: str,
     *,
@@ -199,6 +258,345 @@ def build_plan(
         batch_report_dir=batch_report_dir,
         step6_report_dir=step6_report_dir,
     )
+
+
+def _is_bbox_done(category_root: Path) -> bool:
+    verdict = category_root / "03_audit" / "audit_verdict.json"
+    if not verdict.exists():
+        return False
+    try:
+        payload = json.loads(verdict.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return bool(payload.get("passed"))
+
+
+def build_bbox_plan(
+    category: str,
+    *,
+    c1_bulk_dir: Path,
+    policy_tag: str,
+    out_version: str,
+    group_label: str,
+) -> BBoxCategoryPlan:
+    category_root = c1_bulk_dir / f"{category}_{policy_tag}_{out_version}"
+    cert_dir = category_root / "01_cert"
+    apply_dir = category_root / "02_apply"
+    audit_dir = category_root / "03_audit"
+    step6_dir = category_root / "04_step6"
+    out_name = f"layout.{group_label}_{policy_tag}_{out_version}.usd"
+    return BBoxCategoryPlan(
+        category=category,
+        category_root=category_root,
+        cert_dir=cert_dir,
+        apply_dir=apply_dir,
+        audit_dir=audit_dir,
+        step6_dir=step6_dir,
+        mapping_json=cert_dir / "filtered_mapping.json",
+        mapping_stats_json=cert_dir / "filtered_mapping.stats.json",
+        certificate_jsonl=cert_dir / "pair_certificates.jsonl",
+        certificate_summary_json=cert_dir / "pair_certificate_summary.json",
+        certified_graph_json=cert_dir / "certified_graph.json",
+        reject_ledger_jsonl=apply_dir / "rewrite_reject_ledger.jsonl",
+        audit_report_json=audit_dir / "placement_pairwise_compare.json",
+        audit_verdict_json=audit_dir / "audit_verdict.json",
+        out_name=out_name,
+    )
+
+
+def _run_bbox_gated(args: argparse.Namespace) -> int:
+    dataset_root = Path(args.dataset_root).resolve()
+    bak_root = Path(args.bak_root).resolve()
+    baseline_root = Path(args.baseline_root).resolve() if args.baseline_root else None
+    report_path = Path(args.report).resolve()
+    c1_bulk_dir = Path(args.c1_bulk_dir).resolve()
+    c1_bulk_dir.mkdir(parents=True, exist_ok=True)
+
+    include_re = re.compile(args.include_regex) if args.include_regex else None
+    exclude_re = re.compile(args.exclude_regex) if args.exclude_regex else None
+    category_allowlist = _load_category_allowlist(args.category_list_json)
+
+    categories = _list_categories(dataset_root)
+    if category_allowlist is not None:
+        categories = [c for c in categories if c in category_allowlist]
+    if args.skip_door_variants:
+        categories = [c for c in categories if not c.startswith("door_")]
+    if include_re:
+        categories = [c for c in categories if include_re.search(c)]
+    if exclude_re:
+        categories = [c for c in categories if not exclude_re.search(c)]
+    if args.skip_done:
+        categories = [c for c in categories if not _is_bbox_done(c1_bulk_dir / f"{c}_{args.bbox_policy}_{args.out_version}")]
+    if args.max_categories and args.max_categories > 0:
+        categories = categories[: args.max_categories]
+
+    run_stamp = time.strftime("%Y%m%d_%H%M%S")
+    run_dir = c1_bulk_dir / "_autorun" / f"{args.group_label}_{args.bbox_policy}_{run_stamp}"
+    ledger_path = run_dir / "ledger.jsonl"
+    _write_ledger(
+        ledger_path,
+        {
+            "event": "run_start",
+            "bbox_gated": True,
+            "bbox_policy": args.bbox_policy,
+            "baseline_root": str(baseline_root) if baseline_root else None,
+            "dataset_root": str(dataset_root),
+            "bak_root": str(bak_root),
+            "report": str(report_path),
+            "c1_bulk_dir": str(c1_bulk_dir),
+            "step6_mode": args.step6_mode,
+            "categories": categories,
+        },
+    )
+
+    print(f"[bbox-autorun] categories_to_run={len(categories)} run_dir={run_dir}")
+
+    for idx, category in enumerate(categories, start=1):
+        group_label = args.group_label if args.group_label != "c1_autorun" else f"c1_{category}_bbox"
+        plan = build_bbox_plan(
+            category,
+            c1_bulk_dir=c1_bulk_dir,
+            policy_tag=args.bbox_policy,
+            out_version=args.out_version,
+            group_label=group_label,
+        )
+        _write_ledger(ledger_path, {"event": "category_start", "category": category, "group_label": group_label})
+        print(f"\n[bbox-autorun] ({idx}/{len(categories)}) category={category} policy={args.bbox_policy}")
+
+        # 1) Certificates + filtered mapping
+        if not plan.mapping_json.exists():
+            cmd = [
+                str(ISAAC_PY),
+                str(SCRIPT_BUILD_MAPPING.relative_to(REPO_ROOT)),
+                "--report",
+                str(report_path.relative_to(REPO_ROOT)) if report_path.is_relative_to(REPO_ROOT) else str(report_path),
+                "--dataset-root",
+                str(dataset_root.relative_to(REPO_ROOT)) if dataset_root.is_relative_to(REPO_ROOT) else str(dataset_root),
+                "--category",
+                category,
+                "--out-mapping-json",
+                str(plan.mapping_json.relative_to(REPO_ROOT)) if plan.mapping_json.is_relative_to(REPO_ROOT) else str(plan.mapping_json),
+                "--out-stats-json",
+                str(plan.mapping_stats_json.relative_to(REPO_ROOT)) if plan.mapping_stats_json.is_relative_to(REPO_ROOT) else str(plan.mapping_stats_json),
+                "--bbox-gated",
+                "--bbox-policy",
+                args.bbox_policy,
+                "--dedup-mode",
+                args.dedup_mode,
+                "--out-certificate-jsonl",
+                str(plan.certificate_jsonl.relative_to(REPO_ROOT)) if plan.certificate_jsonl.is_relative_to(REPO_ROOT) else str(plan.certificate_jsonl),
+                "--out-certificate-summary-json",
+                str(plan.certificate_summary_json.relative_to(REPO_ROOT)) if plan.certificate_summary_json.is_relative_to(REPO_ROOT) else str(plan.certificate_summary_json),
+                "--out-certified-graph-json",
+                str(plan.certified_graph_json.relative_to(REPO_ROOT)) if plan.certified_graph_json.is_relative_to(REPO_ROOT) else str(plan.certified_graph_json),
+            ]
+            rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "01_cert.log")
+            if rc != 0:
+                _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "cert", "rc": rc})
+                return rc
+
+        pairs = _read_mapping_pairs(plan.mapping_stats_json)
+        if pairs is not None and pairs == 0:
+            print(f"[bbox-autorun] category={category} mapping_pairs=0 -> skip")
+            _write_ledger(ledger_path, {"event": "category_skip", "category": category, "reason": "mapping_pairs_0"})
+            continue
+
+        # 2) Bulk apply
+        cmd = [
+            str(ISAAC_PY),
+            str(SCRIPT_BULK_APPLY.relative_to(REPO_ROOT)),
+            "--dataset-root",
+            str(dataset_root.relative_to(REPO_ROOT)) if dataset_root.is_relative_to(REPO_ROOT) else str(dataset_root),
+            "--mapping-json",
+            str(plan.mapping_json.relative_to(REPO_ROOT)) if plan.mapping_json.is_relative_to(REPO_ROOT) else str(plan.mapping_json),
+            "--mapping-stats-json",
+            str(plan.mapping_stats_json.relative_to(REPO_ROOT)) if plan.mapping_stats_json.is_relative_to(REPO_ROOT) else str(plan.mapping_stats_json),
+            "--certificate-jsonl",
+            str(plan.certificate_jsonl.relative_to(REPO_ROOT)) if plan.certificate_jsonl.is_relative_to(REPO_ROOT) else str(plan.certificate_jsonl),
+            "--group-label",
+            group_label,
+            "--out-name",
+            plan.out_name,
+            "--scene-files",
+            args.scene_files,
+            "--report-dir",
+            str(plan.apply_dir.relative_to(REPO_ROOT)) if plan.apply_dir.is_relative_to(REPO_ROOT) else str(plan.apply_dir),
+            "--bbox-gated",
+            "--bbox-policy",
+            args.bbox_policy,
+            "--reject-ledger-jsonl",
+            str(plan.reject_ledger_jsonl.relative_to(REPO_ROOT)) if plan.reject_ledger_jsonl.is_relative_to(REPO_ROOT) else str(plan.reject_ledger_jsonl),
+            "--v-matrix-mode",
+            args.v_matrix_mode,
+        ]
+        if baseline_root:
+            cmd.extend(["--baseline-root", str(baseline_root)])
+        if args.mode_reports_dir:
+            cmd.extend(["--mode-reports-dir", args.mode_reports_dir])
+        if args.input_layout_name:
+            cmd.extend(["--input-layout-name", args.input_layout_name])
+        if args.set_instanceable:
+            cmd.append("--set-instanceable")
+        rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "02_apply.log")
+        if rc != 0:
+            _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "apply", "rc": rc})
+            return rc
+
+        changed_scene_ids = _changed_scene_ids_from_batch_summary(plan.apply_dir / "batch_summary.json", dataset_root)
+        changed_scene_list_json = plan.apply_dir / "changed_scene_ids.json"
+        changed_scene_list_json.parent.mkdir(parents=True, exist_ok=True)
+        changed_scene_list_json.write_text(json.dumps(changed_scene_ids, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+        # 3) Authoritative audit
+        if changed_scene_ids:
+            cmd = [
+                str(ISAAC_PY),
+                str(SCRIPT_AUDIT.relative_to(REPO_ROOT)),
+                "--left-root",
+                str(dataset_root.relative_to(REPO_ROOT)) if dataset_root.is_relative_to(REPO_ROOT) else str(dataset_root),
+                "--right-root",
+                str(dataset_root.relative_to(REPO_ROOT)) if dataset_root.is_relative_to(REPO_ROOT) else str(dataset_root),
+                "--left-mode",
+                "current",
+                "--right-mode",
+                "current",
+                "--right-layout-name",
+                plan.out_name,
+                "--label",
+                f"{category}_{args.bbox_policy}",
+                "--out",
+                str(plan.audit_report_json.relative_to(REPO_ROOT)) if plan.audit_report_json.is_relative_to(REPO_ROOT) else str(plan.audit_report_json),
+                "--verdict-out",
+                str(plan.audit_verdict_json.relative_to(REPO_ROOT)) if plan.audit_verdict_json.is_relative_to(REPO_ROOT) else str(plan.audit_verdict_json),
+                "--scene-list-json",
+                str(changed_scene_list_json.relative_to(REPO_ROOT)) if changed_scene_list_json.is_relative_to(REPO_ROOT) else str(changed_scene_list_json),
+                "--bbox-policy",
+                args.bbox_policy,
+                "--eps-bbox",
+                str(args.eps_bbox),
+                "--eps-pos",
+                str(args.eps_pos),
+                "--eps-angle",
+                str(args.eps_angle),
+                "--eps-geom",
+                str(args.eps_geom),
+            ]
+            rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "03_audit.log")
+            if rc != 0:
+                _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "audit", "rc": rc})
+                return rc
+        else:
+            empty_aggregate = {
+                "scenes_ok": 0,
+                "scenes_error": 0,
+                "total_common_prims": 0,
+                "total_compared": 0,
+                "total_no_mesh": 0,
+                "total_only_in_left": 0,
+                "total_only_in_right": 0,
+                "total_ref_changed": 0,
+                "total_ref_same": 0,
+                "ref_changed_hard_fail_count": 0,
+                "displaced_breakdown": {"gt_0.01": 0, "gt_0.1": 0, "gt_1.0": 0, "gt_10.0": 0},
+                "max_per_mesh_breakdown": {"gt_0.01": 0, "gt_0.1": 0, "gt_1.0": 0, "gt_10.0": 0},
+                "vertex_rmse_breakdown": {"gt_0.01": 0, "gt_0.1": 0, "gt_1.0": 0, "gt_10.0": 0},
+                "total_vertex_rmse_count": 0,
+                "ref_changed_breakdown": {"gt_0.01": 0, "gt_0.1": 0, "gt_1.0": 0, "gt_10.0": 0},
+                "ref_same_breakdown": {"gt_0.01": 0, "gt_0.1": 0, "gt_1.0": 0, "gt_10.0": 0},
+                "blocking_reason_counts": {},
+                "category_maxima": {},
+                "global_top_50_worst": [],
+                "scene_errors": [],
+            }
+            plan.audit_dir.mkdir(parents=True, exist_ok=True)
+            plan.audit_report_json.write_text(
+                json.dumps(
+                    {
+                        "label": f"{category}_{args.bbox_policy}",
+                        "bbox_policy": args.bbox_policy,
+                        "changed_scene_ids": changed_scene_ids,
+                        "aggregate": empty_aggregate,
+                        "per_scene": [],
+                        "skipped_reason": "no_changed_layouts",
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            plan.audit_verdict_json.write_text(
+                json.dumps(
+                    {
+                        "label": f"{category}_{args.bbox_policy}",
+                        "policy": args.bbox_policy,
+                        "thresholds": {
+                            "eps_bbox": args.eps_bbox,
+                            "eps_pos": args.eps_pos,
+                            "eps_angle": args.eps_angle,
+                            "eps_geom": args.eps_geom,
+                        },
+                        "passed": True,
+                        "compared_scope_complete": True,
+                        "scenes_error": 0,
+                        "total_no_mesh": 0,
+                        "ref_changed_fail_count": 0,
+                        "blocking_reason_counts": {},
+                        "skipped_reason": "no_changed_layouts",
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+        # 4) Step6 gate / dry-run / apply
+        if args.step6_mode != "off":
+            cmd = [
+                str(ISAAC_PY),
+                str(SCRIPT_STEP6.relative_to(REPO_ROOT)),
+                "--dataset-root",
+                str(dataset_root.relative_to(REPO_ROOT)) if dataset_root.is_relative_to(REPO_ROOT) else str(dataset_root),
+                "--bak-root",
+                str(bak_root.relative_to(REPO_ROOT)) if bak_root.is_relative_to(REPO_ROOT) else str(bak_root),
+                "--mapping-json",
+                str(plan.mapping_json.relative_to(REPO_ROOT)) if plan.mapping_json.is_relative_to(REPO_ROOT) else str(plan.mapping_json),
+                "--category",
+                category,
+                "--group-label",
+                group_label,
+                "--out-name",
+                plan.out_name,
+                "--promote-scene-files",
+                args.scene_files,
+                "--report-dir",
+                str(plan.step6_dir.relative_to(REPO_ROOT)) if plan.step6_dir.is_relative_to(REPO_ROOT) else str(plan.step6_dir),
+                "--audit-verdict-json",
+                str(plan.audit_verdict_json.relative_to(REPO_ROOT)) if plan.audit_verdict_json.is_relative_to(REPO_ROOT) else str(plan.audit_verdict_json),
+                "--bbox-gated",
+            ]
+            if args.step6_mode == "dry_run":
+                cmd.append("--dry-run")
+            rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "04_step6.log")
+            if rc != 0:
+                _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "step6", "rc": rc})
+                return rc
+
+        _write_ledger(
+            ledger_path,
+            {
+                "event": "category_done",
+                "category": category,
+                "group_label": group_label,
+                "mapping_json": str(plan.mapping_json),
+                "audit_verdict_json": str(plan.audit_verdict_json),
+            },
+        )
+
+    _write_ledger(ledger_path, {"event": "run_done"})
+    print("[bbox-autorun] DONE")
+    return 0
 
 
 def main() -> int:
@@ -226,6 +624,7 @@ def main() -> int:
 
     ap.add_argument("--include-regex", default="", help="Only run categories matching this regex")
     ap.add_argument("--exclude-regex", default="", help="Skip categories matching this regex")
+    ap.add_argument("--category-list-json", default=None, help="Optional JSON array of exact category names to run.")
 
     ap.add_argument(
         "--set-instanceable",
@@ -239,6 +638,34 @@ def main() -> int:
                     help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
     ap.add_argument("--mode-reports-dir", default=None,
                     help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
+    ap.add_argument(
+        "--scene-files",
+        default="layout.usd",
+        help="Comma-separated scene USD filenames for bbox-gated apply/promote. Default focuses A/B on layout.usd only.",
+    )
+    ap.add_argument("--bbox-gated", action="store_true", help="Enable bbox-gated cert -> apply -> audit -> step6 flow.")
+    ap.add_argument(
+        "--bbox-policy",
+        choices=["bbox_primary_rmse_observe", "bbox_primary_rmse_harder"],
+        default="bbox_primary_rmse_observe",
+    )
+    ap.add_argument("--baseline-root", default=None, help="Canonical upstream baseline recorded in bbox-gated runs.")
+    ap.add_argument(
+        "--step6-mode",
+        choices=["off", "dry_run", "apply"],
+        default="off",
+        help="Step6 behavior for bbox-gated runs.",
+    )
+    ap.add_argument(
+        "--dedup-mode",
+        choices=["geom_only", "shape_invariant", "topo_filesize", "transitive"],
+        default="geom_only",
+        help="Input report mode passed into bbox-gated certificate build.",
+    )
+    ap.add_argument("--eps-bbox", type=float, default=0.01)
+    ap.add_argument("--eps-pos", type=float, default=0.01)
+    ap.add_argument("--eps-angle", type=float, default=1.0)
+    ap.add_argument("--eps-geom", type=float, default=0.01)
     ap.add_argument(
         "--input-layout-name",
         default=None,
@@ -255,16 +682,22 @@ def main() -> int:
 
     if not ISAAC_PY.exists():
         raise FileNotFoundError(f"Missing Isaac wrapper: {ISAAC_PY}")
-    for p in (SCRIPT_BUILD_MAPPING, SCRIPT_BULK_APPLY, SCRIPT_STEP6):
+    for p in (SCRIPT_BUILD_MAPPING, SCRIPT_BULK_APPLY, SCRIPT_STEP6, SCRIPT_AUDIT):
         if not p.exists():
             raise FileNotFoundError(f"Missing required script: {p}")
+
+    if args.bbox_gated:
+        return _run_bbox_gated(args)
 
     c1_bulk_dir.mkdir(parents=True, exist_ok=True)
 
     include_re = re.compile(args.include_regex) if args.include_regex else None
     exclude_re = re.compile(args.exclude_regex) if args.exclude_regex else None
+    category_allowlist = _load_category_allowlist(args.category_list_json)
 
     categories = _list_categories(dataset_root)
+    if category_allowlist is not None:
+        categories = [c for c in categories if c in category_allowlist]
     if args.skip_door_variants:
         categories = [c for c in categories if not c.startswith("door_")]
 

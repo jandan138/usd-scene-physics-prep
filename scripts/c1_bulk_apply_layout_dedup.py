@@ -26,6 +26,15 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
+
+def _append_jsonl(path: Path, rows: List[Dict]) -> None:
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
 def _load_rewriter_module():
     scripts_dir = Path(__file__).resolve().parent
     mod_path = scripts_dir / "rewrite_layout_asset_refs_with_compensation.py"
@@ -59,6 +68,17 @@ def main() -> int:
                     help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
     ap.add_argument("--mode-reports-dir", default=None,
                     help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
+    ap.add_argument("--bbox-gated", action="store_true", help="Enable bbox-gated fail-closed apply behavior.")
+    ap.add_argument(
+        "--bbox-policy",
+        choices=["bbox_primary_rmse_observe", "bbox_primary_rmse_harder"],
+        default="bbox_primary_rmse_observe",
+        help="BBox-gated policy label recorded in apply summaries.",
+    )
+    ap.add_argument("--mapping-stats-json", default=None, help="Optional mapping stats JSON for traceability.")
+    ap.add_argument("--certificate-jsonl", default=None, help="Optional pair certificate JSONL for traceability.")
+    ap.add_argument("--baseline-root", default=None, help="Optional canonical baseline root recorded in summaries.")
+    ap.add_argument("--reject-ledger-jsonl", default=None, help="Optional JSONL ledger aggregating bbox-gated rejects.")
     ap.add_argument(
         "--input-layout-name",
         default=None,
@@ -133,8 +153,23 @@ def main() -> int:
                 max_preview=int(args.max_preview),
                 v_matrix_mode=args.v_matrix_mode,
                 mode_reports_dir=args.mode_reports_dir,
+                bbox_gated=bool(args.bbox_gated),
+                bbox_policy=args.bbox_policy,
             )
             summary["scene_file"] = scene_fn
+
+            if args.reject_ledger_jsonl and report_out and os.path.isfile(report_out):
+                payload = json.loads(Path(report_out).read_text(encoding="utf-8"))
+                reject_rows = []
+                for row in payload.get("changes", []):
+                    if row.get("kind") != "bbox_gated_reject":
+                        continue
+                    enriched = dict(row)
+                    enriched.setdefault("layout_in", summary.get("layout_in"))
+                    enriched.setdefault("layout_out", summary.get("layout_out"))
+                    enriched.setdefault("scene_file", scene_fn)
+                    reject_rows.append(enriched)
+                _append_jsonl(Path(args.reject_ledger_jsonl), reject_rows)
 
             did_change = any(
                 (summary.get("counts") or {}).get(k, 0)
@@ -155,6 +190,12 @@ def main() -> int:
         "dataset_root": str(dataset_root),
         "layout_root": str(layout_root),
         "mapping_json": args.mapping_json,
+        "mapping_stats_json": args.mapping_stats_json,
+        "certificate_jsonl": args.certificate_jsonl,
+        "baseline_root": args.baseline_root,
+        "bbox_gated": bool(args.bbox_gated),
+        "bbox_policy": args.bbox_policy,
+        "reject_ledger_jsonl": args.reject_ledger_jsonl,
         "out_name": args.out_name,
         "scene_files": scene_files,
         "dry_run": bool(args.dry_run),

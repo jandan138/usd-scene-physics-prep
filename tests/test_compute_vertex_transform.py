@@ -10,6 +10,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 from compute_vertex_transform import (
+    build_pair_certificate,
     procrustes_full,
     compute_V_shape_invariant,
 )
@@ -185,23 +186,21 @@ class TestShapeInvariant:
         )
 
     def test_different_scale(self):
-        """Same shape at different scales: canon [0,1]^3 vs old [0,5]^3."""
+        """Large absolute size deltas are now rejected by the stricter guard."""
         canon = BASE_PTS.copy()
         old = canon * 5.0
 
-        V = compute_V_shape_invariant(canon, old)
-
-        aligned = _apply_V(canon, V)
-        assert np.allclose(aligned, old, atol=1e-3), (
-            f"max residual: {np.abs(aligned - old).max():.2e}"
-        )
+        with pytest.raises(RuntimeError, match="aspect ratio mismatch"):
+            compute_V_shape_invariant(canon, old)
 
     def test_different_vertex_count_icp(self):
         """Different vertex counts triggers ICP path."""
         rng = np.random.RandomState(42)
         canon = rng.rand(50, 3).astype(np.float64) * 10
-        # old is a superset (extra points near existing ones)
-        old = np.vstack([canon * 2.0, rng.rand(10, 3) * 20])
+        # old is a near-superset with the same overall scale, which should
+        # stay inside the stricter bbox guards while still exercising ICP.
+        extra = canon[:10] + rng.normal(scale=1e-3, size=(10, 3))
+        old = np.vstack([canon, extra])
 
         # Should not raise — exercises the ICP branch
         V = compute_V_shape_invariant(canon, old)
@@ -231,3 +230,51 @@ class TestTransitive:
         assert np.allclose(aligned, C, atol=1e-5), (
             f"max residual: {np.abs(aligned - C).max():.2e}"
         )
+
+
+class TestPairCertificate:
+    """Tests for build_pair_certificate()."""
+
+    def test_geom_only_exact_proof(self, monkeypatch):
+        monkeypatch.setattr(
+            "compute_vertex_transform.extract_instance_space_vertices",
+            lambda path: BASE_PTS.copy(),
+        )
+        monkeypatch.setattr("compute_vertex_transform.os.path.isfile", lambda path: True)
+
+        cert = build_pair_certificate(
+            old_usd="/tmp/old.usd",
+            canonical_usd="/tmp/canon.usd",
+            mode="geom_only",
+        )
+
+        assert cert["eligible"] is True
+        assert cert["reject_reason"] is None
+        assert cert["proof_source"] == "geom_only_exact_world_proof"
+        assert cert["vertex_rmse"] == 0.0
+        assert cert["rmse_available"] is True
+        assert cert["bbox_delta"]["max_abs"] == 0.0
+
+    def test_non_geom_mode_rejected_in_phase1(self, monkeypatch):
+        monkeypatch.setattr("compute_vertex_transform.os.path.isfile", lambda path: True)
+        cert = build_pair_certificate(
+            old_usd="/tmp/old.usd",
+            canonical_usd="/tmp/canon.usd",
+            mode="shape_invariant",
+        )
+        assert cert["eligible"] is False
+        assert cert["reject_reason"] == "mode_not_enabled_shape_invariant"
+        assert cert["rmse_available"] is False
+
+    def test_missing_asset_rejected(self, monkeypatch):
+        def _isfile(path):
+            return path != "/tmp/missing.usd"
+
+        monkeypatch.setattr("compute_vertex_transform.os.path.isfile", _isfile)
+        cert = build_pair_certificate(
+            old_usd="/tmp/missing.usd",
+            canonical_usd="/tmp/canon.usd",
+            mode="geom_only",
+        )
+        assert cert["eligible"] is False
+        assert cert["reject_reason"] == "old_asset_missing"

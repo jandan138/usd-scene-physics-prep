@@ -89,16 +89,27 @@ def _abs_from_usd_ref(base_dir: str, asset_path: str) -> str:
     return os.path.abspath(os.path.join(base_dir, s))
 
 
-def _abs_to_report_style(abs_path: str, dataset_name: str) -> Optional[str]:
+def _abs_to_subset_rel(abs_path: str, dataset_name: str) -> Optional[str]:
     p = (abs_path or "").replace("\\", "/")
     marker = f"/{dataset_name}/GRScenes_assets/"
     idx = p.find(marker)
     if idx >= 0:
-        return p[idx + 1 :]
+        return p[idx + 1 + len(dataset_name) + 1 :]
     marker2 = "/GRScenes_assets/"
     idx2 = p.find(marker2)
     if idx2 >= 0:
-        return f"{dataset_name}/" + p[idx2 + 1 :]
+        return p[idx2 + 1 :]
+    return None
+
+
+def _normalize_mapping_key(p: str, dataset_name: str) -> Optional[str]:
+    s = (p or "").replace("\\", "/").strip()
+    marker = f"{dataset_name}/GRScenes_assets/"
+    if marker in s:
+        return s[s.find(marker) + len(dataset_name) + 1 :].lstrip("/")
+    marker2 = "GRScenes_assets/"
+    if marker2 in s:
+        return s[s.find(marker2) :].lstrip("/")
     return None
 
 
@@ -137,7 +148,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
                 for r in items:
                     ap = str(getattr(r, "assetPath", "") or "")
                     abs_p = _abs_from_usd_ref(base_dir, ap)
-                    rel = _abs_to_report_style(abs_p, dataset_name)
+                    rel = _abs_to_subset_rel(abs_p, dataset_name)
                     if not rel:
                         continue
                     if rel in old_asset_usd_rel_set:
@@ -153,7 +164,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
                 for r in items:
                     ap = str(getattr(r, "assetPath", "") or "")
                     abs_p = _abs_from_usd_ref(base_dir, ap)
-                    rel = _abs_to_report_style(abs_p, dataset_name)
+                    rel = _abs_to_subset_rel(abs_p, dataset_name)
                     if not rel:
                         continue
                     if rel in old_asset_usd_rel_set:
@@ -171,7 +182,7 @@ def _scan_stage_for_old_assets(stage_path: Path, old_asset_usd_rel_set: Set[str]
 
             def handle_asset_path(asset_path: str) -> None:
                 abs_p = _abs_from_usd_ref(base_dir, asset_path)
-                rel = _abs_to_report_style(abs_p, dataset_name)
+                rel = _abs_to_subset_rel(abs_p, dataset_name)
                 if not rel:
                     return
                 if rel in old_asset_usd_rel_set:
@@ -354,6 +365,8 @@ def main() -> int:
     ap.add_argument("--layout-root", default=None)
     ap.add_argument("--report-dir", required=True)
     ap.add_argument("--ledger-jsonl", default=None)
+    ap.add_argument("--audit-verdict-json", default=None, help="Required authoritative audit verdict for bbox-gated Step6.")
+    ap.add_argument("--bbox-gated", action="store_true", help="Require authoritative audit verdict before promote/soft-delete.")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--progress-every", type=int, default=1000)
     ap.add_argument(
@@ -374,7 +387,14 @@ def main() -> int:
     report_dir = Path(args.report_dir)
     report_dir.mkdir(parents=True, exist_ok=True)
 
-    mapping: Dict[str, str] = json.loads(Path(args.mapping_json).read_text())
+    mapping_payload: Dict[str, str] = json.loads(Path(args.mapping_json).read_text())
+    mapping: Dict[str, str] = {}
+    for old_key, canonical_key in mapping_payload.items():
+        old_rel = _normalize_mapping_key(old_key, dataset_name)
+        canonical_rel = _normalize_mapping_key(canonical_key, dataset_name)
+        if not old_rel or not canonical_rel:
+            continue
+        mapping[old_rel] = canonical_rel
     if not mapping:
         raise SystemExit("Empty mapping JSON")
 
@@ -403,9 +423,32 @@ def main() -> int:
     post_promote_full_scan_path = report_dir / "post_promote_full_usd_scan_excluding_backups_pxr.json"
     soft_delete_report_path = report_dir / "soft_delete_old_assets_report.json"
     post_soft_delete_layout_scan_path = report_dir / "post_soft_delete_layout_scan_pxr.json"
+    step6_gate_decision_path = report_dir / "step6_gate_decision.json"
 
     progress_json = report_dir / "progress.json"
     progress_jsonl = report_dir / "progress.jsonl"
+
+    audit_verdict = None
+    if args.bbox_gated or args.audit_verdict_json:
+        if not args.audit_verdict_json:
+            raise SystemExit("bbox-gated Step6 requires --audit-verdict-json")
+        audit_verdict = json.loads(Path(args.audit_verdict_json).read_text(encoding="utf-8"))
+        gate_decision = {
+            "bbox_gated": True,
+            "audit_verdict_json": str(Path(args.audit_verdict_json)),
+            "audit_passed": bool(audit_verdict.get("passed")),
+            "blocking_reason_counts": audit_verdict.get("blocking_reason_counts", {}),
+            "ref_changed_fail_count": audit_verdict.get("ref_changed_fail_count", 0),
+            "scenes_error": audit_verdict.get("scenes_error", 0),
+            "total_no_mesh": audit_verdict.get("total_no_mesh", 0),
+        }
+        _write_json(step6_gate_decision_path, gate_decision)
+        if not gate_decision["audit_passed"]:
+            raise SystemExit(
+                f"ABORT: authoritative audit failed; see {args.audit_verdict_json} and {step6_gate_decision_path}"
+            )
+    elif args.dry_run:
+        _write_json(step6_gate_decision_path, {"bbox_gated": False, "audit_passed": None})
 
     # 1) Promote scene USDs (layout + derived outputs)
     layouts = sorted(layout_root.glob("**/layout.usd"))
@@ -554,6 +597,7 @@ def main() -> int:
                 "post_promote_full_scan": str(post_promote_full_scan_path),
                 "soft_delete": str(soft_delete_report_path),
                 "post_soft_delete_layout_scan": str(post_soft_delete_layout_scan_path),
+                "step6_gate_decision": str(step6_gate_decision_path),
             },
         }
         _append_jsonl(Path(args.ledger_jsonl), entry)

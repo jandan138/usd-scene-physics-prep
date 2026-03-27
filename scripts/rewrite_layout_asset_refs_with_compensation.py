@@ -468,6 +468,87 @@ def _rewrite_payload_listop_with_mapping(
     return new_pls, changed, changed_pairs
 
 
+def _get_authored_payload_listop(prim):
+    if not prim or not prim.IsValid() or not prim.HasAuthoredPayloads():
+        return None
+    try:
+        for spec in prim.GetPrimStack():
+            payload_list = getattr(spec, "payloadList", None)
+            if payload_list is None:
+                continue
+            try:
+                items = list(payload_list.GetAddedOrExplicitItems())
+            except Exception:
+                items = []
+            if items:
+                return payload_list
+    except Exception:
+        return None
+    return None
+
+
+def _set_payload_listop(prim, payloads) -> None:
+    items = []
+    try:
+        items = list(payloads.GetAddedOrExplicitItems())
+    except Exception:
+        items = []
+    payload_api = prim.GetPayloads()
+    payload_api.ClearPayloads()
+    for item in items:
+        payload_api.AddPayload(
+            getattr(item, "assetPath", "") or "",
+            getattr(item, "primPath", Sdf.Path.emptyPath),
+            getattr(item, "layerOffset", None),
+        )
+
+
+def _preview_asset_attr_mapping_changes(
+    prim,
+    base_dir: str,
+    mapping_by_old_abs: Dict[str, str],
+) -> List[Dict[str, Any]]:
+    previews: List[Dict[str, Any]] = []
+    for attr in prim.GetAttributes():
+        t = attr.GetTypeName()
+        if t not in (Sdf.ValueTypeNames.Asset, Sdf.ValueTypeNames.AssetArray):
+            continue
+
+        try:
+            v = attr.Get()
+        except Exception:
+            continue
+
+        if isinstance(v, Sdf.AssetPath):
+            resolved = _resolve_ref_asset_path(base_dir, v.path)
+            new_abs = mapping_by_old_abs.get(resolved)
+            if new_abs:
+                previews.append(
+                    {
+                        "attr": attr.GetName(),
+                        "old_abs": resolved,
+                        "new_abs": new_abs,
+                    }
+                )
+            continue
+
+        if isinstance(v, (list, tuple)):
+            for item in v:
+                if not isinstance(item, Sdf.AssetPath):
+                    continue
+                resolved = _resolve_ref_asset_path(base_dir, item.path)
+                new_abs = mapping_by_old_abs.get(resolved)
+                if new_abs:
+                    previews.append(
+                        {
+                            "attr": attr.GetName(),
+                            "old_abs": resolved,
+                            "new_abs": new_abs,
+                        }
+                    )
+    return previews
+
+
 def rewrite_layout(
     *,
     layout_usd: str,
@@ -481,6 +562,8 @@ def rewrite_layout(
     max_preview: int,
     v_matrix_mode: str = "none",
     mode_reports_dir: Optional[str] = None,
+    bbox_gated: bool = False,
+    bbox_policy: str = "bbox_primary_rmse_observe",
 ) -> Dict[str, Any]:
     if _PXR_IMPORT_ERROR is not None:
         raise RuntimeError(f"pxr.Usd not available: {_PXR_IMPORT_ERROR}")
@@ -569,10 +652,38 @@ def rewrite_layout(
     asset_attrs_changed = 0
     xform_compensated = 0
     instanceable_set = 0
+    reject_records = 0
 
     rewritten_prims: set[str] = set()
 
     mapping_by_old = {mp.old_abs: mp.canonical_abs for mp in mapping_pairs}
+
+    def _record_reject(
+        prim_path: str,
+        reason: str,
+        *,
+        old_abs: Optional[str] = None,
+        canonical_abs: Optional[str] = None,
+        scene_shape: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        nonlocal reject_records
+        reject_records += 1
+        payload: Dict[str, Any] = {
+            "prim": prim_path,
+            "kind": "bbox_gated_reject",
+            "reject_reason": reason,
+            "bbox_policy": bbox_policy,
+        }
+        if old_abs is not None:
+            payload["old_abs"] = old_abs
+        if canonical_abs is not None:
+            payload["canonical_abs"] = canonical_abs
+        if scene_shape is not None:
+            payload["scene_shape"] = scene_shape
+        if details:
+            payload.update(details)
+        changes.append(payload)
 
     # Pre-filter: exclude pairs that fail the aspect-ratio guard.
     # This must happen before the traversal loop so that rejected pairs
@@ -583,13 +694,15 @@ def rewrite_layout(
             V, dedup_mode = _get_V_cached(old_abs, canonical_abs)
             if V is None:
                 rejected_keys.append(old_abs)
-                changes.append({
-                    "prim": "(pre-filter)",
-                    "kind": "aspect_ratio_rejected",
-                    "old_abs": old_abs,
-                    "canonical_abs": canonical_abs,
-                    "dedup_mode": dedup_mode,
-                })
+                changes.append(
+                    {
+                        "prim": "(pre-filter)",
+                        "kind": "aspect_ratio_rejected",
+                        "old_abs": old_abs,
+                        "canonical_abs": canonical_abs,
+                        "dedup_mode": dedup_mode,
+                    }
+                )
         for k in rejected_keys:
             del mapping_by_old[k]
 
@@ -598,101 +711,211 @@ def rewrite_layout(
             continue
 
         prim_path_str = str(prim.GetPath())
+        refs = prim.GetMetadata("references") if prim.HasAuthoredReferences() else None
+        pls = _get_authored_payload_listop(prim)
 
-        # 1) References
-        if prim.HasAuthoredReferences():
-            refs = prim.GetMetadata("references")
-            if refs:
-                new_refs, n, changed_pairs = _rewrite_reference_listop_with_mapping(refs, base_dir, mapping_by_old)
-                if n:
-                    prim.SetMetadata("references", new_refs)
-                    refs_changed += n
-                    rewritten_prims.add(prim_path_str)
-                    for old_abs, new_abs in changed_pairs:
-                        changes.append(
-                            {
-                                "prim": prim_path_str,
-                                "kind": "references",
-                                "old_abs": old_abs,
-                                "new_abs": new_abs,
-                                "count": 1,
-                            }
-                        )
+        new_refs = refs
+        ref_changed_pairs: List[Tuple[str, str]] = []
+        if refs:
+            new_refs, ref_count, ref_changed_pairs = _rewrite_reference_listop_with_mapping(refs, base_dir, mapping_by_old)
+        else:
+            ref_count = 0
 
-                    if apply_compensation:
-                        uniq = sorted(set(changed_pairs))
-                        if len(uniq) == 1:
-                            old_abs, new_abs = uniq[0]
-                            # Compensate local transform so world placement is unchanged.
-                            # Two regimes depending on V's coordinate space:
-                            #   geom_only: V=I in mesh-local space, need internal compensation
-                            #     M_new_local = M_canon_int^{-1} * M_old_int * M_old_local
-                            #   non-geom_only (topo_filesize/shape_invariant/transitive):
-                            #     V is in instance-space (from extract_instance_space_vertices)
-                            #     M_new_local = V * M_old_local
-                            try:
-                                old_local = xform_cache.GetLocalTransformation(prim)
-                                if isinstance(old_local, tuple):
-                                    old_local = old_local[0]
-                                V, dedup_mode = _get_V_cached(old_abs, new_abs)
-                                if dedup_mode in ("geom_only", "identity"):
-                                    old_internal = _get_internal_cached(old_abs)
-                                    canonical_internal = _get_internal_cached(new_abs)
-                                    new_local = canonical_internal.GetInverse() * old_internal * old_local
-                                else:
-                                    new_local = V * old_local
-                                _set_local_matrix(prim, new_local)
-                                xform_compensated += 1
-                                changes.append(
-                                    {
-                                        "prim": prim_path_str,
-                                        "kind": "xform_compensation",
-                                        "old_asset_abs": old_abs,
-                                        "canonical_asset_abs": new_abs,
-                                        "v_matrix_mode": v_matrix_mode,
-                                        "dedup_mode": dedup_mode,
-                                    }
-                                )
-                            except Exception as e:
-                                changes.append(
-                                    {
-                                        "prim": prim_path_str,
-                                        "kind": "xform_compensation_error",
-                                        "old_asset_abs": old_abs,
-                                        "canonical_asset_abs": new_abs,
-                                        "error": str(e),
-                                    }
-                                )
+        new_pls = pls
+        payload_changed_pairs: List[Tuple[str, str]] = []
+        if pls:
+            new_pls, payload_count, payload_changed_pairs = _rewrite_payload_listop_with_mapping(pls, base_dir, mapping_by_old)
+        else:
+            payload_count = 0
+
+        asset_attr_previews = _preview_asset_attr_mapping_changes(prim, base_dir, mapping_by_old)
+
+        if bbox_gated and (ref_count or payload_count or asset_attr_previews):
+            if payload_count:
+                old_abs, new_abs = payload_changed_pairs[0]
+                _record_reject(
+                    prim_path_str,
+                    "payload_rewrite_disabled_bbox_phase1",
+                    old_abs=old_abs,
+                    canonical_abs=new_abs,
+                    scene_shape="payload",
+                    details={"changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in payload_changed_pairs]},
+                )
+                continue
+
+            if asset_attr_previews:
+                first = asset_attr_previews[0]
+                _record_reject(
+                    prim_path_str,
+                    "asset_attr_rewrite_disabled_bbox_phase1",
+                    old_abs=str(first["old_abs"]),
+                    canonical_abs=str(first["new_abs"]),
+                    scene_shape="asset_attr",
+                    details={"attrs": asset_attr_previews},
+                )
+                continue
+
+            uniq = sorted(set(ref_changed_pairs))
+            if len(uniq) != 1:
+                _record_reject(
+                    prim_path_str,
+                    "multi_ref_changed_prim_disabled_bbox_phase1",
+                    scene_shape="multi_ref",
+                    details={"changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq]},
+                )
+                continue
+
+            old_abs, new_abs = uniq[0]
+            if not apply_compensation:
+                _record_reject(
+                    prim_path_str,
+                    "bbox_gated_requires_compensation",
+                    old_abs=old_abs,
+                    canonical_abs=new_abs,
+                    scene_shape="references",
+                )
+                continue
+
+            try:
+                old_local = xform_cache.GetLocalTransformation(prim)
+                if isinstance(old_local, tuple):
+                    old_local = old_local[0]
+                V, dedup_mode = _get_V_cached(old_abs, new_abs)
+                if V is None:
+                    _record_reject(
+                        prim_path_str,
+                        "unresolved_compensation_state",
+                        old_abs=old_abs,
+                        canonical_abs=new_abs,
+                        scene_shape="references",
+                    )
+                    continue
+                if dedup_mode not in ("geom_only", "identity"):
+                    _record_reject(
+                        prim_path_str,
+                        f"mode_not_enabled_{dedup_mode}",
+                        old_abs=old_abs,
+                        canonical_abs=new_abs,
+                        scene_shape="references",
+                    )
+                    continue
+                old_internal = _get_internal_cached(old_abs)
+                canonical_internal = _get_internal_cached(new_abs)
+                new_local = canonical_internal.GetInverse() * old_internal * old_local
+            except Exception as e:
+                _record_reject(
+                    prim_path_str,
+                    "xform_preflight_failed",
+                    old_abs=old_abs,
+                    canonical_abs=new_abs,
+                    scene_shape="references",
+                    details={"error": str(e)},
+                )
+                continue
+
+            prim.SetMetadata("references", new_refs)
+            refs_changed += ref_count
+            rewritten_prims.add(prim_path_str)
+            for old_abs_item, new_abs_item in ref_changed_pairs:
+                changes.append(
+                    {
+                        "prim": prim_path_str,
+                        "kind": "references",
+                        "old_abs": old_abs_item,
+                        "new_abs": new_abs_item,
+                        "count": 1,
+                    }
+                )
+            _set_local_matrix(prim, new_local)
+            xform_compensated += 1
+            changes.append(
+                {
+                    "prim": prim_path_str,
+                    "kind": "xform_compensation",
+                    "old_asset_abs": old_abs,
+                    "canonical_asset_abs": new_abs,
+                    "v_matrix_mode": v_matrix_mode,
+                    "dedup_mode": dedup_mode,
+                }
+            )
+            continue
+
+        # Legacy behavior
+        if refs and ref_count:
+            prim.SetMetadata("references", new_refs)
+            refs_changed += ref_count
+            rewritten_prims.add(prim_path_str)
+            for old_abs, new_abs in ref_changed_pairs:
+                changes.append(
+                    {
+                        "prim": prim_path_str,
+                        "kind": "references",
+                        "old_abs": old_abs,
+                        "new_abs": new_abs,
+                        "count": 1,
+                    }
+                )
+
+            if apply_compensation:
+                uniq = sorted(set(ref_changed_pairs))
+                if len(uniq) == 1:
+                    old_abs, new_abs = uniq[0]
+                    try:
+                        old_local = xform_cache.GetLocalTransformation(prim)
+                        if isinstance(old_local, tuple):
+                            old_local = old_local[0]
+                        V, dedup_mode = _get_V_cached(old_abs, new_abs)
+                        if dedup_mode in ("geom_only", "identity"):
+                            old_internal = _get_internal_cached(old_abs)
+                            canonical_internal = _get_internal_cached(new_abs)
+                            new_local = canonical_internal.GetInverse() * old_internal * old_local
                         else:
-                            # Safety: a prim with multiple different reference rewrites cannot be unambiguously compensated.
-                            changes.append(
-                                {
-                                    "prim": prim_path_str,
-                                    "kind": "xform_compensation_skipped_multi_ref",
-                                    "changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq],
-                                }
-                            )
-
-        # 2) Payloads
-        if prim.HasAuthoredPayloads():
-            pls = prim.GetMetadata("payloads")
-            if pls:
-                new_pls, n, changed_pairs = _rewrite_payload_listop_with_mapping(pls, base_dir, mapping_by_old)
-                if n:
-                    prim.SetMetadata("payloads", new_pls)
-                    payloads_changed += n
-                    for old_abs, new_abs in changed_pairs:
+                            new_local = V * old_local
+                        _set_local_matrix(prim, new_local)
+                        xform_compensated += 1
                         changes.append(
                             {
                                 "prim": prim_path_str,
-                                "kind": "payloads",
-                                "old_abs": old_abs,
-                                "new_abs": new_abs,
-                                "count": 1,
+                                "kind": "xform_compensation",
+                                "old_asset_abs": old_abs,
+                                "canonical_asset_abs": new_abs,
+                                "v_matrix_mode": v_matrix_mode,
+                                "dedup_mode": dedup_mode,
                             }
                         )
+                    except Exception as e:
+                        changes.append(
+                            {
+                                "prim": prim_path_str,
+                                "kind": "xform_compensation_error",
+                                "old_asset_abs": old_abs,
+                                "canonical_asset_abs": new_abs,
+                                "error": str(e),
+                            }
+                        )
+                else:
+                    changes.append(
+                        {
+                            "prim": prim_path_str,
+                            "kind": "xform_compensation_skipped_multi_ref",
+                            "changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq],
+                        }
+                    )
 
-        # 3) Asset-valued attributes (fallback)
+        if pls and payload_count:
+            _set_payload_listop(prim, new_pls)
+            payloads_changed += payload_count
+            for old_abs, new_abs in payload_changed_pairs:
+                changes.append(
+                    {
+                        "prim": prim_path_str,
+                        "kind": "payloads",
+                        "old_abs": old_abs,
+                        "new_abs": new_abs,
+                        "count": 1,
+                    }
+                )
+
         for attr in prim.GetAttributes():
             t = attr.GetTypeName()
             if t not in (Sdf.ValueTypeNames.Asset, Sdf.ValueTypeNames.AssetArray):
@@ -703,7 +926,6 @@ def rewrite_layout(
             except Exception:
                 continue
 
-            # scalar asset path
             if isinstance(v, Sdf.AssetPath):
                 ap = v.path
                 resolved = _resolve_ref_asset_path(base_dir, ap)
@@ -723,7 +945,6 @@ def rewrite_layout(
                     )
                 continue
 
-            # array asset paths
             if isinstance(v, (list, tuple)):
                 did_any = False
                 new_vals: List[Sdf.AssetPath] = []
@@ -749,7 +970,6 @@ def rewrite_layout(
                         )
                     else:
                         new_vals.append(item)
-
                 if did_any:
                     attr.Set(new_vals)
                     asset_attrs_changed += 1
@@ -765,12 +985,15 @@ def rewrite_layout(
         "asset_internal_matrices_computed": len(asset_internal_cache),
         "v_matrix_mode": v_matrix_mode,
         "v_matrices_computed": len(_v_matrix_cache),
+        "bbox_gated": bool(bbox_gated),
+        "bbox_policy": bbox_policy,
         "counts": {
             "refs_changed": refs_changed,
             "payloads_changed": payloads_changed,
             "asset_attrs_changed": asset_attrs_changed,
             "xform_compensated": xform_compensated,
             "instanceable_set": instanceable_set,
+            "reject_records": reject_records,
             "change_records": len(changes),
         },
         "mapping_pairs": [{"old_abs": mp.old_abs, "canonical_abs": mp.canonical_abs} for mp in mapping_pairs],
@@ -861,6 +1084,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Directory containing geom_only/, topo_filesize/, shape_invariant/ dedup reports. Required when --v-matrix-mode=auto.",
     )
     ap.add_argument(
+        "--bbox-gated",
+        action="store_true",
+        help="Enable fail-closed bbox-gated rewrite behavior.",
+    )
+    ap.add_argument(
+        "--bbox-policy",
+        choices=["bbox_primary_rmse_observe", "bbox_primary_rmse_harder"],
+        default="bbox_primary_rmse_observe",
+        help="BBox-gated policy label recorded in reports.",
+    )
+    ap.add_argument(
         "--preview",
         type=int,
         default=30,
@@ -891,6 +1125,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         max_preview=max(0, int(args.preview)),
         v_matrix_mode=args.v_matrix_mode,
         mode_reports_dir=args.mode_reports_dir,
+        bbox_gated=bool(args.bbox_gated),
+        bbox_policy=args.bbox_policy,
     )
 
     print(json.dumps(summary, ensure_ascii=False, indent=2))

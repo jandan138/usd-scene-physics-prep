@@ -75,7 +75,10 @@ def _find_latest_backup_by_pattern(scene_dir: str, prefix: str) -> Optional[str]
     return os.path.join(scene_dir, candidates[-1])
 
 
-def select_layout(scene_dir: str, mode: str) -> Optional[str]:
+def select_layout(scene_dir: str, mode: str, explicit_name: Optional[str] = None) -> Optional[str]:
+    if explicit_name:
+        candidate = os.path.join(scene_dir, explicit_name)
+        return candidate if os.path.isfile(candidate) else None
     if mode == "current":
         candidate = os.path.join(scene_dir, "layout.usd")
         return candidate if os.path.isfile(candidate) else None
@@ -125,6 +128,9 @@ def discover_scene_pairs(
     right_root: str,
     left_mode: str,
     right_mode: str,
+    left_layout_name: Optional[str] = None,
+    right_layout_name: Optional[str] = None,
+    scene_ids: Optional[Set[str]] = None,
     scene_filter: Optional[str] = None,
 ) -> Tuple[List[Tuple[str, str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
     """Discover matched scene pairs across two dataset roots / layout modes."""
@@ -141,12 +147,14 @@ def discover_scene_pairs(
 
         for scene_id in sorted(left_ids & right_ids):
             full_id = f"{subcategory}/{scene_id}"
+            if scene_ids is not None and full_id not in scene_ids:
+                continue
             if scene_filter and scene_filter not in full_id:
                 continue
             left_scene_dir = os.path.join(left_base, scene_id)
             right_scene_dir = os.path.join(right_base, scene_id)
-            left_layout = select_layout(left_scene_dir, left_mode)
-            right_layout = select_layout(right_scene_dir, right_mode)
+            left_layout = select_layout(left_scene_dir, left_mode, explicit_name=left_layout_name)
+            right_layout = select_layout(right_scene_dir, right_mode, explicit_name=right_layout_name)
             if left_layout and right_layout:
                 pairs.append((left_layout, right_layout, full_id))
             elif left_layout and not right_layout:
@@ -166,9 +174,11 @@ def discover_scene_pairs(
 
         for scene_id in sorted(left_ids - right_ids):
             full_id = f"{subcategory}/{scene_id}"
+            if scene_ids is not None and full_id not in scene_ids:
+                continue
             if scene_filter and scene_filter not in full_id:
                 continue
-            left_layout = select_layout(os.path.join(left_base, scene_id), left_mode)
+            left_layout = select_layout(os.path.join(left_base, scene_id), left_mode, explicit_name=left_layout_name)
             if left_layout:
                 right_only.append({
                     "scene_id": full_id,
@@ -178,9 +188,11 @@ def discover_scene_pairs(
 
         for scene_id in sorted(right_ids - left_ids):
             full_id = f"{subcategory}/{scene_id}"
+            if scene_ids is not None and full_id not in scene_ids:
+                continue
             if scene_filter and scene_filter not in full_id:
                 continue
-            right_layout = select_layout(os.path.join(right_base, scene_id), right_mode)
+            right_layout = select_layout(os.path.join(right_base, scene_id), right_mode, explicit_name=right_layout_name)
             if right_layout:
                 left_only.append({
                     "scene_id": full_id,
@@ -189,6 +201,54 @@ def discover_scene_pairs(
                 })
 
     return pairs, left_only, right_only
+
+
+def _bbox_from_points(points: np.ndarray) -> Dict[str, List[float]]:
+    mins = points.min(axis=0)
+    maxs = points.max(axis=0)
+    return {
+        "min": [round(float(v), 6) for v in mins.tolist()],
+        "max": [round(float(v), 6) for v in maxs.tolist()],
+    }
+
+
+def _max_abs_axis_delta(a: Sequence[float], b: Sequence[float]) -> float:
+    return float(max(abs(float(x) - float(y)) for x, y in zip(a, b)))
+
+
+def _footprint_signature(points: np.ndarray) -> Dict[str, float]:
+    if len(points) == 0:
+        return {"extent_x": 0.0, "extent_z": 0.0, "axis_deg": 0.0}
+
+    proj = points[:, [0, 2]]
+    mins = proj.min(axis=0)
+    maxs = proj.max(axis=0)
+    extents = maxs - mins
+    centered = proj - proj.mean(axis=0)
+    cov = centered.T @ centered
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    major_idx = int(np.argmax(eigvals))
+    axis = eigvecs[:, major_idx]
+    axis_deg = float(np.degrees(np.arctan2(axis[1], axis[0])))
+    if axis_deg < 0:
+        axis_deg += 180.0
+
+    # Symmetric projected footprints have unstable principal axes; treat them as axis-agnostic.
+    if min(extents) > 0 and max(extents) / min(extents) < 1.05:
+        axis_deg = 0.0
+
+    return {
+        "extent_x": round(float(extents[0]), 6),
+        "extent_z": round(float(extents[1]), 6),
+        "axis_deg": round(axis_deg, 6),
+    }
+
+
+def _axis_delta_deg(a_deg: float, b_deg: float) -> float:
+    delta = abs(float(a_deg) - float(b_deg)) % 180.0
+    if delta > 90.0:
+        delta = 180.0 - delta
+    return round(float(delta), 6)
 
 
 def _get_reference_asset_paths(prim):
@@ -349,6 +409,12 @@ def compare_scene(
     scene_id: str,
     left_locator: Dict[str, str],
     right_locator: Dict[str, str],
+    *,
+    bbox_policy: str,
+    eps_bbox: float,
+    eps_pos: float,
+    eps_angle: float,
+    eps_geom: float,
 ) -> Dict[str, object]:
     result: Dict[str, object] = {
         "scene_id": scene_id,
@@ -445,10 +511,46 @@ def compare_scene(
         vertex_rmse = max(per_mesh_rmse) if per_mesh_rmse else None
 
         ref_changed = left_refs != right_refs
+        pts_left_all = np.vstack([pts for _, pts in meshes_left])
+        pts_right_all = np.vstack([pts for _, pts in meshes_right])
+        bbox_left = _bbox_from_points(pts_left_all)
+        bbox_right = _bbox_from_points(pts_right_all)
+        bbox_min_delta = [round(abs(a - b), 6) for a, b in zip(bbox_left["min"], bbox_right["min"])]
+        bbox_max_delta = [round(abs(a - b), 6) for a, b in zip(bbox_left["max"], bbox_right["max"])]
+        bbox_delta_max = round(max(max(bbox_min_delta), max(bbox_max_delta)), 6)
+        footprint_left = _footprint_signature(pts_left_all)
+        footprint_right = _footprint_signature(pts_right_all)
+        footprint_extent_delta = round(
+            max(
+                abs(footprint_left["extent_x"] - footprint_right["extent_x"]),
+                abs(footprint_left["extent_z"] - footprint_right["extent_z"]),
+            ),
+            6,
+        )
+        footprint_axis_delta = _axis_delta_deg(footprint_left["axis_deg"], footprint_right["axis_deg"])
 
         parts = path.split("/")
         category = parts[4] if len(parts) >= 5 else "unknown"
         category_disps[category].append(displacement)
+
+        hard_failures: List[str] = []
+        if ref_changed:
+            if _max_abs_axis_delta(bbox_left["min"], bbox_right["min"]) > eps_bbox:
+                hard_failures.append("bbox_min_delta_gt_eps")
+            if _max_abs_axis_delta(bbox_left["max"], bbox_right["max"]) > eps_bbox:
+                hard_failures.append("bbox_max_delta_gt_eps")
+            if footprint_extent_delta > eps_bbox:
+                hard_failures.append("footprint_extent_delta_gt_eps")
+            if footprint_axis_delta > eps_angle:
+                hard_failures.append("footprint_axis_delta_gt_eps")
+            if displacement > eps_pos:
+                hard_failures.append("centroid_delta_gt_eps")
+            if (
+                bbox_policy == "bbox_primary_rmse_harder"
+                and vertex_rmse is not None
+                and vertex_rmse > eps_geom
+            ):
+                hard_failures.append("vertex_rmse_gt_eps")
 
         entry = {
             "prim_path": path,
@@ -456,6 +558,17 @@ def compare_scene(
             "max_per_mesh_displacement": round(max_mesh_disp, 6),
             "vertex_rmse": round(vertex_rmse, 6) if vertex_rmse is not None else None,
             "ref_changed": ref_changed,
+            "bbox_left": bbox_left,
+            "bbox_right": bbox_right,
+            "bbox_min_delta": bbox_min_delta,
+            "bbox_max_delta": bbox_max_delta,
+            "bbox_delta_max_abs": bbox_delta_max,
+            "footprint_left": footprint_left,
+            "footprint_right": footprint_right,
+            "footprint_extent_delta": footprint_extent_delta,
+            "footprint_axis_delta": footprint_axis_delta,
+            "hard_fail": bool(hard_failures),
+            "hard_failures": hard_failures,
             "left_ref_sample": left_refs[:2],
             "right_ref_sample": right_refs[:2],
             "verts_left": verts_left,
@@ -471,6 +584,13 @@ def compare_scene(
     all_vertex_rmse = [c["vertex_rmse"] for c in compared if c["vertex_rmse"] is not None]
     ref_changed_disps = [c["displacement"] for c in compared if c["ref_changed"]]
     ref_same_disps = [c["displacement"] for c in compared if not c["ref_changed"]]
+    ref_changed_hard_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("hard_fail"))
+    blocking_reason_counts: Dict[str, int] = defaultdict(int)
+    for c in compared:
+        if not c.get("ref_changed"):
+            continue
+        for reason in c.get("hard_failures", []):
+            blocking_reason_counts[str(reason)] += 1
 
     category_summary = {}
     for category, disps in sorted(category_disps.items()):
@@ -497,6 +617,8 @@ def compare_scene(
         "vertex_rmse_breakdown": _breakdown(all_vertex_rmse, DISP_THRESHOLDS),
         "vertex_rmse_count": len(all_vertex_rmse),
         "ref_changed_count": len(ref_changed_disps),
+        "ref_changed_hard_fail_count": ref_changed_hard_fail_count,
+        "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
         "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
         "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
         "ref_same_count": len(ref_same_disps),
@@ -519,6 +641,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_only_right = sum(int(r.get("only_in_right", 0)) for r in ok_results)
     total_ref_changed = sum(int(r.get("ref_changed_count", 0)) for r in ok_results)
     total_ref_same = sum(int(r.get("ref_same_count", 0)) for r in ok_results)
+    total_ref_changed_hard_fail = sum(int(r.get("ref_changed_hard_fail_count", 0)) for r in ok_results)
 
     total_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_mesh_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
@@ -526,6 +649,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_vertex_rmse_count = 0
     total_ref_changed_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_ref_same_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
+    blocking_reason_counts: Dict[str, int] = defaultdict(int)
 
     category_acc = defaultdict(list)
     global_worst = []
@@ -542,6 +666,8 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
             total_ref_changed_disp[key] += int(value)
         for key, value in r.get("ref_same_breakdown", {}).items():
             total_ref_same_disp[key] += int(value)
+        for key, value in r.get("blocking_reason_counts", {}).items():
+            blocking_reason_counts[key] += int(value)
 
         for category, info in r.get("category_breakdown", {}).items():
             stats = info.get("displacement_stats", {})
@@ -567,12 +693,14 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
         "total_only_in_right": total_only_right,
         "total_ref_changed": total_ref_changed,
         "total_ref_same": total_ref_same,
+        "ref_changed_hard_fail_count": total_ref_changed_hard_fail,
         "displaced_breakdown": total_disp,
         "max_per_mesh_breakdown": total_mesh_disp,
         "vertex_rmse_breakdown": total_vertex_rmse,
         "total_vertex_rmse_count": total_vertex_rmse_count,
         "ref_changed_breakdown": total_ref_changed_disp,
         "ref_same_breakdown": total_ref_same_disp,
+        "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
         "category_maxima": {
             category: round(max(values), 6)
             for category, values in sorted(category_acc.items())
@@ -586,6 +714,44 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     }
 
 
+def build_audit_verdict(
+    *,
+    aggregate: Dict[str, object],
+    bbox_policy: str,
+    eps_bbox: float,
+    eps_pos: float,
+    eps_angle: float,
+    eps_geom: float,
+    label: str,
+) -> Dict[str, object]:
+    compared_scope_complete = (
+        int(aggregate.get("total_only_in_left", 0)) == 0
+        and int(aggregate.get("total_only_in_right", 0)) == 0
+    )
+    passed = (
+        int(aggregate.get("scenes_error", 0)) == 0
+        and int(aggregate.get("total_no_mesh", 0)) == 0
+        and compared_scope_complete
+        and int(aggregate.get("ref_changed_hard_fail_count", 0)) == 0
+    )
+    return {
+        "label": label,
+        "policy": bbox_policy,
+        "thresholds": {
+            "eps_bbox": eps_bbox,
+            "eps_pos": eps_pos,
+            "eps_angle": eps_angle,
+            "eps_geom": eps_geom,
+        },
+        "passed": passed,
+        "compared_scope_complete": compared_scope_complete,
+        "scenes_error": int(aggregate.get("scenes_error", 0)),
+        "total_no_mesh": int(aggregate.get("total_no_mesh", 0)),
+        "ref_changed_fail_count": int(aggregate.get("ref_changed_hard_fail_count", 0)),
+        "blocking_reason_counts": aggregate.get("blocking_reason_counts", {}),
+    }
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Compare scene placement between two dataset snapshots.",
@@ -594,22 +760,41 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--right-root", required=True)
     parser.add_argument("--left-mode", choices=sorted(VALID_LAYOUT_MODES), default="current")
     parser.add_argument("--right-mode", choices=sorted(VALID_LAYOUT_MODES), default="current")
+    parser.add_argument("--left-layout-name", default=None)
+    parser.add_argument("--right-layout-name", default=None)
     parser.add_argument("--label", required=True, help="Label for this comparison run")
     parser.add_argument("--out", required=True, help="Output JSON path")
+    parser.add_argument("--verdict-out", default=None, help="Optional authoritative audit verdict JSON path.")
     parser.add_argument("--scene-filter", default=None)
+    parser.add_argument("--scene-list-json", default=None, help="Optional JSON array of exact scene ids (e.g. home/SCENE) to compare.")
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--left-bak-root", default=None)
     parser.add_argument("--right-bak-root", default=None)
+    parser.add_argument(
+        "--bbox-policy",
+        choices=["bbox_primary_rmse_observe", "bbox_primary_rmse_harder"],
+        default="bbox_primary_rmse_observe",
+    )
+    parser.add_argument("--eps-bbox", type=float, default=0.01)
+    parser.add_argument("--eps-pos", type=float, default=0.01)
+    parser.add_argument("--eps-angle", type=float, default=1.0)
+    parser.add_argument("--eps-geom", type=float, default=0.01)
     args = parser.parse_args(argv)
 
     left_root = os.path.abspath(args.left_root)
     right_root = os.path.abspath(args.right_root)
     left_locator = build_old_asset_locator(args.left_bak_root, left_root)
     right_locator = build_old_asset_locator(args.right_bak_root, right_root)
+    scene_ids = None
+    if args.scene_list_json:
+        payload = json.loads(open(args.scene_list_json, "r", encoding="utf-8").read())
+        scene_ids = {str(item) for item in payload if isinstance(item, str)}
 
     print(f"Left root:  {left_root}")
     print(f"Right root: {right_root}")
     print(f"Modes:      {args.left_mode} vs {args.right_mode}")
+    if args.left_layout_name or args.right_layout_name:
+        print(f"Layout names: left={args.left_layout_name} right={args.right_layout_name}")
     print(f"Label:      {args.label}")
     print(f"Backup locators: left={len(left_locator)} right={len(right_locator)}")
 
@@ -618,6 +803,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         right_root=right_root,
         left_mode=args.left_mode,
         right_mode=args.right_mode,
+        left_layout_name=args.left_layout_name,
+        right_layout_name=args.right_layout_name,
+        scene_ids=scene_ids,
         scene_filter=args.scene_filter,
     )
     print(f"Matched scene pairs: {len(pairs)}")
@@ -635,7 +823,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         for idx, (left_layout, right_layout, scene_id) in enumerate(pairs, start=1):
             print(f"[{idx}/{len(pairs)}] {scene_id}")
             scene_results.append(
-                compare_scene(left_layout, right_layout, scene_id, left_locator, right_locator)
+                compare_scene(
+                    left_layout,
+                    right_layout,
+                    scene_id,
+                    left_locator,
+                    right_locator,
+                    bbox_policy=args.bbox_policy,
+                    eps_bbox=float(args.eps_bbox),
+                    eps_pos=float(args.eps_pos),
+                    eps_angle=float(args.eps_angle),
+                    eps_geom=float(args.eps_geom),
+                )
             )
     else:
         with ProcessPoolExecutor(max_workers=args.workers) as executor:
@@ -647,6 +846,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     scene_id,
                     left_locator,
                     right_locator,
+                    bbox_policy=args.bbox_policy,
+                    eps_bbox=float(args.eps_bbox),
+                    eps_pos=float(args.eps_pos),
+                    eps_angle=float(args.eps_angle),
+                    eps_geom=float(args.eps_geom),
                 ): scene_id
                 for left_layout, right_layout, scene_id in pairs
             }
@@ -685,6 +889,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "right_root": right_root,
         "left_mode": args.left_mode,
         "right_mode": args.right_mode,
+        "left_layout_name": args.left_layout_name,
+        "right_layout_name": args.right_layout_name,
+        "bbox_policy": args.bbox_policy,
+        "thresholds": {
+            "eps_bbox": args.eps_bbox,
+            "eps_pos": args.eps_pos,
+            "eps_angle": args.eps_angle,
+            "eps_geom": args.eps_geom,
+        },
         "scene_filter": args.scene_filter,
         "elapsed_seconds": elapsed,
         "matched_scene_count": len(pairs),
@@ -693,10 +906,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "aggregate": aggregate,
         "per_scene": scene_results,
     }
+    verdict = build_audit_verdict(
+        aggregate=aggregate,
+        bbox_policy=args.bbox_policy,
+        eps_bbox=float(args.eps_bbox),
+        eps_pos=float(args.eps_pos),
+        eps_angle=float(args.eps_angle),
+        eps_geom=float(args.eps_geom),
+        label=args.label,
+    )
+    output["verdict"] = verdict
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
+    if args.verdict_out:
+        os.makedirs(os.path.dirname(os.path.abspath(args.verdict_out)), exist_ok=True)
+        with open(args.verdict_out, "w", encoding="utf-8") as f:
+            json.dump(verdict, f, indent=2, ensure_ascii=False)
 
     print()
     print("=" * 72)
@@ -715,11 +942,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Vertex RMSE > 10.0:      {aggregate['vertex_rmse_breakdown']['gt_10.0']}")
     print(f"Ref changed prims:       {aggregate['total_ref_changed']}")
     print(f"Ref changed > 0.01:      {aggregate['ref_changed_breakdown']['gt_0.01']}")
+    print(f"Ref changed hard fails:  {aggregate['ref_changed_hard_fail_count']}")
     print(f"Ref same prims:          {aggregate['total_ref_same']}")
     print(f"Ref same > 0.01:         {aggregate['ref_same_breakdown']['gt_0.01']}")
     print(f"Only in left/right:      {aggregate['total_only_in_left']}/{aggregate['total_only_in_right']}")
+    print(f"Audit passed:            {verdict['passed']}")
     print(f"Report saved to:         {args.out}")
-    return 0
+    if args.verdict_out:
+        print(f"Verdict saved to:        {args.verdict_out}")
+    return 0 if verdict["passed"] else 2
 
 
 if __name__ == "__main__":

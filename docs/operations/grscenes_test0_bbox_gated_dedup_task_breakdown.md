@@ -23,6 +23,10 @@ code_reference:
 This document turns the signed-off bbox-gated dedup spec into an implementation
 task breakdown for `GRScenes-test0`.
 
+Current execution status is tracked separately in:
+
+- `docs/operations/grscenes_test0_bbox_gated_dedup_status_20260327.md`
+
 It assumes the following are already settled and must not be reopened here:
 
 - canonical upstream baseline:
@@ -674,6 +678,7 @@ Do not expand scope during phase-0 / phase-1 to:
 # References
 
 - `docs/operations/grscenes_test0_bbox_gated_dedup_implementation.md`
+- `docs/operations/grscenes_test0_bbox_gated_dedup_status_20260327.md`
 - `docs/test0_full/grscenes_test0_rebuilt_prededup_baseline_adoption_20260327.md`
 - `check_reports/test0_rebuilt_full/20260315_chain_fix_v1/summary/prededup_baseline_binding_verdict.json`
 - `.codex/worklogs/main/2026-03-27/bbox-gated-impl-spec-handoff.md`
