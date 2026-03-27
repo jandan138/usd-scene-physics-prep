@@ -503,8 +503,13 @@ def rewrite_layout(
         else:
             _v_mode_index = {}
 
-    def _get_V_cached(old_abs: str, new_abs: str) -> Tuple[Gf.Matrix4d, str]:
-        """Get V matrix and dedup mode for a pair, with caching."""
+    def _get_V_cached(old_abs: str, new_abs: str) -> Tuple[Optional[Gf.Matrix4d], str]:
+        """Get V matrix and dedup mode for a pair, with caching.
+
+        Returns (None, "aspect_ratio_rejected") when the pair fails the
+        aspect-ratio guard — the caller must skip the reference rewrite
+        entirely for these pairs.
+        """
         if v_matrix_mode != "auto":
             return Gf.Matrix4d(1.0), "identity"
         key = (old_abs, new_abs)
@@ -514,6 +519,11 @@ def rewrite_layout(
         mode = _cvt.determine_compensation_mode(old_abs, new_abs, _v_mode_index)
         try:
             V = _cvt.compute_V_for_pair(old_abs, new_abs, mode, mode_index=_v_mode_index)
+        except RuntimeError as e:
+            if "aspect ratio mismatch" in str(e):
+                _v_matrix_cache[key] = (None, "aspect_ratio_rejected")
+                return None, "aspect_ratio_rejected"
+            V = Gf.Matrix4d(1.0)
         except Exception:
             V = Gf.Matrix4d(1.0)
         _v_matrix_cache[key] = (V, mode)
@@ -563,6 +573,25 @@ def rewrite_layout(
     rewritten_prims: set[str] = set()
 
     mapping_by_old = {mp.old_abs: mp.canonical_abs for mp in mapping_pairs}
+
+    # Pre-filter: exclude pairs that fail the aspect-ratio guard.
+    # This must happen before the traversal loop so that rejected pairs
+    # never get their references rewritten.
+    if v_matrix_mode == "auto" and apply_compensation:
+        rejected_keys: List[str] = []
+        for old_abs, canonical_abs in mapping_by_old.items():
+            V, dedup_mode = _get_V_cached(old_abs, canonical_abs)
+            if V is None:
+                rejected_keys.append(old_abs)
+                changes.append({
+                    "prim": "(pre-filter)",
+                    "kind": "aspect_ratio_rejected",
+                    "old_abs": old_abs,
+                    "canonical_abs": canonical_abs,
+                    "dedup_mode": dedup_mode,
+                })
+        for k in rejected_keys:
+            del mapping_by_old[k]
 
     for prim in stage.Traverse():
         if not prim or not prim.IsValid():

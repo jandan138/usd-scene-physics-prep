@@ -30,11 +30,14 @@ Public API:
 from __future__ import annotations
 
 import json
+import logging
 import os
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # Lazy pxr import — module can be imported without pxr for testing
 _pxr_loaded = False
@@ -400,9 +403,31 @@ def icp_in_normalized_space(
     return R_acc, t_acc, rmse_final
 
 
+def _flat_normal_axis(pts_norm: np.ndarray, var_threshold: float = 0.01) -> Optional[int]:
+    """Return the normal axis index if pts_norm is a flat (planar) asset.
+
+    Computes per-axis variance of the normalized vertices.  If the smallest
+    variance is below *var_threshold*, the asset is considered flat and the
+    axis with that minimum variance is its normal axis (0=X, 1=Y, 2=Z).
+    Returns None for non-flat (volumetric) assets.
+
+    Args:
+        pts_norm: Nx3 vertices already normalized to unit bounding box.
+        var_threshold: Variance cutoff for the "flat" test.
+
+    Returns:
+        Axis index {0, 1, 2} or None.
+    """
+    var = np.var(pts_norm, axis=0)
+    min_ax = int(np.argmin(var))
+    return min_ax if float(var[min_ax]) < var_threshold else None
+
+
 def compute_V_shape_invariant(
     pts_canon: np.ndarray,
     pts_old: np.ndarray,
+    aspect_ratio_threshold: float = 1.2,
+    size_diff_threshold: float = 0.03,
 ) -> np.ndarray:
     """Compute V matrix for shape_invariant dedup pairs.
 
@@ -416,16 +441,69 @@ def compute_V_shape_invariant(
     Args:
         pts_canon: Nx3 canonical vertices in instance space.
         pts_old: Mx3 old vertices in instance space.
+        aspect_ratio_threshold: Maximum allowed ratio between corresponding
+            bbox extents.  Pairs exceeding this are rejected with RuntimeError.
 
     Returns:
         4x4 numpy array V (row-vector convention).
+
+    Raises:
+        RuntimeError: If bbox aspect ratios or absolute sizes differ beyond thresholds.
     """
+    # Aspect ratio guard: reject pairs with mismatched bbox proportions
+    ext_canon = np.sort(pts_canon.max(axis=0) - pts_canon.min(axis=0))[::-1]
+    ext_old = np.sort(pts_old.max(axis=0) - pts_old.min(axis=0))[::-1]
+    for i, (ec, eo) in enumerate(zip(ext_canon, ext_old)):
+        if ec < 1e-6 and eo < 1e-6:
+            continue
+        if ec < 1e-6 or eo < 1e-6:
+            raise RuntimeError(
+                f"aspect ratio mismatch: dim[{i}] canon={ec:.4f} vs old={eo:.4f} (one degenerate)"
+            )
+        ratio = max(ec, eo) / min(ec, eo)
+        if ratio >= aspect_ratio_threshold:
+            raise RuntimeError(
+                f"aspect ratio mismatch: dim[{i}] ratio={ratio:.2f} >= {aspect_ratio_threshold} "
+                f"(canon={ec:.4f}, old={eo:.4f})"
+            )
+
+    # Absolute size difference guard: reject pairs where any dimension
+    # differs by more than size_diff_threshold (relative to the larger).
+    # Catches cases like ground strips of similar proportions but different
+    # lengths (e.g. 6560 vs 7290) that would stick out of walls.
+    for i, (ec, eo) in enumerate(zip(ext_canon, ext_old)):
+        mx = max(ec, eo)
+        if mx < 1e-6:
+            continue
+        rel_diff = abs(ec - eo) / mx
+        if rel_diff >= size_diff_threshold:
+            raise RuntimeError(
+                f"size diff mismatch: dim[{i}] rel_diff={rel_diff:.3f} >= {size_diff_threshold} "
+                f"(canon={ec:.4f}, old={eo:.4f}, diff={abs(ec-eo):.4f})"
+            )
+
     # Normalize both to unit bbox
     c_norm, c_min, c_ext = _normalize_to_unit_bbox(pts_canon)
     o_norm, o_min, o_ext = _normalize_to_unit_bbox(pts_old)
 
+    # Plane-normal mismatch guard:
+    # If both assets are flat (planar) but their normal axes differ, Procrustes
+    # would encode a spurious ~90° rotation into V.  For these cases we skip the
+    # rotational alignment and keep only the scale term (R_norm = Identity).
+    c_ax = _flat_normal_axis(c_norm)
+    o_ax = _flat_normal_axis(o_norm)
+
+    if c_ax is not None and o_ax is not None and c_ax != o_ax:
+        logger.warning(
+            "compute_V_shape_invariant: plane normal mismatch "
+            "(canon_axis=%d, old_axis=%d) — setting R_norm=Identity, t_norm=0 "
+            "(scale-only V).",
+            c_ax, o_ax,
+        )
+        R_norm = np.eye(3, dtype=np.float64)
+        t_norm = np.zeros(3, dtype=np.float64)
     # Align in normalized space
-    if len(pts_canon) == len(pts_old):
+    elif len(pts_canon) == len(pts_old):
         # Same vertex count: use Procrustes in normalized space
         c_c = c_norm.mean(axis=0)
         c_o = o_norm.mean(axis=0)
