@@ -63,3 +63,6 @@ subsets/
 
 # Skills (claude code custom skills)
 skills/
+
+# Temp docs (may contain sensitive info)
+docs/tmp/
