@@ -197,21 +197,66 @@ Why it was stopped:
   - keep A/B on `layout.usd` only
 - leaving v4 running would have mixed old and new execution shapes
 
+## `20260327_bbox_ab_eval_v5`
+
+Root:
+
+- `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/`
+
+Purpose:
+
+- fresh real-data A/B rerun from commit `94659ba`
+- keep the latest agreed execution shape in one isolated bundle
+
+Current state:
+
+- fresh merged report materialized at:
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/merged_geom_only.json`
+- fresh clean non-door shard files materialized at:
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_0.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_1.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_2.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_3.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_4.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_5.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_6.json`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/shard_7.json`
+- isolated workroots prepared at:
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/workroots/policy_a_dataset`
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/workroots/policy_b_dataset`
+- both policies were submitted to DLC as `8` shard jobs each:
+  - `t0bboxabv5a_<shard>_8`
+  - `t0bboxabv5b_<shard>_8`
+- machine-readable live status is tracked at:
+  - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/dlc_status_summary.json`
+- archived status-change note:
+  - `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
+
+Why it is not final yet:
+
+- all `16` fresh-run DLC shard jobs are now terminal and all `16` failed
+- every shard failed on its first category at `step = cert`
+- representative cert logs show the common runtime error:
+  - `ModuleNotFoundError: No module named 'ijson'`
+- because the shared failure happens before cert completes, `v5` still does not
+  provide a trustworthy Policy A / Policy B result bundle
+
 # What Is Blocking Final A/B Completion
 
 The blocker is no longer missing implementation.
 
-The blocker is that the final real-data A/B run has not yet been rerun from a
-fresh root after the latest runtime-shape optimizations were all in place at the
-same time.
+The blocker is that the fresh real-data A/B run has not yet fully reached
+terminal outputs from the latest isolated run root after the latest
+runtime-shape optimizations were all in place at the same time.
 
 Concretely:
 
 - core code is implemented
 - focused tests pass
 - synthetic smokes pass
-- but no single real-data run root yet represents the final intended execution
-  shape end-to-end
+- `v5` was launched in the right shape, but the full run failed at a shared
+  cert-stage runtime dependency issue before meaningful A/B outputs were
+  produced
 
 That is why it would be misleading to claim that the A/B evaluation is already
 complete.
