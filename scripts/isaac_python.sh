@@ -57,6 +57,19 @@ resolve_isaac_root() {
   return 1
 }
 
+prepend_pythonpath() {
+  local candidate="$1"
+  [[ -z "$candidate" || ! -d "$candidate" ]] && return 0
+  case ":${PYTHONPATH:-}:" in
+    *":${candidate}:"*) return 0 ;;
+  esac
+  if [[ -z "${PYTHONPATH:-}" ]]; then
+    export PYTHONPATH="${candidate}"
+  else
+    export PYTHONPATH="${candidate}:${PYTHONPATH}"
+  fi
+}
+
 ISAAC_ROOT="$(resolve_isaac_root)" || {
   echo "ERROR: Could not locate Isaac Sim installation (python.sh not found)." >&2
   echo "Hint: export ISAAC_SIM_ROOT=\"/abs/path/to/isaac_sim-<version>\"" >&2
@@ -67,16 +80,17 @@ ISAAC_ROOT="$(resolve_isaac_root)" || {
 RUNNER="${ISAAC_ROOT}/python.sh"
 
 # Optional environment preparation similar to /isaac-sim/isaac_python.sh
+# 0) Make Isaac's own site-packages explicit so repo-launched DLC jobs do not
+# rely on ambient image/python state for pure-Python dependencies like ijson.
+while IFS= read -r -d '' sitepkg; do
+  prepend_pythonpath "$sitepkg"
+done < <(find "${ISAAC_ROOT}/kit/python/lib" -maxdepth 3 -type d -path '*/site-packages' -print0 2>/dev/null || true)
+
 # 1) Prepend all directories that contain a 'pxr' package under extscache to PYTHONPATH
 EXTSCACHE_DIR="${ISAAC_ROOT}/extscache"
 if [[ -d "$EXTSCACHE_DIR" ]]; then
   while IFS= read -r -d '' pxrdir; do
-    parent_dir="$(dirname "$pxrdir")"
-    if [[ -z "${PYTHONPATH:-}" ]]; then
-      export PYTHONPATH="${parent_dir}"
-    else
-      export PYTHONPATH="${parent_dir}:${PYTHONPATH}"
-    fi
+    prepend_pythonpath "$(dirname "$pxrdir")"
   done < <(find "$EXTSCACHE_DIR" -maxdepth 4 -type d -name pxr -print0 2>/dev/null || true)
 
   # 2) Locate USD shared libs (e.g., omni.usd.libs/bin/libtf.so) and extend LD_LIBRARY_PATH

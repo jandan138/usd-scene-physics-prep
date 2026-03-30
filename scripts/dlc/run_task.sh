@@ -33,6 +33,39 @@ export PYTHONPATH="${CODE_ROOT}:${PYTHONPATH:-}"
 # Ensure all relative paths in scripts resolve from the project root
 cd "$CODE_ROOT"
 
+ensure_isaac_module() {
+    local module_name="$1"
+    local rc=0
+    "$ISAAC_PYTHON" - <<PY || rc=$?
+import importlib.util
+import json
+import site
+import sys
+
+module_name = ${module_name@Q}
+spec = importlib.util.find_spec(module_name)
+payload = {
+    "module": module_name,
+    "found": bool(spec),
+    "executable": sys.executable,
+    "prefix": sys.prefix,
+    "sitepackages": site.getsitepackages(),
+    "path_head": sys.path[:10],
+}
+if spec is not None:
+    payload["origin"] = spec.origin
+    print("ISAAC_MODULE_OK " + json.dumps(payload, ensure_ascii=False))
+else:
+    print("ISAAC_MODULE_MISSING " + json.dumps(payload, ensure_ascii=False))
+    raise SystemExit(1)
+PY
+    return $rc
+}
+
+# Early dependency preflight: bbox-gated cert jobs depend on ijson.
+# Make the failure surface explicit here so DLC logs are actionable.
+ensure_isaac_module "ijson"
+
 # ============================================================
 # 检查运行模式 (Check run mode)
 # $1 是第一个参数，决定运行哪种处理模式
