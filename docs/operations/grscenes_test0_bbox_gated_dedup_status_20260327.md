@@ -231,6 +231,8 @@ Current state:
   - `check_reports/test0_bbox_gated/20260327_bbox_ab_eval_v5/summary/dlc_status_summary.json`
 - archived status-change note:
   - `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
+- remediation plan:
+  - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
 
 Why it is not final yet:
 

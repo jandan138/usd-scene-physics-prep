@@ -159,3 +159,7 @@ The next action should be one of:
 
 After that, rerun from a new fresh run id instead of trying to treat `v5` as a
 valid finished A/B evaluation.
+
+Related follow-up document:
+
+- `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
