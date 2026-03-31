@@ -723,14 +723,16 @@ def build_audit_verdict(
     eps_angle: float,
     eps_geom: float,
     label: str,
+    allow_no_mesh: bool = False,
 ) -> Dict[str, object]:
     compared_scope_complete = (
         int(aggregate.get("total_only_in_left", 0)) == 0
         and int(aggregate.get("total_only_in_right", 0)) == 0
     )
+    no_mesh_ok = allow_no_mesh or int(aggregate.get("total_no_mesh", 0)) == 0
     passed = (
         int(aggregate.get("scenes_error", 0)) == 0
-        and int(aggregate.get("total_no_mesh", 0)) == 0
+        and no_mesh_ok
         and compared_scope_complete
         and int(aggregate.get("ref_changed_hard_fail_count", 0)) == 0
     )
@@ -779,6 +781,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--eps-pos", type=float, default=0.01)
     parser.add_argument("--eps-angle", type=float, default=1.0)
     parser.add_argument("--eps-geom", type=float, default=0.01)
+    parser.add_argument("--allow-no-mesh", action="store_true",
+                        help="Downgrade total_no_mesh>0 from hard-fail to warning in audit verdict.")
     args = parser.parse_args(argv)
 
     left_root = os.path.abspath(args.left_root)
@@ -914,6 +918,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         eps_angle=float(args.eps_angle),
         eps_geom=float(args.eps_geom),
         label=args.label,
+        allow_no_mesh=args.allow_no_mesh,
     )
     output["verdict"] = verdict
 

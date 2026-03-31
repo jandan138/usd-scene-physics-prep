@@ -331,6 +331,10 @@ The next Codex window should do exactly this:
 
 - `docs/operations/grscenes_test0_bbox_gated_dedup_implementation.md`
 - `docs/operations/grscenes_test0_bbox_gated_dedup_task_breakdown.md`
+- `docs/operations/grscenes_test0_bbox_gated_ab_eval_v6_status.md` — final A/B evaluation results
+- `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
+- `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
+- `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_validation_status_20260331.md`
 - `.codex/worklogs/main/2026-03-27/bbox-gated-ab-eval-plan.md`
 - `.codex/worklogs/main/2026-03-27/bbox-gated-ab-eval-research.md`
 - `.codex/worklogs/main/2026-03-27/bbox-gated-ab-eval-handoff.md`

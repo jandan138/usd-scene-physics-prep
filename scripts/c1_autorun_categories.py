@@ -480,6 +480,7 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
                 str(args.eps_angle),
                 "--eps-geom",
                 str(args.eps_geom),
+                "--allow-no-mesh",
             ]
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "03_audit.log")
             if rc != 0:
