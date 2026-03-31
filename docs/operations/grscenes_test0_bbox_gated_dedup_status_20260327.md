@@ -233,6 +233,8 @@ Current state:
   - `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
 - remediation plan:
   - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
+- remediation validation status:
+  - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_validation_status_20260331.md`
 
 Why it is not final yet:
 

@@ -163,3 +163,4 @@ valid finished A/B evaluation.
 Related follow-up document:
 
 - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
+- `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_validation_status_20260331.md`

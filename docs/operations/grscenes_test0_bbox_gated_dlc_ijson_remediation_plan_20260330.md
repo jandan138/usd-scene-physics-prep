@@ -1,7 +1,7 @@
 ---
 title: "GRScenes-test0 BBox-Gated DLC ijson Remediation Plan"
 created_at: "2026-03-30"
-updated_at: "2026-03-30"
+updated_at: "2026-03-31"
 maintainer: "Codex"
 status: "active"
 code_reference:
@@ -28,6 +28,12 @@ ModuleNotFoundError: No module named 'ijson'
 
 This failure occurs before the pipeline can produce meaningful Policy A /
 Policy B outputs.
+
+Update on 2026-03-31:
+
+- the planned remediation has now been implemented
+- a fresh DLC smoke validation succeeded
+- the validating job imported `ijson` from the repo-vendored runtime path
 
 # Problem Statement
 
@@ -343,6 +349,7 @@ This plan should be linked from:
 
 - `docs/operations/grscenes_test0_bbox_gated_dedup_status_20260327.md`
 - `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
+- `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_validation_status_20260331.md`
 
 Suggested link text:
 
@@ -357,3 +364,9 @@ This remediation plan is considered complete when:
 3. the runtime fix is implemented
 4. a DLC validation job proves `ijson` import under the real job entrypoint
 5. a new fresh A/B rerun is launched from the validated runtime
+
+Current status relative to the exit criteria:
+
+- item `4` is now satisfied by
+  - `check_reports/test0_bbox_gated/20260331_dlc_ijson_smoke_v2/`
+  - live job id `dlc8btgcq9lvbgdv`

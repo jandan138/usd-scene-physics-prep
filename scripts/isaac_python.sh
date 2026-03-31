@@ -17,6 +17,9 @@ if [[ $# -lt 1 ]]; then
   exit 2
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 resolve_isaac_root() {
   # 1) Respect explicit env var
   if [[ -n "${ISAAC_SIM_ROOT:-}" && -x "${ISAAC_SIM_ROOT}/python.sh" ]]; then
@@ -80,6 +83,10 @@ ISAAC_ROOT="$(resolve_isaac_root)" || {
 RUNNER="${ISAAC_ROOT}/python.sh"
 
 # Optional environment preparation similar to /isaac-sim/isaac_python.sh
+# -1) Prefer repo-vendored runtime dependencies when present so DLC jobs do not
+# depend on the base image shipping pure-Python packages like ijson.
+prepend_pythonpath "${REPO_ROOT}/third_party/runtime_deps/isaac_py310"
+
 # 0) Make Isaac's own site-packages explicit so repo-launched DLC jobs do not
 # rely on ambient image/python state for pure-Python dependencies like ijson.
 while IFS= read -r -d '' sitepkg; do
