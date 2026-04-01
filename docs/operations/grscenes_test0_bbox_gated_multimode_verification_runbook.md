@@ -3,7 +3,7 @@ title: "BBox-Gated Multi-Mode Verification Runbook"
 created_at: "2026-04-01"
 updated_at: "2026-04-01"
 maintainer: "Claude Code (reviewed)"
-status: "planned"
+status: "probe-passed"
 code_reference:
   - "scripts/report_asset_mesh_dedup.py"
   - "scripts/compute_vertex_transform.py"
@@ -25,12 +25,16 @@ code_reference:
 
 | 项目 | 路径 |
 |------|------|
-| 数据集 | `GRScenes-test0-rebuilt-normalized/` |
-| 备份 | `GRScenes-test0-rebuilt-normalized_bak/` |
+| 去重前快照（报告用） | `GRScenes-test0-rebuilt-normalize-prededup/` |
+| 当前工作集（已去重） | `GRScenes-test0-rebuilt-normalized/` |
 | 已有 dedup 报告 | `check_reports/test0_rebuilt_dedup/{geom_only,topo_filesize,shape_invariant}/` (114 categories each) |
 | v5 基线 | `check_reports/test0_rebuilt_dedup/c1_bulk_v5_translation_fix/` (ground only) |
 | v5 验证 | `check_reports/test0_rebuilt_dedup/v5_verification/pairwise_compare.json` (99 scenes, 0 displaced) |
 | 联合报告 | `check_reports/test0_rebuilt_dedup/union_3way/all_categories_union_merged.json` |
+
+> **重要**：`GRScenes-test0-rebuilt-normalized/` 已被 v3 全量去重（83 类目），重复资产已物理删除。
+> 报告生成（Step 1）必须在 `prededup` 上运行才能扫到重复组。
+> 管线测试（Step 2）也需基于 `prededup` 数据集操作。
 
 # Step 1: 重新生成 bottle 和 other 的 geom_only 报告
 
@@ -41,10 +45,10 @@ Change 1 移除了 `_tolerance_merge` 对 geom_only 的污染。需要验证新�
 ## 命令
 
 ```bash
-# bottle（--assets-root 指向类目子目录，而非整个 GRScenes_assets）
+# bottle（--assets-root 指向 prededup 的类目子目录，normalized 已去重无重复可扫）
 ./scripts/isaac_python.sh scripts/report_asset_mesh_dedup.py \
-  --assets-root GRScenes-test0-rebuilt-normalized/GRScenes_assets/bottle \
-  --out-dir check_reports/test0_rebuilt_dedup/geom_only/bottle \
+  --assets-root GRScenes-test0-rebuilt-normalize-prededup/GRScenes_assets/bottle \
+  --out-dir check_reports/test0_rebuilt_dedup/v7_geom_only/bottle \
   --dataset bottle \
   --mode all \
   --merge-tolerance 0.005 \
@@ -52,8 +56,8 @@ Change 1 移除了 `_tolerance_merge` 对 geom_only 的污染。需要验证新�
 
 # other
 ./scripts/isaac_python.sh scripts/report_asset_mesh_dedup.py \
-  --assets-root GRScenes-test0-rebuilt-normalized/GRScenes_assets/other \
-  --out-dir check_reports/test0_rebuilt_dedup/geom_only/other \
+  --assets-root GRScenes-test0-rebuilt-normalize-prededup/GRScenes_assets/other \
+  --out-dir check_reports/test0_rebuilt_dedup/v7_geom_only/other \
   --dataset other \
   --mode all \
   --merge-tolerance 0.005 \
@@ -67,16 +71,20 @@ Change 1 移除了 `_tolerance_merge` 对 geom_only 的污染。需要验证新�
 ```bash
 # 检查 tolerance_merged_groups 必须为 0
 jq '.meta.tolerance_merged_groups' \
-  check_reports/test0_rebuilt_dedup/geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json
+  check_reports/test0_rebuilt_dedup/v7_geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json
 # 期望: 0
 
 jq '.meta.tolerance_merged_groups' \
-  check_reports/test0_rebuilt_dedup/geom_only/other/other_asset_mesh_dedup_geom_only.json
+  check_reports/test0_rebuilt_dedup/v7_geom_only/other/other_asset_mesh_dedup_geom_only.json
 # 期望: 0
 
-# 对比旧报告的组数（旧报告应该更多，因为包含了 tolerance_merge 组）
+# 对比旧报告的组数（旧报告包含 tolerance_merge 污染）
+# 旧 bottle: 239 groups (28 tolerance_merge) → 新应 ~211
+# 旧 other:  2283 groups (264 tolerance_merge) → 新应 ~2019
 jq '.meta.duplicate_group_count' \
-  check_reports/test0_rebuilt_dedup/geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json
+  check_reports/test0_rebuilt_dedup/v7_geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json
+jq '.meta.duplicate_group_count' \
+  check_reports/test0_rebuilt_dedup/v7_geom_only/other/other_asset_mesh_dedup_geom_only.json
 ```
 
 # Step 2: 探针测试 — 对 bottle 和 other 跑 bbox-gated 管线
@@ -89,7 +97,7 @@ jq '.meta.duplicate_group_count' \
 
 ```bash
 python3 scripts/c1_autorun_categories.py \
-  --dataset-root GRScenes-test0-rebuilt-normalized \
+  --dataset-root GRScenes-test0-rebuilt-normalize-prededup \
   --bak-root GRScenes-test0-rebuilt-normalized_bak \
   --report check_reports/test0_rebuilt_dedup/union_3way/all_categories_union_merged.json \
   --c1-bulk-dir check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode \
@@ -109,8 +117,8 @@ python3 scripts/c1_autorun_categories.py \
 ```bash
 # bottle
 ./scripts/isaac_python.sh scripts/c1_build_bulk_mapping_from_dedup_report.py \
-  --report check_reports/test0_rebuilt_dedup/geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json \
-  --dataset-root GRScenes-test0-rebuilt-normalized \
+  --report check_reports/test0_rebuilt_dedup/v7_geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json \
+  --dataset-root GRScenes-test0-rebuilt-normalize-prededup \
   --out-mapping-json check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode/bottle_bulk_batch_v1/filtered_mapping.json \
   --out-stats-json check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode/bottle_bulk_batch_v1/stats.json \
   --bbox-gated \
@@ -125,7 +133,7 @@ python3 scripts/c1_autorun_categories.py \
 ```bash
 # 对一个场景干跑，检查 reject 记录
 ./scripts/isaac_python.sh scripts/rewrite_layout_asset_refs_with_compensation.py \
-  --layout-usd GRScenes-test0-rebuilt-normalized/GRScenes100/home/SCENE_ID/layout.usd \
+  --layout-usd GRScenes-test0-rebuilt-normalize-prededup/GRScenes100/home/SCENE_ID/layout.usd \
   --mapping-json check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode/bottle_bulk_batch_v1/filtered_mapping.json \
   --dry-run \
   --report-out /tmp/bottle_dryrun_report.json \
@@ -160,12 +168,31 @@ jq '.eligible_count' \
 
 确认去重替换后场景中每个物体的世界空间位置不变（bbox、质心、顶点 RMSE 均在阈值内）。
 
+> **注意**：Step 2 使用 `dry_run` 模式不会实际修改文件。需要先以 `apply` 模式在 prededup 上
+> 执行一次（autorun step6-mode apply），然后对比 prededup 修改前后。
+> `--bak-root` 提供的备份目录保留了修改前的 layout，作为 pairwise compare 的 left-root。
+
 ## 命令
 
 ```bash
+# 先以 apply 模式执行（Step 2 dry_run 确认无误后）
+python3 scripts/c1_autorun_categories.py \
+  --dataset-root GRScenes-test0-rebuilt-normalize-prededup \
+  --bak-root GRScenes-test0-rebuilt-normalized_bak \
+  --report check_reports/test0_rebuilt_dedup/union_3way/all_categories_union_merged.json \
+  --c1-bulk-dir check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode \
+  --include-regex "^(bottle|other)$" \
+  --group-label c1_v7_multimode_probe \
+  --step6-mode apply \
+  --bbox-gated \
+  --bbox-policy bbox_primary_rmse_observe \
+  --v-matrix-mode auto \
+  --mode-reports-dir check_reports/test0_rebuilt_dedup
+
+# 然后 pairwise compare：left=备份(修改前) right=prededup(修改后)
 ./scripts/isaac_python.sh scripts/placement_pairwise_compare.py \
   --left-root GRScenes-test0-rebuilt-normalized_bak \
-  --right-root GRScenes-test0-rebuilt-normalized \
+  --right-root GRScenes-test0-rebuilt-normalize-prededup \
   --label "v7_multimode_probe_bottle_other" \
   --out check_reports/test0_rebuilt_dedup/v7_verification/pairwise_compare.json \
   --verdict-out check_reports/test0_rebuilt_dedup/v7_verification/verdict.json \
@@ -235,7 +262,7 @@ jq '.reject_reason_counts' \
 ```bash
 # --skip-done 默认为 True，无需显式传参；不存在 --ledger 标志（ledger 路径由 --c1-bulk-dir 自动派生）
 python3 scripts/c1_autorun_categories.py \
-  --dataset-root GRScenes-test0-rebuilt-normalized \
+  --dataset-root GRScenes-test0-rebuilt-normalize-prededup \
   --bak-root GRScenes-test0-rebuilt-normalized_bak \
   --report check_reports/test0_rebuilt_dedup/union_3way/all_categories_union_merged.json \
   --c1-bulk-dir check_reports/test0_rebuilt_dedup/c1_bulk_v7_multimode \
