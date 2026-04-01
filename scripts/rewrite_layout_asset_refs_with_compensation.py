@@ -790,7 +790,7 @@ def rewrite_layout(
                         scene_shape="references",
                     )
                     continue
-                if dedup_mode not in ("geom_only", "identity"):
+                if dedup_mode not in ("geom_only", "identity", "topo_filesize", "shape_invariant"):
                     _record_reject(
                         prim_path_str,
                         f"mode_not_enabled_{dedup_mode}",
@@ -799,9 +799,12 @@ def rewrite_layout(
                         scene_shape="references",
                     )
                     continue
-                old_internal = _get_internal_cached(old_abs)
-                canonical_internal = _get_internal_cached(new_abs)
-                new_local = canonical_internal.GetInverse() * old_internal * old_local
+                if dedup_mode in ("geom_only", "identity"):
+                    old_internal = _get_internal_cached(old_abs)
+                    canonical_internal = _get_internal_cached(new_abs)
+                    new_local = canonical_internal.GetInverse() * old_internal * old_local
+                else:
+                    new_local = V * old_local
             except Exception as e:
                 _record_reject(
                     prim_path_str,

@@ -1,9 +1,9 @@
 ---
 title: "BBox-Gated Multi-Mode Dedup: Change Plan"
 created_at: "2026-03-31"
-updated_at: "2026-03-31"
+updated_at: "2026-04-01"
 maintainer: "Claude Code"
-status: "planned"
+status: "implemented"
 code_reference:
   - "scripts/report_asset_mesh_dedup.py"
   - "scripts/compute_vertex_transform.py"

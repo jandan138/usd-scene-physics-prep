@@ -1045,15 +1045,10 @@ def _write_report(
         assert duplicates_key is not None, f"Unknown mode: {mode}"
         dups = _make_duplicates_map(records, duplicates_key)
 
-    # Tolerance-based merge: find near-miss duplicates that hash differently
-    # due to floating-point noise but are geometrically identical within tolerance.
+    # tolerance_merged_count kept at 0 — tolerance merge was removed from
+    # geom_only mode because it contaminated hash-identical reports with
+    # near-miss groups that have different geometry hashes.
     tolerance_merged_count = 0
-    if merge_tolerance > 0 and mode == "geom_only" and mode != "shape_invariant":
-        hash_only_count = len(dups)
-        dups = _tolerance_merge(records, dups, merge_tolerance)
-        tolerance_merged_count = len(dups) - hash_only_count
-        if tolerance_merged_count > 0:
-            print(f"  Tolerance merge ({merge_tolerance}): found {tolerance_merged_count} additional groups", flush=True)
 
     meta = {
         "dataset": dataset,

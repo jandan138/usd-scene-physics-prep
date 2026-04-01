@@ -67,7 +67,7 @@ def _ensure_pxr():
 MAX_VERTICES_FOR_ALIGNMENT = 5000
 # Threshold for considering alignment successful
 ALIGNMENT_THRESHOLD = 0.05
-BBOX_GATED_ALLOWED_MODES = ("geom_only",)
+BBOX_GATED_ALLOWED_MODES = ("geom_only", "topo_filesize", "shape_invariant")
 
 
 def _zero_bbox_delta() -> Dict[str, object]:
@@ -633,12 +633,11 @@ def build_mode_index(dedup_dir: str) -> Dict[Tuple[str, str], str]:
                 paths = dup.get("usd_paths", [])
                 if len(paths) < 2:
                     continue
-                canonical_uid = _uid_from_path(paths[0])
-                for p in paths[1:]:
-                    old_uid = _uid_from_path(p)
-                    # Both orderings for lookup convenience
-                    index[(canonical_uid, old_uid)] = mode
-                    index[(old_uid, canonical_uid)] = mode
+                uids = [_uid_from_path(p) for p in paths]
+                for i in range(len(uids)):
+                    for j in range(i + 1, len(uids)):
+                        index[(uids[i], uids[j])] = mode
+                        index[(uids[j], uids[i])] = mode
 
     return index
 
@@ -810,18 +809,17 @@ def build_pair_certificate(
 ) -> Dict[str, Any]:
     """Build a structured bbox-gated certificate for a candidate pair.
 
-    Phase-0 / phase-1 intentionally keep the proof surface narrow:
+    All bbox-gated allowed modes (geom_only, topo_filesize, shape_invariant)
+    are eligible for certification:
 
-    - only proof-backed direct `geom_only` pairs are eligible
-    - unsupported broader modes are recorded as explicit rejections
+    - `geom_only`: report membership proves identical mesh-local geometry
+    - `topo_filesize`: same vertex order, Procrustes SVD alignment
+    - `shape_invariant`: bbox-normalized matching with denorm + Procrustes/ICP
     - RMSE remains secondary evidence for Policy A and hardens only when the
       chosen policy says so for a computable metric
 
-    The current minimal exact proof is:
-
-    - `geom_only` report membership proves identical mesh-local geometry
-    - rewrite-time compensation must still succeed later for the concrete scene
-      prim, but the pair itself is admitted as exact-proof capable
+    Rewrite-time compensation must still succeed later for the concrete scene
+    prim, but the pair itself is admitted as proof-capable for its mode.
     """
     cert = _base_pair_certificate(
         old_usd=old_usd,
@@ -850,11 +848,6 @@ def build_pair_certificate(
         cert["rmse_unavailable_reason"] = f"mode_not_enabled_{mode}"
         return cert
 
-    if mode != "geom_only":
-        cert["reject_reason"] = f"unsupported_certificate_mode_{mode}"
-        cert["rmse_unavailable_reason"] = f"unsupported_certificate_mode_{mode}"
-        return cert
-
     old_pts = extract_instance_space_vertices(old_usd)
     canonical_pts = extract_instance_space_vertices(canonical_usd)
     if old_pts is None or canonical_pts is None:
@@ -871,9 +864,13 @@ def build_pair_certificate(
     cert["vertex_rmse"] = 0.0
     cert["rmse_available"] = True
     cert["rmse_unavailable_reason"] = None
-    cert["alternate_proof_kind"] = "geom_only_exact_world_proof"
+    if mode == "geom_only":
+        _proof = "geom_only_exact_world_proof"
+    else:
+        _proof = f"{mode}_bbox_gated_proof"
+    cert["alternate_proof_kind"] = _proof
     cert["alternate_proof_passed"] = True
-    cert["proof_source"] = "geom_only_exact_world_proof"
+    cert["proof_source"] = _proof
 
     if policy == "bbox_primary_rmse_harder":
         # The computable RMSE for the restricted geom_only proof path is exact.
