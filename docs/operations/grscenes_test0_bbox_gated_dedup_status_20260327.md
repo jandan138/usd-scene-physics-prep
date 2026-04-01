@@ -332,6 +332,8 @@ The next Codex window should do exactly this:
 - `docs/operations/grscenes_test0_bbox_gated_dedup_implementation.md`
 - `docs/operations/grscenes_test0_bbox_gated_dedup_task_breakdown.md`
 - `docs/operations/grscenes_test0_bbox_gated_ab_eval_v6_status.md` — final A/B evaluation results
+- `docs/operations/grscenes_test0_bbox_gated_v6_rmse_bbox_investigation.md` — RMSE vs BBox investigation: why bbox passed but RMSE failed
+- `docs/operations/grscenes_test0_bbox_gated_multimode_plan.md` — multi-mode dedup + bbox-only gating change plan
 - `docs/operations/grscenes_test0_bbox_gated_status_change_20260330.md`
 - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_remediation_plan_20260330.md`
 - `docs/operations/grscenes_test0_bbox_gated_dlc_ijson_validation_status_20260331.md`
