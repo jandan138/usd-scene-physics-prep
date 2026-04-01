@@ -31,13 +31,18 @@ code_reference:
 | 类目 | 资产数 | 重复组数 | tolerance_merged | 状态 |
 |------|--------|---------|-----------------|------|
 | bottle | 2,253 | 74 | **0** | PASS |
-| other | 22,358 | (运行中) | — | PENDING |
+| other | 22,357 | 1,891 | **0** | PASS |
+
+旧基线对比（含 tolerance_merge 污染）：
+- bottle: 239 → 74 groups（-165），tolerance_merge: 28 → 0
+- other: 2,283 → 1,891 groups（-392），tolerance_merge: 264 → 0
 
 **结论**：Change 1 正确移除了 `_tolerance_merge` 对 geom_only 的污染。
 
 ## 报告路径
 
 - `check_reports/test0_rebuilt_dedup/v7_geom_only/bottle/bottle_asset_mesh_dedup_geom_only.json`
+- `check_reports/test0_rebuilt_dedup/v7_geom_only/other/other_asset_mesh_dedup_geom_only.json`
 
 # Step 2: bbox-gated 管线探针
 
@@ -105,7 +110,7 @@ V 矩阵查找 fallback 到 transitive 模式（因缺少 topo/shape 报告）�
 
 # 待完成
 
-1. Step 1 other 类目报告生成（运行中，~22k 资产）
+1. ~~Step 1 other 类目报告生成~~ — 完成：1,891 groups, tolerance_merged=0
 2. Step 3 pairwise compare：需在 prededup 上实际 apply 后对比位移
 3. Step 4 全量覆盖率统计
 4. 全量 83 类目滚动发布
