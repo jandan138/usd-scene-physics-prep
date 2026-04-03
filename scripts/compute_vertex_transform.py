@@ -12,6 +12,7 @@ where V captures the vertex-space mapping: p_mesh_old = p_mesh_canon * V
 Three dedup modes produce different V matrices:
   - geom_only:        vertices identical => V = Identity
   - topo_filesize:    same vertex order, different coords => Procrustes SVD
+                      (with shuffle-gated NN fallback when vertex order differs)
   - shape_invariant:  bbox-normalized matching => denorm + Procrustes/ICP
   - transitive:       BFS through intermediaries, accumulate V along path
 
@@ -68,6 +69,14 @@ MAX_VERTICES_FOR_ALIGNMENT = 5000
 # Threshold for considering alignment successful
 ALIGNMENT_THRESHOLD = 0.05
 BBOX_GATED_ALLOWED_MODES = ("geom_only", "topo_filesize", "shape_invariant")
+
+# NN fallback constants — see docs/operations/topo_vertex_shuffle_correspondence_fix_plan.md
+# Baseline bbox_delta above this triggers NN attempt (spike data: shuffle pairs all > 0.15)
+_NN_FALLBACK_BASELINE_THRESHOLD = 0.15
+# NN close_pct must exceed this to confirm genuine shuffle (spike: all shuffle pairs > 95%)
+_NN_FALLBACK_CLOSE_PCT_THRESHOLD = 95.0
+# Candidate bbox_delta must be below this to accept NN result (spike: all shuffle < 0.004)
+_NN_FALLBACK_ACCEPT_THRESHOLD = 0.01
 
 
 def _zero_bbox_delta() -> Dict[str, object]:
@@ -337,6 +346,126 @@ def procrustes_full(pts_canon: np.ndarray, pts_old: np.ndarray) -> np.ndarray:
     V[3, :3] = t
 
     return V
+
+
+# ---------------------------------------------------------------------------
+# Shuffle-gated NN fallback (shared helper for topo_filesize same-vtx-count)
+# ---------------------------------------------------------------------------
+
+def _bbox_delta_max_abs(V_np: np.ndarray, pts_canon: np.ndarray, pts_old: np.ndarray) -> float:
+    """Compute max absolute bbox delta after applying V to canonical points."""
+    canon_h = np.hstack([pts_canon, np.ones((len(pts_canon), 1))])
+    canon_transformed = (canon_h @ V_np)[:, :3]
+    delta_min = np.abs(pts_old.min(axis=0) - canon_transformed.min(axis=0))
+    delta_max = np.abs(pts_old.max(axis=0) - canon_transformed.max(axis=0))
+    return float(max(delta_min.max(), delta_max.max()))
+
+
+def _nn_procrustes_in_normalized_space(
+    pts_canon: np.ndarray,
+    pts_old: np.ndarray,
+) -> Tuple[np.ndarray, float, float]:
+    """NN reorder + Procrustes in bbox-normalized space, denormalized to instance space.
+
+    Returns:
+        (V_4x4, nn_close_pct, nn_unique_ratio)
+    """
+    from scipy.spatial import cKDTree
+
+    c_norm, c_min, c_ext = _normalize_to_unit_bbox(pts_canon)
+    o_norm, o_min, o_ext = _normalize_to_unit_bbox(pts_old)
+
+    tree = cKDTree(o_norm)
+    dists, indices = tree.query(c_norm)
+    o_norm_reordered = o_norm[indices]
+
+    nn_close_pct = float(np.sum(dists < 0.01) / len(dists) * 100.0)
+    nn_unique_ratio = float(len(np.unique(indices)) / len(indices))
+
+    # Procrustes in normalized space on reordered points
+    c_c = c_norm.mean(axis=0)
+    c_o = o_norm_reordered.mean(axis=0)
+    a = c_norm - c_c
+    b = o_norm_reordered - c_o
+
+    best_R, best_s, best_rmse = np.eye(3), 1.0, float("inf")
+    for allow_refl, allow_scl in [
+        (False, False), (True, False), (False, True), (True, True),
+    ]:
+        R, s, rmse = _try_single_procrustes(a, b, allow_refl, allow_scl)
+        if rmse < best_rmse:
+            best_R, best_s, best_rmse = R, s, rmse
+
+    R_norm = best_s * best_R
+    t_norm = c_o - c_c @ R_norm
+
+    # Denormalize (same formula as compute_V_shape_invariant)
+    sR = R_norm * (o_ext / c_ext)
+    t = (-c_min / c_ext) @ R_norm * o_ext + t_norm * o_ext + o_min
+
+    V = np.eye(4, dtype=np.float64)
+    V[:3, :3] = sR
+    V[3, :3] = t
+
+    return V, nn_close_pct, nn_unique_ratio
+
+
+def _topo_same_vtx_with_nn_fallback(
+    pts_canon: np.ndarray,
+    pts_old: np.ndarray,
+) -> np.ndarray:
+    """Procrustes for topo_filesize same-vertex-count, with shuffle-gated NN fallback.
+
+    1. Run baseline procrustes_full (index-aligned).
+    2. If baseline bbox_delta > threshold AND env kill-switch not set:
+       a. Run NN reorder + Procrustes in normalized space.
+       b. If nn_close_pct > 95% (confirms genuine shuffle) AND
+          candidate bbox_delta <= 0.01: accept candidate.
+       c. Otherwise: keep baseline.
+    3. Return V_4x4.
+    """
+    V_baseline = procrustes_full(pts_canon, pts_old)
+
+    # Kill-switch: DEDUP_DISABLE_NN_FALLBACK=1 → always use baseline
+    if os.environ.get("DEDUP_DISABLE_NN_FALLBACK") == "1":
+        return V_baseline
+
+    baseline_bbox = _bbox_delta_max_abs(V_baseline, pts_canon, pts_old)
+    if baseline_bbox <= _NN_FALLBACK_BASELINE_THRESHOLD:
+        return V_baseline
+
+    # Baseline is bad — attempt NN fallback
+    try:
+        V_nn, nn_close_pct, nn_unique_ratio = _nn_procrustes_in_normalized_space(
+            pts_canon, pts_old,
+        )
+    except Exception as exc:
+        logger.warning("NN fallback failed (%s), keeping baseline V", exc)
+        return V_baseline
+
+    # Gate 1: NN must confirm genuine shuffle
+    if nn_close_pct <= _NN_FALLBACK_CLOSE_PCT_THRESHOLD:
+        logger.debug(
+            "NN fallback: nn_close_pct=%.1f%% <= %.1f%%, keeping baseline",
+            nn_close_pct, _NN_FALLBACK_CLOSE_PCT_THRESHOLD,
+        )
+        return V_baseline
+
+    # Gate 2: candidate must actually be better
+    candidate_bbox = _bbox_delta_max_abs(V_nn, pts_canon, pts_old)
+    if candidate_bbox > _NN_FALLBACK_ACCEPT_THRESHOLD:
+        logger.debug(
+            "NN fallback: candidate_bbox=%.6f > %.4f, keeping baseline",
+            candidate_bbox, _NN_FALLBACK_ACCEPT_THRESHOLD,
+        )
+        return V_baseline
+
+    logger.info(
+        "NN fallback accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
+        "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f)",
+        baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio,
+    )
+    return V_nn
 
 
 # ---------------------------------------------------------------------------
@@ -780,7 +909,7 @@ def _accumulate_V_along_path(
                 if len(pts_from) != len(pts_to):
                     V_step = compute_V_shape_invariant(pts_from, pts_to)
                 else:
-                    V_step = procrustes_full(pts_from, pts_to)
+                    V_step = _topo_same_vtx_with_nn_fallback(pts_from, pts_to)
             elif mode == "shape_invariant":
                 V_step = compute_V_shape_invariant(pts_from, pts_to)
             else:
@@ -1006,7 +1135,7 @@ def compute_V_for_pair(
 
     if mode == "topo_filesize":
         if len(pts_canon) == len(pts_old):
-            V_np = procrustes_full(pts_canon, pts_old)
+            V_np = _topo_same_vtx_with_nn_fallback(pts_canon, pts_old)
         else:
             V_np = compute_V_shape_invariant(pts_canon, pts_old)
     elif mode == "shape_invariant":

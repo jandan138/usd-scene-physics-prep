@@ -2,9 +2,9 @@
 title: "Topo Vertex Shuffle — NN Correspondence Recovery Plan"
 code_reference: scripts/compute_vertex_transform.py
 created_at: 2026-04-03
-updated_at: 2026-04-04
+updated_at: 2026-04-05
 maintainer: zhuzihou
-status: draft
+status: implemented
 ---
 
 # Topo Vertex Shuffle — NN Correspondence Recovery Plan
@@ -173,37 +173,71 @@ nn_mean_dist, nn_close_pct, nn_unique_ratio, is_shuffle_heuristic, wall_time_s`
 
 ## Phase 3: 合入策略设计（spike 验证后执行）
 
-### 触发条件（仅在需要时走 fallback）
+**Status**: IMPLEMENTED (2026-04-03). Spike verdict: CONDITIONAL GO — shuffle-gated only.
+
+### 实际实现（与原 plan 的差异）
+
+原 plan 设想的是「baseline bbox_delta > 阈值就走 NN fallback」。Spike 数据表明
+**无条件 NN 会误伤 good/geom_only 桶**（31/100 回归，最差 1000x），因此实际实现
+采用 **三重门控**：
 
 ```python
-# compute_vertex_transform.py :: compute_V_for_pair()
-if mode == "topo_filesize":
-    if len(pts_canon) == len(pts_old):
-        V_np = procrustes_full(pts_canon, pts_old)
-        # ---- 新增 fallback gate ----
-        if _bbox_delta_too_large(V_np, pts_canon, pts_old, threshold=TBD_FROM_SPIKE):
-            V_np = procrustes_with_nn_correspondence(pts_canon, pts_old)
-    else:
-        V_np = compute_V_shape_invariant(pts_canon, pts_old)
+# compute_vertex_transform.py :: _topo_same_vtx_with_nn_fallback()
+def _topo_same_vtx_with_nn_fallback(pts_canon, pts_old):
+    V_baseline = procrustes_full(pts_canon, pts_old)
+
+    # Kill-switch: DEDUP_DISABLE_NN_FALLBACK=1
+    if os.environ.get("DEDUP_DISABLE_NN_FALLBACK") == "1":
+        return V_baseline
+
+    # Gate 0: baseline must be bad enough to try
+    if _bbox_delta_max_abs(V_baseline, ...) <= 0.15:
+        return V_baseline
+
+    # Gate 1: NN must confirm genuine shuffle (nn_close_pct > 95%)
+    V_nn, nn_close_pct, _ = _nn_procrustes_in_normalized_space(...)
+    if nn_close_pct <= 95.0:
+        return V_baseline
+
+    # Gate 2: candidate must actually be good (bbox_delta <= 0.01)
+    if _bbox_delta_max_abs(V_nn, ...) > 0.01:
+        return V_baseline
+
+    return V_nn
 ```
 
-阈值 `TBD_FROM_SPIKE` 从 Phase 2 数据的双峰分布间隙中选取。
+### 阈值来源（spike 数据支撑）
 
-仅当 baseline `procrustes_full` 的 bbox_delta > 阈值时才走 NN fallback，
-**默认行为不变**。
+| 常量 | 值 | 来源 |
+|------|-----|------|
+| `_NN_FALLBACK_BASELINE_THRESHOLD` | 0.15 | spike: shuffle 对 baseline bbox 均 > 0.15 |
+| `_NN_FALLBACK_CLOSE_PCT_THRESHOLD` | 95.0% | spike: 所有 shuffle 对 nn_close_pct = 100% |
+| `_NN_FALLBACK_ACCEPT_THRESHOLD` | 0.01 | spike: 所有 shuffle 对 candidate < 0.004；非 shuffle 起始 ~0.02；5x 安全余量 |
 
-### Transitive 路径同步修复
+详细分析见 `check_reports/test0_rebuilt_dedup/topo_nn_spike_analysis.md`。
 
-`_accumulate_V_along_path()` (L779-784) 内也有 topo_filesize 同顶点数 →
-`procrustes_full` 的分支，存在同样的 shuffle 问题。Phase 3 须将 NN fallback
-抽为共享 helper，同时应用于 `compute_V_for_pair` 和 `_accumulate_V_along_path`。
+### 共享 helper
+
+`_topo_same_vtx_with_nn_fallback()` 被两处调用：
+- `compute_V_for_pair()` — 直接 V 计算
+- `_accumulate_V_along_path()` — transitive BFS 逐步 V
+
+两处原来的 `procrustes_full(pts_canon, pts_old)` 均替换为
+`_topo_same_vtx_with_nn_fallback(pts_canon, pts_old)`。
 
 ### 运行时 Kill-switch
 
-新增环境变量 `DEDUP_DISABLE_NN_FALLBACK=1` 可在不改代码的情况下禁用 NN
+环境变量 `DEDUP_DISABLE_NN_FALLBACK=1` 可在不改代码的情况下禁用 NN
 fallback，回退到纯 `procrustes_full`。用于生产紧急回滚。
 
-### 算法选择
+### 本变更范围
+
+- **修复**：72/200 poor+gap 对（全部是 shuffle 根因），全部降到 bbox < 0.004
+- **不涉及**：128/200 poor+gap 非 shuffle 对（可能是别的误差源：拓扑差异、
+  阈值语义、真几何差等），需要下一轮用同样 spike 方法拆开看
+- **零回归**：good/geom_only 桶无任何回归（shuffle 门控从不在这些桶触发）
+
+### 算法选择（不变）
 
 - **KDTree NN + 单次 Procrustes**（不用 ICP 多轮迭代）：
   topo 对顶点数相同且几何一致，单轮 NN 已经能恢复 100% 对应（实验证据）。
@@ -216,9 +250,8 @@ fallback，回退到纯 `procrustes_full`。用于生产紧急回滚。
 ### 非均匀缩放
 
 spike 数据（extent_ratio ≈ [1.02, 0.95, 1.02]）显示 topo 对的缩放差异 < 5%，
-bbox 归一化后 NN close_pct = 100%。如果 spike 结果显示 NN 后残差仍系统偏大
-（说明存在更大的非均匀缩放），再单独立项处理 bbox 对角缩放或在归一化空间发证书。
-**不与 shuffle 修复混在同一个 PR**。
+bbox 归一化后 NN close_pct = 100%。128 对非 shuffle 的 poor/gap 需要下一轮
+单独调查，**不与 shuffle 修复混在同一个 PR**。
 
 ---
 
@@ -441,8 +474,10 @@ You MUST document your work before finishing. This is mandatory.
 
 | 项 | 路径 |
 |----|------|
-| 核心库（禁改） | `scripts/compute_vertex_transform.py` |
+| 核心库（已合入 NN fallback） | `scripts/compute_vertex_transform.py` |
 | Cert JSONL | `check_reports/test0_rebuilt_dedup/c1_bulk_v8_multimode/bottle_bbox_primary_rmse_observe_v1/01_cert/pair_certificates.jsonl` |
-| Spike 脚本 | `scripts/debug_topo_nn_correspondence_spike.py` （待创建） |
-| Spike CSV | `check_reports/test0_rebuilt_dedup/topo_nn_spike_results.csv` （待生成） |
+| Spike 脚本 | `scripts/debug_topo_nn_correspondence_spike.py` （已实现，见 `docs/changes/2026-04-03_topo_nn_shuffle_gated_fallback.md`） |
+| Spike CSV | `check_reports/test0_rebuilt_dedup/topo_nn_spike_results.csv` （已生成，350 对实验数据） |
+| Spike 分析 | `check_reports/test0_rebuilt_dedup/topo_nn_spike_analysis.md` （已完成，verdict: CONDITIONAL GO） |
+| 实现记录 | `docs/changes/2026-04-03_topo_nn_shuffle_gated_fallback.md` |
 | 数据集 | `GRScenes-test0-rebuilt-normalize-prededup/` |
