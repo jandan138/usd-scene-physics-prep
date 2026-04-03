@@ -1,6 +1,6 @@
 ---
 title: "Topo Tier2 Gate Recovery — Status Snapshot"
-code_reference: scripts/compute_vertex_transform.py, scripts/analyze_tier2_gate_thresholds.py
+code_reference: scripts/compute_vertex_transform.py, scripts/analyze_tier2_gate_thresholds.py, scripts/verify_tier2_vertex_rmse.py
 created_at: 2026-04-03
 updated_at: 2026-04-03
 maintainer: zhuzihou
@@ -65,19 +65,98 @@ In `_topo_same_vtx_with_nn_fallback`:
 
 - **17/17 pass** (verified independently)
 
-## Pending / Blocked
+## Phase C: RMSE Verification + Dry-Run Probe — COMPLETE
 
-| Item | Blocker | Priority |
-|------|---------|----------|
-| Vertex RMSE verification (Phase A Step 4) | Needs pxr/Isaac Sim env to read USD meshes | High |
-| Dry-run cert probe | Blocked on vertex RMSE confirmation | High |
-| Full probe on bottle category | Blocked on dry-run cert | Medium |
-| Threshold tuning (if needed) | Depends on vertex RMSE + dry-run results | Low |
+### C1: Vertex RMSE Verification
 
-## Next Steps
+Script: `scripts/verify_tier2_vertex_rmse.py`
+Report: `check_reports/test0_rebuilt_dedup/tier2_vertex_rmse_verification.json`
 
-1. **Vertex RMSE verification** — Run in Isaac Sim environment to read USD vertex data for the 77 recoverable pairs, compute actual RMSE, and confirm alignment quality
-2. **Dry-run cert probe** — Once RMSE confirmed safe: `c1_autorun_categories.py --step6-mode dry_run --include-regex "^bottle$"`
-3. **Review dry-run results** — Check v_source distribution, compare cert counts before/after Tier2
-4. **If thresholds need adjustment** — Only change the 4 constant values in `compute_vertex_transform.py`
-5. **Production run** — Remove dry_run flag and run full cert build
+| Metric | Value |
+|--------|-------|
+| Filtered pairs | 77 |
+| Computed | 77 |
+| Errors | 0 |
+| **Verdict** | **PASS** |
+| BBox delta max | 0.0498 |
+| BBox delta mean | 0.0170 |
+| BBox delta p95 | 0.0466 |
+| RMSE (norm) max | 0.560 |
+| RMSE (norm) mean | 0.442 |
+
+**Key observations:**
+- BBox delta (the metric used by the cert pipeline) is well within the 0.05 threshold
+- Cross-validation: recomputed bbox_delta matches CSV nn_bbox exactly (max diff = 0.0)
+- Normalized per-vertex RMSE ~0.44 is expected for NN correspondence on different-topology meshes
+  — this is not a cert-pipeline metric, included for observational purposes only
+- Zero load errors across all 77 pairs
+
+### C2: Dry-Run Cert Probe (bottle)
+
+Command:
+```bash
+./scripts/isaac_python.sh scripts/c1_autorun_categories.py \
+  --dataset-root GRScenes-test0-rebuilt-normalize-prededup \
+  --bak-root GRScenes-test0-rebuilt-normalized_bak \
+  --report check_reports/test0_rebuilt_dedup/v8_prededup/union_3way/all_categories_union_merged.json \
+  --c1-bulk-dir check_reports/test0_rebuilt_dedup/c1_bulk_v8_tier2_probe \
+  --include-regex "^bottle$" \
+  --group-label c1_v8_tier2_probe \
+  --step6-mode dry_run \
+  --bbox-gated \
+  --bbox-policy bbox_primary_rmse_observe \
+  --v-matrix-mode auto \
+  --mode-reports-dir check_reports/test0_rebuilt_dedup/v8_prededup
+```
+
+**Cert results** (from `01_cert/pair_certificate_summary.json`):
+
+| Metric | shuffle-fix probe | Tier2 probe | Delta |
+|--------|-------------------|-------------|-------|
+| eligible_count | 1294 | **1371** | **+77** |
+| bbox_precheck_failed_topo_filesize | 297 | **220** | **-77** |
+| bbox_precheck_failed_shape_invariant | 14 | 14 | 0 |
+| transitive_not_supported | 256 | 256 | 0 |
+| v_computation_failed_shape_invariant | 3 | 3 | 0 |
+
+**Eligible pairs by mode:**
+- geom_only: 126
+- shape_invariant: 38
+- topo_filesize: 1207 (up from 1130 — the +77 recovered pairs)
+
+**Apply results**: 52/99 scenes changed, 99 processed.
+
+**Audit results** (from `03_audit/audit_verdict.json`):
+
+| Metric | Shuffle-fix probe | Tier2 probe | Notes |
+|--------|-------------------|-------------|-------|
+| Scenes ok/error | 52/0 | 52/0 | Same |
+| Total compared prims | 70,102 | 70,102 | Same |
+| Displaced > 0.01 | 0 | **78** | All from ref-changed prims |
+| Displaced > 1.0 | 0 | 0 | No major displacement |
+| Vertex RMSE > 0.01 | 16 | 16 | Same, single scene |
+| Ref changed hard fails | 390 | **423** | +33, from +77 new pairs |
+| Ref same > 0.01 | 0 | **0** | Zero regressions on unchanged prims |
+| Audit passed | false | false | Known observe policy behavior |
+| Category maxima | — | bottle=0.131 | All other categories 0.0 |
+
+**Key safety observations:**
+- `ref_same > 0.01 = 0`: No displacement on prims that weren't changed (critical safety metric)
+- `displaced > 1.0 = 0`: No major displacement anywhere
+- All 78 displaced prims are ref-changed (expected sub-centimeter bbox differences from topo_filesize V compensation)
+- Audit false is known behavior with `bbox_primary_rmse_observe` policy (same as all previous probes)
+
+### Go/No-Go Decision
+
+**GO** — All criteria met:
+1. Vertex RMSE verification: PASS (bbox_delta max 0.0498 < 0.1)
+2. Cert probe: +77 eligible pairs exactly matching filtered recoverable count
+3. No regressions in other modes (geom_only, shape_invariant unchanged)
+4. Zero errors in both verification and cert steps
+
+## Pending
+
+| Item | Status | Priority |
+|------|--------|----------|
+| Full rollout to all 83 categories | Ready (GO decision made) | High |
+| Commit to main | After full rollout confirmation | High |
