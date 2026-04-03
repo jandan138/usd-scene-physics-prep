@@ -78,6 +78,15 @@ _NN_FALLBACK_CLOSE_PCT_THRESHOLD = 95.0
 # Candidate bbox_delta must be below this to accept NN result (spike: all shuffle < 0.004)
 _NN_FALLBACK_ACCEPT_THRESHOLD = 0.01
 
+# NN Tier2 constants — relaxed gate for non-shuffle pairs with good NN quality
+_NN_TIER2_BBOX_THRESHOLD = 0.05
+_NN_TIER2_UNIQUE_THRESHOLD = 0.5
+_NN_TIER2_MEAN_DIST_THRESHOLD = 0.02
+_NN_TIER2_CLOSE_PCT_FLOOR = 10.0
+
+# v_source tracing — populated by _topo_same_vtx_with_nn_fallback, read by build_pair_certificate
+_last_v_source: Dict[str, Any] = {}
+
 
 def _zero_bbox_delta() -> Dict[str, object]:
     return {
@@ -361,14 +370,14 @@ def _bbox_delta_max_abs(V_np: np.ndarray, pts_canon: np.ndarray, pts_old: np.nda
     return float(max(delta_min.max(), delta_max.max()))
 
 
-def _nn_procrustes_in_normalized_space(
+def _nn_procrustes_core(
     pts_canon: np.ndarray,
     pts_old: np.ndarray,
-) -> Tuple[np.ndarray, float, float]:
+) -> Tuple[np.ndarray, float, float, float]:
     """NN reorder + Procrustes in bbox-normalized space, denormalized to instance space.
 
     Returns:
-        (V_4x4, nn_close_pct, nn_unique_ratio)
+        (V_4x4, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm)
     """
     from scipy.spatial import cKDTree
 
@@ -381,6 +390,7 @@ def _nn_procrustes_in_normalized_space(
 
     nn_close_pct = float(np.sum(dists < 0.01) / len(dists) * 100.0)
     nn_unique_ratio = float(len(np.unique(indices)) / len(indices))
+    nn_mean_dist_norm = float(np.mean(dists))
 
     # Procrustes in normalized space on reordered points
     c_c = c_norm.mean(axis=0)
@@ -407,7 +417,34 @@ def _nn_procrustes_in_normalized_space(
     V[:3, :3] = sR
     V[3, :3] = t
 
+    return V, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm
+
+
+def _nn_procrustes_in_normalized_space(
+    pts_canon: np.ndarray,
+    pts_old: np.ndarray,
+) -> Tuple[np.ndarray, float, float]:
+    """NN reorder + Procrustes (backward-compatible wrapper).
+
+    Returns:
+        (V_4x4, nn_close_pct, nn_unique_ratio)
+    """
+    V, nn_close_pct, nn_unique_ratio, _nn_mean = _nn_procrustes_core(
+        pts_canon, pts_old,
+    )
     return V, nn_close_pct, nn_unique_ratio
+
+
+def _nn_procrustes_with_stats(
+    pts_canon: np.ndarray,
+    pts_old: np.ndarray,
+) -> Tuple[np.ndarray, float, float, float]:
+    """NN reorder + Procrustes returning all stats including nn_mean_dist_norm.
+
+    Returns:
+        (V_4x4, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm)
+    """
+    return _nn_procrustes_core(pts_canon, pts_old)
 
 
 def _topo_same_vtx_with_nn_fallback(
@@ -428,44 +465,82 @@ def _topo_same_vtx_with_nn_fallback(
 
     # Kill-switch: DEDUP_DISABLE_NN_FALLBACK=1 → always use baseline
     if os.environ.get("DEDUP_DISABLE_NN_FALLBACK") == "1":
+        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     baseline_bbox = _bbox_delta_max_abs(V_baseline, pts_canon, pts_old)
     if baseline_bbox <= _NN_FALLBACK_BASELINE_THRESHOLD:
+        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     # Baseline is bad — attempt NN fallback
     try:
-        V_nn, nn_close_pct, nn_unique_ratio = _nn_procrustes_in_normalized_space(
-            pts_canon, pts_old,
+        V_nn, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm = (
+            _nn_procrustes_with_stats(pts_canon, pts_old)
         )
     except Exception as exc:
         logger.warning("NN fallback failed (%s), keeping baseline V", exc)
+        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
         return V_baseline
 
-    # Gate 1: NN must confirm genuine shuffle
-    if nn_close_pct <= _NN_FALLBACK_CLOSE_PCT_THRESHOLD:
-        logger.debug(
-            "NN fallback: nn_close_pct=%.1f%% <= %.1f%%, keeping baseline",
-            nn_close_pct, _NN_FALLBACK_CLOSE_PCT_THRESHOLD,
-        )
-        return V_baseline
-
-    # Gate 2: candidate must actually be better
     candidate_bbox = _bbox_delta_max_abs(V_nn, pts_canon, pts_old)
-    if candidate_bbox > _NN_FALLBACK_ACCEPT_THRESHOLD:
-        logger.debug(
-            "NN fallback: candidate_bbox=%.6f > %.4f, keeping baseline",
-            candidate_bbox, _NN_FALLBACK_ACCEPT_THRESHOLD,
+
+    # Gate 1 (Tier1): NN must confirm genuine shuffle (nn_close_pct > 95%)
+    if nn_close_pct > _NN_FALLBACK_CLOSE_PCT_THRESHOLD:
+        # Gate 2: candidate must actually be better
+        if candidate_bbox > _NN_FALLBACK_ACCEPT_THRESHOLD:
+            logger.debug(
+                "NN fallback: candidate_bbox=%.6f > %.4f, keeping baseline",
+                candidate_bbox, _NN_FALLBACK_ACCEPT_THRESHOLD,
+            )
+            _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+            return V_baseline
+
+        logger.info(
+            "NN fallback accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
+            "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f)",
+            baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio,
         )
+        _last_v_source.clear(); _last_v_source["v_source"] = "tier1_shuffle"
+        return V_nn
+
+    # Gate 1B: Tier2 — relaxed NN gate for non-shuffle pairs
+    if os.environ.get("DEDUP_DISABLE_NN_TIER2") == "1":
+        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
         return V_baseline
 
-    logger.info(
-        "NN fallback accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
-        "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f)",
-        baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio,
+    # Allow env override for bbox threshold
+    tier2_bbox = _NN_TIER2_BBOX_THRESHOLD
+    _bbox_override = os.environ.get("DEDUP_NN_TIER2_BBOX")
+    if _bbox_override:
+        try:
+            tier2_bbox = float(_bbox_override)
+        except ValueError:
+            pass
+
+    if (nn_close_pct >= _NN_TIER2_CLOSE_PCT_FLOOR
+            and candidate_bbox <= tier2_bbox
+            and nn_mean_dist_norm <= _NN_TIER2_MEAN_DIST_THRESHOLD
+            and nn_unique_ratio >= _NN_TIER2_UNIQUE_THRESHOLD):
+        logger.info(
+            "NN Tier2 accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
+            "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f, nn_mean_dist_norm=%.6f)",
+            baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm,
+        )
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "tier2_nn"
+        _last_v_source["tier2_nn_bbox"] = candidate_bbox
+        _last_v_source["tier2_nn_unique_ratio"] = nn_unique_ratio
+        _last_v_source["tier2_nn_mean_dist_norm"] = nn_mean_dist_norm
+        return V_nn
+
+    logger.debug(
+        "NN Tier2 rejected: candidate_bbox=%.6f, nn_close_pct=%.1f%%, "
+        "nn_unique_ratio=%.3f, nn_mean_dist_norm=%.6f",
+        candidate_bbox, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm,
     )
-    return V_nn
+    _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+    return V_baseline
 
 
 # ---------------------------------------------------------------------------
@@ -996,10 +1071,16 @@ def build_pair_certificate(
         cert["vertex_rmse"] = 0.0
         cert["rmse_available"] = True
         cert["rmse_unavailable_reason"] = None
+        cert["v_source"] = "identity"
         _proof = "geom_only_exact_world_proof"
     else:
         try:
             V = compute_V_for_pair(old_usd, canonical_usd, mode)
+            cert["v_source"] = _last_v_source.get("v_source", "baseline")
+            if cert["v_source"] == "tier2_nn":
+                cert["tier2_nn_bbox"] = _last_v_source.get("tier2_nn_bbox")
+                cert["tier2_nn_unique_ratio"] = _last_v_source.get("tier2_nn_unique_ratio")
+                cert["tier2_nn_mean_dist_norm"] = _last_v_source.get("tier2_nn_mean_dist_norm")
             V_np = np.array(
                 [[V[i][j] for j in range(4)] for i in range(4)],
                 dtype=np.float64,

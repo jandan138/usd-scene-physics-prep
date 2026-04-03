@@ -39,7 +39,7 @@ scripts/run_phase2_full.sh
 scripts/run_phase3_full.sh
 
 # One-off analysis / debug scripts (root-level scratch)
-analyze_*.py
+/analyze_*.py
 capture_*.py
 check_normalized.py
 compare_bottles.py
