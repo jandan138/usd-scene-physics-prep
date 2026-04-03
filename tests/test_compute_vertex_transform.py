@@ -255,15 +255,64 @@ class TestPairCertificate:
         assert cert["rmse_available"] is True
         assert cert["bbox_delta"]["max_abs"] == 0.0
 
-    def test_non_geom_mode_rejected_in_phase1(self, monkeypatch):
+    def test_unsupported_mode_rejected(self, monkeypatch):
+        """Modes not in allowed_modes (e.g. transitive) are rejected."""
         monkeypatch.setattr("compute_vertex_transform.os.path.isfile", lambda path: True)
+        cert = build_pair_certificate(
+            old_usd="/tmp/old.usd",
+            canonical_usd="/tmp/canon.usd",
+            mode="transitive",
+        )
+        assert cert["eligible"] is False
+        assert cert["reject_reason"] == "mode_not_enabled_transitive"
+        assert cert["rmse_available"] is False
+
+    def test_topo_filesize_with_v_computation(self, monkeypatch):
+        """topo_filesize mode computes real V and bbox delta."""
+        canon_pts = BASE_PTS.copy()
+        # Simulate old = canon shifted by small translation
+        old_pts = canon_pts + np.array([0.001, 0.001, 0.001])
+
+        monkeypatch.setattr("compute_vertex_transform.os.path.isfile", lambda path: True)
+        monkeypatch.setattr(
+            "compute_vertex_transform.extract_instance_space_vertices",
+            lambda path: old_pts.copy() if "old" in path else canon_pts.copy(),
+        )
+
+        cert = build_pair_certificate(
+            old_usd="/tmp/old.usd",
+            canonical_usd="/tmp/canon.usd",
+            mode="topo_filesize",
+        )
+
+        assert cert["eligible"] is True
+        assert cert["proof_source"] == "topo_filesize_bbox_gated_proof"
+        assert cert.get("bbox_delta_available") is True
+        assert cert["bbox_delta"]["max_abs"] < 0.5  # below precheck threshold
+        assert cert["rmse_available"] is True
+
+    def test_shape_invariant_v_failure_closes(self, monkeypatch):
+        """V computation failure -> fail closed with None metrics."""
+        monkeypatch.setattr("compute_vertex_transform.os.path.isfile", lambda path: True)
+        monkeypatch.setattr(
+            "compute_vertex_transform.extract_instance_space_vertices",
+            lambda path: BASE_PTS.copy(),
+        )
+        monkeypatch.setattr(
+            "compute_vertex_transform.compute_V_for_pair",
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("test failure")),
+        )
+
         cert = build_pair_certificate(
             old_usd="/tmp/old.usd",
             canonical_usd="/tmp/canon.usd",
             mode="shape_invariant",
         )
+
         assert cert["eligible"] is False
-        assert cert["reject_reason"] == "mode_not_enabled_shape_invariant"
+        assert "v_computation_failed" in cert["reject_reason"]
+        assert cert["bbox_delta"] is None
+        assert cert["bbox_delta_available"] is False
         assert cert["rmse_available"] is False
 
     def test_missing_asset_rejected(self, monkeypatch):

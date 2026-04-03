@@ -390,6 +390,8 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
                 "--out-certified-graph-json",
                 str(plan.certified_graph_json.relative_to(REPO_ROOT)) if plan.certified_graph_json.is_relative_to(REPO_ROOT) else str(plan.certified_graph_json),
             ]
+            if args.mode_reports_dir:
+                cmd.extend(["--mode-reports-dir", args.mode_reports_dir])
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "01_cert.log")
             if rc != 0:
                 _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "cert", "rc": rc})
@@ -482,6 +484,8 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
                 str(args.eps_geom),
                 "--allow-no-mesh",
             ]
+            if args.mode_reports_dir:
+                cmd.extend(["--mode-reports-dir", args.mode_reports_dir])
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "03_audit.log")
             if rc != 0:
                 _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "audit", "rc": rc})
@@ -688,6 +692,10 @@ def main() -> int:
             raise FileNotFoundError(f"Missing required script: {p}")
 
     if args.bbox_gated:
+        if not args.mode_reports_dir:
+            raise SystemExit(
+                "ERROR: --mode-reports-dir is required when --bbox-gated is set."
+            )
         return _run_bbox_gated(args)
 
     c1_bulk_dir.mkdir(parents=True, exist_ok=True)

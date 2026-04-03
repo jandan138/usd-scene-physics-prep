@@ -307,6 +307,12 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
     report_mode = _infer_dedup_mode(report, args.dedup_mode)
     revoked_edges = _read_revoked_edges(args.revoked_edges_jsonl)
 
+    # Build mode_index for per-pair mode resolution (required for bbox-gated)
+    mode_index: Dict[Tuple[str, str], str] = {}
+    if args.mode_reports_dir:
+        mode_index = _cvt.build_mode_index(args.mode_reports_dir)
+        print(f"[bbox-gated] mode_index loaded: {len(mode_index)} entries from {args.mode_reports_dir}", flush=True)
+
     certificate_rows: List[Dict[str, object]] = []
     eligible_edges: List[Tuple[str, str]] = []
     all_nodes: Set[str] = set()
@@ -314,6 +320,9 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
     groups_seen = 0
     groups_included = 0
     rejected_by_reason: Counter = Counter()
+    pair_mode_counts: Counter = Counter()
+    eligible_by_mode: Counter = Counter()
+    reject_reason_by_mode: Dict[str, Counter] = defaultdict(Counter)
 
     for group in _iter_duplicate_groups(report):
         groups_seen += 1
@@ -347,12 +356,37 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
                 continue
 
             candidate_pair_count += 1
-            cert = _cvt.build_pair_certificate(
-                old_usd=str(dataset_root / old_asset),
-                canonical_usd=str(dataset_root / initial_canonical),
-                mode=report_mode,
-                policy=args.bbox_policy,
-            )
+
+            # Per-pair mode resolution via mode_index
+            if mode_index:
+                canon_uid = _cvt._uid_from_path(str(dataset_root / initial_canonical))
+                old_uid = _cvt._uid_from_path(str(dataset_root / old_asset))
+                pair_mode = mode_index.get((canon_uid, old_uid))
+                if pair_mode is None:
+                    pair_mode = "transitive"
+            else:
+                pair_mode = report_mode
+
+            pair_mode_counts[pair_mode] += 1
+
+            # Transitive pairs are NOT supported this round — reject immediately
+            if pair_mode == "transitive":
+                cert = _cvt._base_pair_certificate(
+                    old_usd=str(dataset_root / old_asset),
+                    canonical_usd=str(dataset_root / initial_canonical),
+                    mode=pair_mode,
+                    policy=args.bbox_policy,
+                )
+                cert["eligible"] = False
+                cert["reject_reason"] = "transitive_not_supported"
+            else:
+                cert = _cvt.build_pair_certificate(
+                    old_usd=str(dataset_root / old_asset),
+                    canonical_usd=str(dataset_root / initial_canonical),
+                    mode=pair_mode,
+                    policy=args.bbox_policy,
+                )
+
             cert["old_asset"] = old_asset
             cert["canonical_asset"] = initial_canonical
             cert["group_sig"] = sig
@@ -360,6 +394,8 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             cert["initial_canonical"] = initial_canonical
             cert["old_asset_usage_in_layouts"] = int(usage.get(old_asset, 0))
             cert["canonical_usage_in_layouts"] = int(usage.get(initial_canonical, 0))
+            cert["pair_mode"] = pair_mode
+            cert["dominant_source_mode"] = group.get("dominant_source_mode")
 
             if (old_asset, initial_canonical) in revoked_edges:
                 cert["eligible"] = False
@@ -370,11 +406,21 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
 
             if cert.get("eligible"):
                 eligible_edges.append((initial_canonical, old_asset))
+                eligible_by_mode[pair_mode] += 1
             else:
-                rejected_by_reason[str(cert.get("reject_reason") or "unknown")] += 1
+                reason = str(cert.get("reject_reason") or "unknown")
+                rejected_by_reason[reason] += 1
+                reject_reason_by_mode[pair_mode][reason] += 1
 
             certificate_rows.append(cert)
 
+    # Build directed certified-edge adjacency for canonical consistency
+    # cert_out[canonical] = {old1, old2, ...} from eligible cert rows
+    cert_out: Dict[str, Set[str]] = defaultdict(set)
+    for canon, old in eligible_edges:
+        cert_out[canon].add(old)
+
+    # Rebuild components using undirected eligible edges (for grouping)
     components = _connected_components(sorted(all_nodes), eligible_edges)
     filtered_mapping: Dict[str, str] = {}
     component_rows: List[Dict[str, object]] = []
@@ -393,22 +439,38 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             )
             continue
 
-        canonical = _component_canonical(component, usage)
-        pairs = []
+        # Choose final canonical as the node with largest cert_out coverage
+        # within this component.  Fall back to usage-based selection.
+        best_canonical = None
+        best_coverage = -1
         for node in component:
+            coverage = len(cert_out.get(node, set()) & set(component))
+            if coverage > best_coverage or (coverage == best_coverage and (best_canonical is None or node < best_canonical)):
+                best_canonical = node
+                best_coverage = coverage
+        canonical = best_canonical or component[0]
+
+        # Only keep members that have a direct certified edge FROM final canonical
+        certified_members = cert_out.get(canonical, set()) & set(component)
+        pairs = []
+        for node in sorted(certified_members):
             if node == canonical:
                 continue
             filtered_mapping[node] = canonical
             pairs.append({"old_asset": node, "canonical_asset": canonical})
             mapping_pairs += 1
 
+        dropped = set(component) - certified_members - {canonical}
+
         component_rows.append(
             {
                 "component_id": idx,
                 "canonical": canonical,
                 "nodes": component,
+                "certified_members": sorted(certified_members),
+                "dropped_uncovered": sorted(dropped),
                 "mapping_pairs": pairs,
-                "eligible": True,
+                "eligible": bool(pairs),
             }
         )
 
@@ -464,8 +526,15 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             "groups_included": groups_included,
             "candidate_pairs": candidate_pair_count,
             "eligible_pairs": len(eligible_edges),
+            "eligible_count": len(eligible_edges),
             "rejected_pairs": candidate_pair_count - len(eligible_edges),
             "reject_reason_counts": dict(sorted(rejected_by_reason.items())),
+            "pair_mode_counts": dict(sorted(pair_mode_counts.items())),
+            "eligible_pairs_by_mode": dict(sorted(eligible_by_mode.items())),
+            "reject_reason_counts_by_mode": {
+                mode: dict(sorted(counts.items()))
+                for mode, counts in sorted(reject_reason_by_mode.items())
+            },
             "revoked_edge_count": sum(1 for row in certificate_rows if row.get("reject_reason") == "revoked_edge"),
         },
     )
@@ -566,9 +635,20 @@ def main() -> int:
         default=None,
         help="Optional JSONL of attributable revoked old->canonical edges for rebuilds.",
     )
+    ap.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/). "
+             "REQUIRED when --bbox-gated is set.",
+    )
     args = ap.parse_args()
 
     if args.bbox_gated:
+        if not args.mode_reports_dir:
+            raise SystemExit(
+                "ERROR: --mode-reports-dir is required when --bbox-gated is set. "
+                "Without it, per-pair mode lookup has no source."
+            )
         required = {
             "--out-certificate-jsonl": args.out_certificate_jsonl,
             "--out-certificate-summary-json": args.out_certificate_summary_json,

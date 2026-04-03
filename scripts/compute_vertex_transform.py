@@ -855,26 +855,82 @@ def build_pair_certificate(
         cert["rmse_unavailable_reason"] = "mesh_probe_failed"
         return cert
 
-    cert["eligible"] = True
-    cert["reject_reason"] = None
-    cert["bbox_delta"] = _zero_bbox_delta()
-    cert["footprint_extent_delta"] = 0.0
-    cert["footprint_axis_delta"] = 0.0
-    cert["centroid_delta"] = 0.0
-    cert["vertex_rmse"] = 0.0
-    cert["rmse_available"] = True
-    cert["rmse_unavailable_reason"] = None
     if mode == "geom_only":
+        # V=Identity, mesh identical -> bbox delta is 0 by definition
+        cert["eligible"] = True
+        cert["reject_reason"] = None
+        cert["bbox_delta"] = _zero_bbox_delta()
+        cert["bbox_delta_available"] = True
+        cert["footprint_extent_delta"] = 0.0
+        cert["footprint_axis_delta"] = 0.0
+        cert["centroid_delta"] = 0.0
+        cert["vertex_rmse"] = 0.0
+        cert["rmse_available"] = True
+        cert["rmse_unavailable_reason"] = None
         _proof = "geom_only_exact_world_proof"
     else:
+        try:
+            V = compute_V_for_pair(old_usd, canonical_usd, mode)
+            V_np = np.array(
+                [[V[i][j] for j in range(4)] for i in range(4)],
+                dtype=np.float64,
+            ) if not isinstance(V, np.ndarray) else V
+            # Transform canonical pts using V (row-vector: p_old ≈ p_canon @ V)
+            canon_h = np.hstack([canonical_pts, np.ones((len(canonical_pts), 1))])
+            canon_transformed = (canon_h @ V_np)[:, :3]
+
+            bbox_old = {"min": old_pts.min(axis=0).tolist(), "max": old_pts.max(axis=0).tolist()}
+            bbox_new = {"min": canon_transformed.min(axis=0).tolist(), "max": canon_transformed.max(axis=0).tolist()}
+            delta_min = [abs(a - b) for a, b in zip(bbox_old["min"], bbox_new["min"])]
+            delta_max = [abs(a - b) for a, b in zip(bbox_old["max"], bbox_new["max"])]
+            max_abs = max(max(delta_min), max(delta_max))
+
+            cert["bbox_delta"] = {"min": delta_min, "max": delta_max, "max_abs": max_abs}
+            cert["bbox_delta_available"] = True
+            centroid_old = np.mean(old_pts, axis=0)
+            centroid_new = np.mean(canon_transformed, axis=0)
+            cert["centroid_delta"] = float(np.linalg.norm(centroid_old - centroid_new))
+            cert["footprint_extent_delta"] = 0.0
+            cert["footprint_axis_delta"] = 0.0
+
+            if len(old_pts) == len(canon_transformed):
+                cert["vertex_rmse"] = float(np.sqrt(np.mean(
+                    np.sum((old_pts - canon_transformed) ** 2, axis=1))))
+                cert["rmse_available"] = True
+            else:
+                cert["vertex_rmse"] = None
+                cert["rmse_available"] = False
+                cert["rmse_unavailable_reason"] = "vertex_count_mismatch"
+
+            # Cert pre-check: gross failure gate (0.5 threshold)
+            CERT_BBOX_PRECHECK_THRESHOLD = 0.5
+            if max_abs > CERT_BBOX_PRECHECK_THRESHOLD:
+                cert["eligible"] = False
+                cert["reject_reason"] = f"bbox_precheck_failed_{mode}"
+                cert["bbox_delta_available"] = True
+                return cert
+
+        except Exception as exc:
+            # FAIL CLOSED — mark ALL metrics unavailable/None
+            cert["eligible"] = False
+            cert["reject_reason"] = f"v_computation_failed_{mode}"
+            cert["bbox_delta"] = None
+            cert["bbox_delta_available"] = False
+            cert["centroid_delta"] = None
+            cert["vertex_rmse"] = None
+            cert["rmse_available"] = False
+            cert["rmse_unavailable_reason"] = str(exc)[:200]
+            cert["footprint_extent_delta"] = 0.0
+            cert["footprint_axis_delta"] = 0.0
+            return cert
+
+        cert["eligible"] = True
+        cert["reject_reason"] = None
         _proof = f"{mode}_bbox_gated_proof"
+
     cert["alternate_proof_kind"] = _proof
     cert["alternate_proof_passed"] = True
     cert["proof_source"] = _proof
-
-    if policy == "bbox_primary_rmse_harder":
-        # The computable RMSE for the restricted geom_only proof path is exact.
-        cert["eligible"] = True
 
     return cert
 

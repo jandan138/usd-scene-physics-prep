@@ -243,11 +243,18 @@ def union_merge_n(reports: List[dict]) -> dict:
     """Merge N dedup reports by union of all groups via union-find.
 
     Each report contributes its duplicate groups to a shared union-find.
-    Connected components form the merged groups.
+    Connected components form the merged groups.  Per-edge source mode is
+    tracked so each output group carries ``dominant_source_mode`` and
+    ``source_mode_counts`` for downstream traceability.
     """
+    MODE_PRIORITY = {"geom_only": 2, "topo_filesize": 1, "shape_invariant": 0}
+
     uf = UnionFind()
     all_grouped = set()
     all_removable = set()
+
+    # edge_mode: (sorted pair) -> highest-priority source mode
+    edge_mode: dict = {}
 
     # Track per-mode stats
     mode_stats = {}
@@ -264,6 +271,13 @@ def union_merge_n(reports: List[dict]) -> dict:
             for m in members:
                 uf.union(rep, m)
                 all_grouped.add(m)
+                # Track edge mode for each (rep, member) pair
+                if m != rep:
+                    edge_key = tuple(sorted([rep, m]))
+                    new_pri = MODE_PRIORITY.get(mode, -1)
+                    old_pri = MODE_PRIORITY.get(edge_mode.get(edge_key, ""), -1)
+                    if new_pri > old_pri:
+                        edge_mode[edge_key] = mode
             for m in members[1:]:
                 all_removable.add(m)
                 removable_count += 1
@@ -306,10 +320,31 @@ def union_merge_n(reports: List[dict]) -> dict:
 
         rep = keepers[0]
         group_paths = [rep] + sorted(removables) + sorted(keepers[1:])
+
+        # Count edge modes within this group for traceability
+        group_mode_counts: dict = {}
+        for i_m, m1 in enumerate(members):
+            for m2 in members[i_m + 1:]:
+                ek = tuple(sorted([m1, m2]))
+                em = edge_mode.get(ek)
+                if em:
+                    group_mode_counts[em] = group_mode_counts.get(em, 0) + 1
+
+        # Pick dominant mode: most edges, then priority tie-break
+        if group_mode_counts:
+            dominant = max(
+                group_mode_counts.keys(),
+                key=lambda m: (group_mode_counts[m], MODE_PRIORITY.get(m, -1)),
+            )
+        else:
+            dominant = "unknown"
+
         output_duplicates.append({
             "sig": "",
             "count": len(group_paths),
             "usd_paths": group_paths,
+            "dominant_source_mode": dominant,
+            "source_mode_counts": group_mode_counts,
         })
         for p in removables:
             actual_removable.add(p)

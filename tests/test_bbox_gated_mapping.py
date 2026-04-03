@@ -100,6 +100,7 @@ def test_bbox_gated_filters_and_rebuilds(tmp_path, monkeypatch):
         out_certificate_summary_json=str(out_cert_summary),
         out_certified_graph_json=str(out_graph),
         revoked_edges_jsonl=None,
+        mode_reports_dir=None,
     )
     rc = mapping_mod._run_bbox_gated(args)
     assert rc == 0
@@ -182,6 +183,7 @@ def test_bbox_gated_revoked_edge_removed(tmp_path, monkeypatch):
         out_certificate_summary_json=str(out_cert_summary),
         out_certified_graph_json=str(out_graph),
         revoked_edges_jsonl=str(revoked),
+        mode_reports_dir=None,
     )
 
     mapping_mod._run_bbox_gated(args)

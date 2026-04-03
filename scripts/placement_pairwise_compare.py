@@ -32,6 +32,46 @@ except ImportError as exc:
     print("Run via ./scripts/isaac_python.sh", file=sys.stderr)
     sys.exit(1)
 
+try:
+    import compute_vertex_transform as _cvt
+    _CVT_AVAILABLE = True
+except ImportError:
+    _cvt = None  # type: ignore
+    _CVT_AVAILABLE = False
+
+
+def _uid_from_ref(ref_path: str) -> Optional[str]:
+    """Extract asset uid from a reference path like .../category/uid/usd/uid.usd"""
+    ref_path = ref_path.replace("\\", "/")
+    parts = ref_path.rstrip("/").split("/")
+    # Look for pattern: .../uid/usd/uid.usd
+    for i, p in enumerate(parts):
+        if p == "usd" and i >= 1 and i + 1 < len(parts):
+            return parts[i - 1]
+    # Fallback: basename without extension's parent dir
+    if len(parts) >= 3:
+        return parts[-3]
+    return None
+
+
+def _lookup_prim_dedup_mode(
+    left_refs: List[str],
+    right_refs: List[str],
+    mode_index: Optional[Dict],
+) -> Optional[str]:
+    """Determine dedup mode for a ref-changed prim."""
+    if not mode_index or left_refs == right_refs:
+        return None
+    old_uid = _uid_from_ref(left_refs[0]) if left_refs else None
+    canon_uid = _uid_from_ref(right_refs[0]) if right_refs else None
+    if old_uid and canon_uid:
+        return (
+            mode_index.get((canon_uid, old_uid))
+            or mode_index.get((old_uid, canon_uid))
+            or "transitive"
+        )
+    return None
+
 
 VALID_LAYOUT_MODES = {
     "current",
@@ -415,6 +455,7 @@ def compare_scene(
     eps_pos: float,
     eps_angle: float,
     eps_geom: float,
+    mode_index: Optional[Dict] = None,
 ) -> Dict[str, object]:
     result: Dict[str, object] = {
         "scene_id": scene_id,
@@ -533,13 +574,26 @@ def compare_scene(
         category = parts[4] if len(parts) >= 5 else "unknown"
         category_disps[category].append(displacement)
 
+        # Per-prim dedup mode lookup
+        prim_mode = _lookup_prim_dedup_mode(left_refs, right_refs, mode_index)
+
+        # Mode-aware effective bbox threshold
+        if prim_mode == "geom_only":
+            effective_eps_bbox = eps_bbox          # 0.01 (strict, V=Identity exact)
+        elif prim_mode in ("topo_filesize", "shape_invariant"):
+            effective_eps_bbox = 0.15              # observe phase — NOT final standard
+        elif prim_mode == "transitive":
+            effective_eps_bbox = eps_bbox           # strict for unsupported mode
+        else:
+            effective_eps_bbox = eps_bbox           # unknown -> strict
+
         hard_failures: List[str] = []
         if ref_changed:
-            if _max_abs_axis_delta(bbox_left["min"], bbox_right["min"]) > eps_bbox:
+            if _max_abs_axis_delta(bbox_left["min"], bbox_right["min"]) > effective_eps_bbox:
                 hard_failures.append("bbox_min_delta_gt_eps")
-            if _max_abs_axis_delta(bbox_left["max"], bbox_right["max"]) > eps_bbox:
+            if _max_abs_axis_delta(bbox_left["max"], bbox_right["max"]) > effective_eps_bbox:
                 hard_failures.append("bbox_max_delta_gt_eps")
-            if footprint_extent_delta > eps_bbox:
+            if footprint_extent_delta > effective_eps_bbox:
                 hard_failures.append("footprint_extent_delta_gt_eps")
             if footprint_axis_delta > eps_angle:
                 hard_failures.append("footprint_axis_delta_gt_eps")
@@ -567,6 +621,8 @@ def compare_scene(
             "footprint_right": footprint_right,
             "footprint_extent_delta": footprint_extent_delta,
             "footprint_axis_delta": footprint_axis_delta,
+            "dedup_mode": prim_mode,
+            "effective_eps_bbox": effective_eps_bbox,
             "hard_fail": bool(hard_failures),
             "hard_failures": hard_failures,
             "left_ref_sample": left_refs[:2],
@@ -586,11 +642,14 @@ def compare_scene(
     ref_same_disps = [c["displacement"] for c in compared if not c["ref_changed"]]
     ref_changed_hard_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("hard_fail"))
     blocking_reason_counts: Dict[str, int] = defaultdict(int)
+    blocking_by_mode: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for c in compared:
         if not c.get("ref_changed"):
             continue
+        m = c.get("dedup_mode") or "unknown"
         for reason in c.get("hard_failures", []):
             blocking_reason_counts[str(reason)] += 1
+            blocking_by_mode[m][reason] += 1
 
     category_summary = {}
     for category, disps in sorted(category_disps.items()):
@@ -619,6 +678,10 @@ def compare_scene(
         "ref_changed_count": len(ref_changed_disps),
         "ref_changed_hard_fail_count": ref_changed_hard_fail_count,
         "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
+        "blocking_reason_counts_by_mode": {
+            mode: dict(sorted(counts.items()))
+            for mode, counts in sorted(blocking_by_mode.items())
+        },
         "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
         "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
         "ref_same_count": len(ref_same_disps),
@@ -650,6 +713,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_ref_changed_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_ref_same_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     blocking_reason_counts: Dict[str, int] = defaultdict(int)
+    blocking_by_mode_agg: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
     category_acc = defaultdict(list)
     global_worst = []
@@ -668,6 +732,9 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
             total_ref_same_disp[key] += int(value)
         for key, value in r.get("blocking_reason_counts", {}).items():
             blocking_reason_counts[key] += int(value)
+        for mode, reasons in r.get("blocking_reason_counts_by_mode", {}).items():
+            for reason, count in reasons.items():
+                blocking_by_mode_agg[mode][reason] += int(count)
 
         for category, info in r.get("category_breakdown", {}).items():
             stats = info.get("displacement_stats", {})
@@ -701,6 +768,10 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
         "ref_changed_breakdown": total_ref_changed_disp,
         "ref_same_breakdown": total_ref_same_disp,
         "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
+        "blocking_reason_counts_by_mode": {
+            mode: dict(sorted(counts.items()))
+            for mode, counts in sorted(blocking_by_mode_agg.items())
+        },
         "category_maxima": {
             category: round(max(values), 6)
             for category, values in sorted(category_acc.items())
@@ -783,12 +854,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--eps-geom", type=float, default=0.01)
     parser.add_argument("--allow-no-mesh", action="store_true",
                         help="Downgrade total_no_mesh>0 from hard-fail to warning in audit verdict.")
+    parser.add_argument("--mode-reports-dir", default=None,
+                        help="Directory containing dedup mode reports for mode-aware thresholds.")
     args = parser.parse_args(argv)
 
     left_root = os.path.abspath(args.left_root)
     right_root = os.path.abspath(args.right_root)
     left_locator = build_old_asset_locator(args.left_bak_root, left_root)
     right_locator = build_old_asset_locator(args.right_bak_root, right_root)
+
+    # Build mode_index for mode-aware thresholds
+    mode_index = None
+    if args.mode_reports_dir and _CVT_AVAILABLE:
+        mode_index = _cvt.build_mode_index(args.mode_reports_dir)
+        print(f"Mode index loaded: {len(mode_index)} entries from {args.mode_reports_dir}")
+    elif args.mode_reports_dir and not _CVT_AVAILABLE:
+        print("WARNING: --mode-reports-dir given but compute_vertex_transform not importable; mode-aware thresholds disabled")
     scene_ids = None
     if args.scene_list_json:
         payload = json.loads(open(args.scene_list_json, "r", encoding="utf-8").read())
@@ -838,6 +919,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     eps_pos=float(args.eps_pos),
                     eps_angle=float(args.eps_angle),
                     eps_geom=float(args.eps_geom),
+                    mode_index=mode_index,
                 )
             )
     else:
@@ -855,6 +937,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     eps_pos=float(args.eps_pos),
                     eps_angle=float(args.eps_angle),
                     eps_geom=float(args.eps_geom),
+                    mode_index=mode_index,
                 ): scene_id
                 for left_layout, right_layout, scene_id in pairs
             }
