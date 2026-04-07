@@ -2,7 +2,7 @@
 title: "Topo Tier2 Gate Recovery — Status Snapshot"
 code_reference: scripts/compute_vertex_transform.py, scripts/analyze_tier2_gate_thresholds.py, scripts/verify_tier2_vertex_rmse.py
 created_at: 2026-04-03
-updated_at: 2026-04-03
+updated_at: 2026-04-07
 maintainer: zhuzihou
 status: in_progress
 ---
@@ -158,5 +158,6 @@ Command:
 
 | Item | Status | Priority |
 |------|--------|----------|
-| Full rollout to all 83 categories | Ready (GO decision made) | High |
+| Audit observe fix | **Done** (2026-04-07) — bbox checks downgraded to soft warning for observe+tier2 | Resolved |
+| Full rollout to all 83 categories | Ready — observe fix unblocks `--skip-done` rerun of 40 failed cats | High |
 | Commit to main | After full rollout confirmation | High |

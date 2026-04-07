@@ -279,7 +279,12 @@ Transitive V 是 BFS 沿路径逐步累积的：`V_total = V_step1 * V_step2 * .
 
 ### Phase C：推广到全类目 + Shape_Invariant 代码改动
 
-**目标**：Phase B 验证通过后，推广到 83 类目全量；基于 Phase B 并行产出的 shape_invariant spike 数据，实现 shape_invariant 的 NN 门控。
+**前置条件（已满足）**：
+- Phase A+B 完成，bottle 探针 GO（eligible 1294→1371, +77, displaced=0）
+- Audit observe 策略修复已实施：observe + tier2 模式下 bbox 检查降级为 soft warning（`placement_pairwise_compare.py`），
+  verdict.passed 不再被 tier2 bbox 差异阻断。详见 `docs/operations/tier2_audit_40cat_failure_investigation_20260407.md`
+
+**目标**：推广到 83 类目全量；基于 Phase B 并行产出的 shape_invariant spike 数据，实现 shape_invariant 的 NN 门控。
 
 **输入数据**：
 

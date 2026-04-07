@@ -105,3 +105,77 @@ def test_ref_changed_internal_drift_triggers_hard_fail(tmp_path):
     assert result["status"] == "ok"
     assert result["ref_changed_hard_fail_count"] >= 1
     assert result["blocking_reason_counts"]
+
+
+@pxr_required
+def test_observe_tier2_bbox_drift_is_soft_fail(tmp_path):
+    """Under observe policy + topo_filesize mode, bbox drift is a soft warning, not hard fail."""
+    left_uid = "aaa111"
+    right_uid = "bbb222"
+    left_asset = _make_asset(
+        str(tmp_path / "GRScenes_assets" / "chair" / left_uid / "usd" / f"{left_uid}.usd"),
+    )
+    right_asset = _make_asset(
+        str(tmp_path / "GRScenes_assets" / "chair" / right_uid / "usd" / f"{right_uid}.usd"),
+        point_offset=(0.2, 0.0, 0.0),  # bbox drift > 0.15 threshold
+    )
+    left_layout = _make_layout(str(tmp_path / "left_layout.usd"), left_asset)
+    right_layout = _make_layout(str(tmp_path / "right_layout.usd"), right_asset)
+
+    # mode_index keyed by (canon_uid, old_uid) — maps to topo_filesize
+    mode_index = {(right_uid, left_uid): "topo_filesize"}
+
+    result = compare_scene(
+        left_layout,
+        right_layout,
+        "home/scene1",
+        {},
+        {},
+        bbox_policy="bbox_primary_rmse_observe",
+        eps_bbox=0.01,
+        eps_pos=0.01,
+        eps_angle=1.0,
+        eps_geom=0.01,
+        mode_index=mode_index,
+    )
+
+    assert result["status"] == "ok"
+    assert result["ref_changed_hard_fail_count"] == 0
+    assert result["ref_changed_soft_fail_count"] >= 1
+    assert result["soft_reason_counts"]
+
+
+@pxr_required
+def test_harder_tier2_bbox_drift_is_still_hard_fail(tmp_path):
+    """Under harder policy + topo_filesize mode, bbox drift remains a hard fail."""
+    left_uid = "aaa111"
+    right_uid = "bbb222"
+    left_asset = _make_asset(
+        str(tmp_path / "GRScenes_assets" / "chair" / left_uid / "usd" / f"{left_uid}.usd"),
+    )
+    right_asset = _make_asset(
+        str(tmp_path / "GRScenes_assets" / "chair" / right_uid / "usd" / f"{right_uid}.usd"),
+        point_offset=(0.2, 0.0, 0.0),  # bbox drift > 0.15 threshold
+    )
+    left_layout = _make_layout(str(tmp_path / "left_layout.usd"), left_asset)
+    right_layout = _make_layout(str(tmp_path / "right_layout.usd"), right_asset)
+
+    mode_index = {(right_uid, left_uid): "topo_filesize"}
+
+    result = compare_scene(
+        left_layout,
+        right_layout,
+        "home/scene1",
+        {},
+        {},
+        bbox_policy="bbox_primary_rmse_harder",
+        eps_bbox=0.01,
+        eps_pos=0.01,
+        eps_angle=1.0,
+        eps_geom=0.01,
+        mode_index=mode_index,
+    )
+
+    assert result["status"] == "ok"
+    assert result["ref_changed_hard_fail_count"] >= 1
+    assert result["blocking_reason_counts"]

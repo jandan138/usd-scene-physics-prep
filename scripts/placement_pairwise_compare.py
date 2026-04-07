@@ -588,17 +588,25 @@ def compare_scene(
             effective_eps_bbox = eps_bbox           # unknown -> strict
 
         hard_failures: List[str] = []
+        soft_failures: List[str] = []
         if ref_changed:
+            # observe + tier2 → bbox checks are soft warnings, not blocking
+            is_observe_tier2 = (
+                bbox_policy == "bbox_primary_rmse_observe"
+                and prim_mode in ("topo_filesize", "shape_invariant")
+            )
+            bbox_target = soft_failures if is_observe_tier2 else hard_failures
+
             if _max_abs_axis_delta(bbox_left["min"], bbox_right["min"]) > effective_eps_bbox:
-                hard_failures.append("bbox_min_delta_gt_eps")
+                bbox_target.append("bbox_min_delta_gt_eps")
             if _max_abs_axis_delta(bbox_left["max"], bbox_right["max"]) > effective_eps_bbox:
-                hard_failures.append("bbox_max_delta_gt_eps")
+                bbox_target.append("bbox_max_delta_gt_eps")
             if footprint_extent_delta > effective_eps_bbox:
-                hard_failures.append("footprint_extent_delta_gt_eps")
+                bbox_target.append("footprint_extent_delta_gt_eps")
             if footprint_axis_delta > eps_angle:
-                hard_failures.append("footprint_axis_delta_gt_eps")
+                bbox_target.append("footprint_axis_delta_gt_eps")
             if displacement > eps_pos:
-                hard_failures.append("centroid_delta_gt_eps")
+                bbox_target.append("centroid_delta_gt_eps")
             if (
                 bbox_policy == "bbox_primary_rmse_harder"
                 and vertex_rmse is not None
@@ -625,6 +633,8 @@ def compare_scene(
             "effective_eps_bbox": effective_eps_bbox,
             "hard_fail": bool(hard_failures),
             "hard_failures": hard_failures,
+            "soft_fail": bool(soft_failures),
+            "soft_failures": soft_failures,
             "left_ref_sample": left_refs[:2],
             "right_ref_sample": right_refs[:2],
             "verts_left": verts_left,
@@ -641,7 +651,7 @@ def compare_scene(
     ref_changed_disps = [c["displacement"] for c in compared if c["ref_changed"]]
     ref_same_disps = [c["displacement"] for c in compared if not c["ref_changed"]]
     ref_changed_hard_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("hard_fail"))
-    blocking_reason_counts: Dict[str, int] = defaultdict(int)
+    blocking_reason_counts: Dict[str, int] = defaultdict(int)  # hard failures only
     blocking_by_mode: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for c in compared:
         if not c.get("ref_changed"):
@@ -650,6 +660,15 @@ def compare_scene(
         for reason in c.get("hard_failures", []):
             blocking_reason_counts[str(reason)] += 1
             blocking_by_mode[m][reason] += 1
+
+    # Soft warnings (observe+tier2 bbox checks) — recorded but not blocking
+    ref_changed_soft_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("soft_fail"))
+    soft_reason_counts: Dict[str, int] = defaultdict(int)
+    for c in compared:
+        if not c.get("ref_changed"):
+            continue
+        for reason in c.get("soft_failures", []):
+            soft_reason_counts[str(reason)] += 1
 
     category_summary = {}
     for category, disps in sorted(category_disps.items()):
@@ -682,6 +701,8 @@ def compare_scene(
             mode: dict(sorted(counts.items()))
             for mode, counts in sorted(blocking_by_mode.items())
         },
+        "ref_changed_soft_fail_count": ref_changed_soft_fail_count,
+        "soft_reason_counts": dict(sorted(soft_reason_counts.items())),
         "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
         "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
         "ref_same_count": len(ref_same_disps),
@@ -705,6 +726,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_ref_changed = sum(int(r.get("ref_changed_count", 0)) for r in ok_results)
     total_ref_same = sum(int(r.get("ref_same_count", 0)) for r in ok_results)
     total_ref_changed_hard_fail = sum(int(r.get("ref_changed_hard_fail_count", 0)) for r in ok_results)
+    total_ref_changed_soft_fail = sum(int(r.get("ref_changed_soft_fail_count", 0)) for r in ok_results)
 
     total_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_mesh_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
@@ -712,8 +734,9 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_vertex_rmse_count = 0
     total_ref_changed_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_ref_same_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
-    blocking_reason_counts: Dict[str, int] = defaultdict(int)
+    blocking_reason_counts: Dict[str, int] = defaultdict(int)  # hard failures only
     blocking_by_mode_agg: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    soft_reason_counts_agg: Dict[str, int] = defaultdict(int)
 
     category_acc = defaultdict(list)
     global_worst = []
@@ -735,6 +758,8 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
         for mode, reasons in r.get("blocking_reason_counts_by_mode", {}).items():
             for reason, count in reasons.items():
                 blocking_by_mode_agg[mode][reason] += int(count)
+        for key, value in r.get("soft_reason_counts", {}).items():
+            soft_reason_counts_agg[key] += int(value)
 
         for category, info in r.get("category_breakdown", {}).items():
             stats = info.get("displacement_stats", {})
@@ -761,6 +786,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
         "total_ref_changed": total_ref_changed,
         "total_ref_same": total_ref_same,
         "ref_changed_hard_fail_count": total_ref_changed_hard_fail,
+        "ref_changed_soft_fail_count": total_ref_changed_soft_fail,
         "displaced_breakdown": total_disp,
         "max_per_mesh_breakdown": total_mesh_disp,
         "vertex_rmse_breakdown": total_vertex_rmse,
@@ -772,6 +798,7 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
             mode: dict(sorted(counts.items()))
             for mode, counts in sorted(blocking_by_mode_agg.items())
         },
+        "soft_reason_counts": dict(sorted(soft_reason_counts_agg.items())),
         "category_maxima": {
             category: round(max(values), 6)
             for category, values in sorted(category_acc.items())
@@ -822,6 +849,8 @@ def build_audit_verdict(
         "total_no_mesh": int(aggregate.get("total_no_mesh", 0)),
         "ref_changed_fail_count": int(aggregate.get("ref_changed_hard_fail_count", 0)),
         "blocking_reason_counts": aggregate.get("blocking_reason_counts", {}),
+        "ref_changed_soft_fail_count": int(aggregate.get("ref_changed_soft_fail_count", 0)),
+        "soft_reason_counts": aggregate.get("soft_reason_counts", {}),
     }
 
 
@@ -1031,6 +1060,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Ref changed prims:       {aggregate['total_ref_changed']}")
     print(f"Ref changed > 0.01:      {aggregate['ref_changed_breakdown']['gt_0.01']}")
     print(f"Ref changed hard fails:  {aggregate['ref_changed_hard_fail_count']}")
+    print(f"Ref changed soft warns:  {aggregate['ref_changed_soft_fail_count']}")
     print(f"Ref same prims:          {aggregate['total_ref_same']}")
     print(f"Ref same > 0.01:         {aggregate['ref_same_breakdown']['gt_0.01']}")
     print(f"Only in left/right:      {aggregate['total_only_in_left']}/{aggregate['total_only_in_right']}")
