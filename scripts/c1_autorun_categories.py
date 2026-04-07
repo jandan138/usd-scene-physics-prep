@@ -351,6 +351,7 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
 
     print(f"[bbox-autorun] categories_to_run={len(categories)} run_dir={run_dir}")
 
+    failed_categories: list[str] = []
     for idx, category in enumerate(categories, start=1):
         group_label = args.group_label if args.group_label != "c1_autorun" else f"c1_{category}_bbox"
         plan = build_bbox_plan(
@@ -395,6 +396,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "01_cert.log")
             if rc != 0:
                 _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "cert", "rc": rc})
+                if args.continue_on_failure:
+                    failed_categories.append(category)
+                    print(f"[bbox-autorun] category={category} cert FAILED (rc={rc}), continuing")
+                    continue
                 return rc
 
         pairs = _read_mapping_pairs(plan.mapping_stats_json)
@@ -442,6 +447,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
         rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "02_apply.log")
         if rc != 0:
             _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "apply", "rc": rc})
+            if args.continue_on_failure:
+                failed_categories.append(category)
+                print(f"[bbox-autorun] category={category} apply FAILED (rc={rc}), continuing")
+                continue
             return rc
 
         changed_scene_ids = _changed_scene_ids_from_batch_summary(plan.apply_dir / "batch_summary.json", dataset_root)
@@ -489,6 +498,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "03_audit.log")
             if rc != 0:
                 _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "audit", "rc": rc})
+                if args.continue_on_failure:
+                    failed_categories.append(category)
+                    print(f"[bbox-autorun] category={category} audit FAILED (rc={rc}), continuing")
+                    continue
                 return rc
         else:
             empty_aggregate = {
@@ -586,6 +599,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             rc = _run(cmd, cwd=REPO_ROOT, log_path=run_dir / category / "04_step6.log")
             if rc != 0:
                 _write_ledger(ledger_path, {"event": "category_fail", "category": category, "step": "step6", "rc": rc})
+                if args.continue_on_failure:
+                    failed_categories.append(category)
+                    print(f"[bbox-autorun] category={category} step6 FAILED (rc={rc}), continuing")
+                    continue
                 return rc
 
         _write_ledger(
@@ -599,7 +616,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             },
         )
 
-    _write_ledger(ledger_path, {"event": "run_done"})
+    _write_ledger(ledger_path, {"event": "run_done", "failed_categories": failed_categories})
+    if failed_categories:
+        print(f"[bbox-autorun] DONE with {len(failed_categories)} failed categories: {failed_categories}")
+        return 1
     print("[bbox-autorun] DONE")
     return 0
 
@@ -667,6 +687,8 @@ def main() -> int:
         default="geom_only",
         help="Input report mode passed into bbox-gated certificate build.",
     )
+    ap.add_argument("--continue-on-failure", action="store_true", default=False,
+                    help="Log category failures to ledger and continue to next category instead of aborting the run.")
     ap.add_argument("--eps-bbox", type=float, default=0.01)
     ap.add_argument("--eps-pos", type=float, default=0.01)
     ap.add_argument("--eps-angle", type=float, default=1.0)
