@@ -20,7 +20,7 @@ status: Active
 > - ../../set_physics/preprocess_for_interaction.py
 > - ../../set_physics/preprocess_for_navigation.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [Python 环境](#python-环境)
@@ -35,4 +35,3 @@ status: Active
 
 ## 验证
 - 运行 `python clean_data.py` 生成 `target/` 后，按交互/导航脚本生成相应 USD 并用 Isaac Sim 打开验证碰撞与刚体效果。
-

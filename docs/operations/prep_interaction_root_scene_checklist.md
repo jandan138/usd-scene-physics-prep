@@ -19,7 +19,7 @@ status: Active
 > - ../../scripts/list_draggable_prims.py
 > - ../../scripts/isaac_python.sh
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [跑完后应该看到什么](#跑完后应该看到什么)
@@ -61,7 +61,7 @@ status: Active
 - 见：`docs/operations/troubleshooting_interaction_preprocess.md`（问题 11）。
 
 ## 推荐进一步阅读
-- `docs/usage/prep_interaction_root_scene.md`
-- `docs/modules/prep_interaction_root_scene.md`
+- `docs/how-to/prep_interaction_root_scene.md`
+- `docs/reference/modules/prep_interaction_root_scene.md`
 - `docs/operations/troubleshooting_interaction_preprocess.md`
 - `docs/operations/troubleshooting_glb_payload_multimesh.md`

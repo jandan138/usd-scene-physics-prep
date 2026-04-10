@@ -19,7 +19,7 @@ status: Active
 > - ../../set_physics/get_all_references.py
 > - ../../set_physics/export_scene.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [总览](#总览)
@@ -38,4 +38,3 @@ status: Active
 - 材质：保持材质绑定关系，复制 `.mdl` 与贴图至目标路径（`set_physics/pxr_utils/data_clean.py:545-549,367-397`）。
 - 交互：为可拾取与带关节对象绑定刚体与碰撞近似，建立碰撞分组并过滤（`set_physics/preprocess_for_interaction.py:229-256,335-387`）。
 - 导航：禁用非主门或门模型，其他对象绑定静态三角网格碰撞近似，写语义（`set_physics/preprocess_for_navigation.py:198-231,389-425`）。
-
