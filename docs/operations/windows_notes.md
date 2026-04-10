@@ -17,7 +17,7 @@ status: Active
 > - ../../set_physics/pxr_utils/data_clean.py
 > - ../../set_physics/pxr_utils/usd_physics.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [文件复制](#文件复制)
@@ -32,4 +32,3 @@ status: Active
 
 ## 路径分隔符
 - 源代码多使用 `/` 分隔符（USD/Omni API 通常兼容），在纯文件系统操作中注意选择合适的分隔符或统一使用 `os.path.join`。
-

@@ -15,7 +15,7 @@ status: Active
 > - ../../clean_data.py
 > - ../../set_physics/pxr_utils/data_clean.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [源目录（示例）](#源目录示例)
@@ -57,4 +57,3 @@ target/
 ```
 
 软链接创建见 `set_physics/pxr_utils/data_clean.py:535-542`。
-

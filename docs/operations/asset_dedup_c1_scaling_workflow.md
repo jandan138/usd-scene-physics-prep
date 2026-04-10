@@ -152,7 +152,7 @@ status: Active
 - soft delete old 资产目录到 bak
 
 推荐使用一键脚本（包含进度 & ledger）：
-- [scripts/c1_step6_promote_scan_soft_delete.py](scripts/c1_step6_promote_scan_soft_delete.py)
+- [scripts/c1_step6_promote_scan_soft_delete.py](../../scripts/c1_step6_promote_scan_soft_delete.py)
 
 先 dry-run 看计划：
 - `python scripts/c1_step6_promote_scan_soft_delete.py --dataset-root GRScenes-test1 --bak-root GRScenes-test1_bak --group-label <group_label> --category <category> --mapping-json <mapping_json> --dry-run`
@@ -177,7 +177,7 @@ status: Active
 ### 4.1 全库扫描的进度
 
 如果你想单独跑扫描（不走 Step6 一键脚本），用：
-- [scripts/scan_usd_for_asset_paths.py](scripts/scan_usd_for_asset_paths.py)
+- [scripts/scan_usd_for_asset_paths.py](../../scripts/scan_usd_for_asset_paths.py)
 
 它支持：
 - `--progress-json`（快照，适合 watch）

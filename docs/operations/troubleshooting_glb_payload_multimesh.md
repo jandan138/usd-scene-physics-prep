@@ -19,7 +19,7 @@ status: Active
 > - ../../scripts/list_draggable_prims.py
 > - ../../scripts/oneoff_force_draggable.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [现象](#现象)

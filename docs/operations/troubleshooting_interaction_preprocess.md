@@ -29,7 +29,7 @@ status: Active
 > - ../../scripts/inspect_usd_physics_props.py
 > - ../../scripts/oneoff_stabilize_contact_ccd_damping.py
 >
-> 总索引：../overview/docs_index.md
+> 总入口：../index.md
 
 ## 索引
 - [背景](#背景)
@@ -289,4 +289,3 @@ PY
   --input  /shared/smartbot/jiamingda/data_code/simbench/MesaTask-USD/simbench_shared/GRSceneUSD/task10/scene_interaction_dynamic_v6.usd \
   --root /root
 ```
-
