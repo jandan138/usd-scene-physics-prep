@@ -1,8 +1,12 @@
 ---
-title: Codex Proxy Configuration Research
+title: "Codex Proxy Configuration Research"
+code_reference:
+  - "/root/.local/bin/codex_vps"
+  - "/root/.config/claude-providers/vps-http-proxy.env"
+  - "/usr/local/bin/codex"
 created_at: 2026-04-09
 updated_at: 2026-04-09
-maintainer: OpenCode
+maintainer: "GitHub Copilot"
 status: completed
 doc_class: record
 ---
@@ -195,3 +199,89 @@ Codex CLI 本身不支持在配置文件中设置代理，必须通过环境变�
 - `codex` 包装函数会 `unset OPENAI_API_KEY`，确保使用配置文件中的 API key
 - 代理配置与 Claude Code 共享同一个 `official-proxy.env` 文件
 - SSH 隧道使用端口 28790，与 Clash 默认端口 17890 不同
+
+---
+
+## 7. 2026-04-09 本机官方 Codex 安装后的最新入口
+
+### 当前命令现状
+
+- 官方 Codex 当前安装在 `/usr/local/bin/codex`
+- 默认 `codex` 不再走旧的 shell 包装函数，而是直接使用官方 npm 全局安装版本
+- 新增 `codex_vps` 作为显式代理入口，用于在启动官方 Codex 之前加载 VPS HTTP 代理环境
+
+### `codex_vps` 的最终实现原则
+
+2026-04-09 的最终落地方案，不再让 Codex 直接复用 Claude 的 `18443 -> iproyal` 住宅代理链。
+
+原因是这条旧链路对 Anthropic 可用，但对 OpenAI/ChatGPT 传输层会出现 reset，具体表现为：
+
+- `codex_apps` MCP 初始化失败
+- `chatgpt.com/backend-api/wham/apps` 请求 reset
+- 后续 Codex 主请求也会 `Connection reset by peer`
+
+最终采用的稳定方案是：
+
+```text
+codex_vps
+  -> 本地 SSH 隧道 127.0.0.1:28791
+  -> VPS 127.0.0.1:18445 tinyproxy
+  -> VPS 原生直连 OpenAI / ChatGPT
+```
+
+也就是说：
+
+1. `codex_vps` 先调用本地 tunnel helper，确保 SSH LocalForward 已建立
+2. 本地代理地址固定为 `127.0.0.1:28791`
+3. VPS 上单独使用 `18445` 端口的 tinyproxy，和 Claude 的 `18443` 入口彻底隔离
+4. 最终仍然执行官方 `/usr/local/bin/codex`
+
+相关本地文件：
+
+- `/root/.local/bin/codex_vps`
+- `/root/.local/bin/codex_vps_tunnel_start`
+- `/root/.local/bin/codex_vps_tunnel_status`
+- `/root/.local/bin/codex_vps_tunnel_stop`
+- `/root/.local/share/zhuzihou-cli/codex_vps_tunnel.py`
+- `/root/.config/claude-providers/codex-openai-tunnel.env`
+
+### 使用方式
+
+```bash
+# 默认官方 Codex（不附加 Codex 专用代理）
+codex
+
+# 显式通过本地隧道 + VPS tinyproxy 启动官方 Codex
+codex_vps
+
+# 手动控制隧道
+codex_vps_tunnel_start
+codex_vps_tunnel_status
+codex_vps_tunnel_stop
+
+# 无副作用验证
+codex_vps --version
+```
+
+### 验证结果
+
+2026-04-09 本机验证结果：
+
+- `command -v codex` -> `/usr/local/bin/codex`
+- `command -v codex_vps` -> `/root/.local/bin/codex_vps`
+- `codex_vps_tunnel_start` -> `running 127.0.0.1:28791`
+- 通过 `127.0.0.1:28791` 代理测试：
+    - `https://api.openai.com/v1/models` -> `HTTP 401`
+    - `https://chatgpt.com/backend-api/wham/apps` -> `HTTP 405`
+- `codex_vps --version` -> `codex-cli 0.118.0`
+- `codex_vps exec --color never --output-last-message ... "Reply with exactly: ok"` -> `ok`
+- `codex_vps_tunnel_stop` 后，`codex_vps_tunnel_status` -> `stopped`
+
+### 结论
+
+对于当前机器，推荐把代理需求明确分成两条入口：
+
+- `codex`：官方默认入口
+- `codex_vps`：本地 SSH 隧道 + VPS tinyproxy 直连 OpenAI/ChatGPT 的专用入口
+
+这样不会再把默认官方安装和 Claude 专用住宅代理绑死在一起，排障和日常使用都更清晰。
