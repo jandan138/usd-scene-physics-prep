@@ -1,0 +1,46 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Bash(*)",
+      "WebFetch",
+      "WebSearch",
+      "Agent(*)",
+      "Skill(*)",
+      "TaskCreate",
+      "TaskList",
+      "TaskGet",
+      "TaskUpdate",
+      "TaskStop",
+      "NotebookEdit(*)",
+      "SendMessage(*)",
+      "TeamCreate(*)",
+      "TeamDelete(*)",
+      "EnterWorktree(*)",
+      "EnterPlanMode(*)",
+      "ExitPlanMode(*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__ide__executeCode"
+    ],
+    "deny": [],
+    "ask": [
+      "Bash(rm *)",
+      "Bash(rm -*)",
+      "Bash(mv *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore *)"
+    ]
+  },
+  "defaultMode": "bypassPermissions"
+}
