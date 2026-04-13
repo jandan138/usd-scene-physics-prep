@@ -51,6 +51,7 @@ subsets/
 .claude/scheduled_tasks.lock
 .claude/.efc_*
 .codex/
+.worktrees/
 
 # Skills (claude code custom skills)
 skills/

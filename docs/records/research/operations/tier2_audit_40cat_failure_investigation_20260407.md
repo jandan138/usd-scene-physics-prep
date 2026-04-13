@@ -2,12 +2,18 @@
 title: "Tier2 Audit 40-Category Failure Investigation"
 code_reference: scripts/placement_pairwise_compare.py, scripts/c1_autorun_categories.py
 created_at: 2026-04-07
-updated_at: 2026-04-07
+updated_at: 2026-04-10
 maintainer: zhuzihou
 status: active
 ---
 
 # Tier2 Audit 40-Category Failure Investigation
+
+> Status note (2026-04-10): This document is still the authoritative record for
+> the 40-category audit failure root cause and observe-policy fix. For latest
+> rollout completion status, see
+> `docs/records/research/operations/grscenes_test0_dedup_rollout_status_20260410.md`.
+> Treat the rollout-status statements below as a historical snapshot.
 
 ## 背景
 

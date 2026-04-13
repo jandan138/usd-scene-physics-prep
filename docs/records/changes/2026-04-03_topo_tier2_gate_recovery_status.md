@@ -2,12 +2,18 @@
 title: "Topo Tier2 Gate Recovery — Status Snapshot"
 code_reference: scripts/compute_vertex_transform.py, scripts/analyze_tier2_gate_thresholds.py, scripts/verify_tier2_vertex_rmse.py
 created_at: 2026-04-03
-updated_at: 2026-04-07
+updated_at: 2026-04-10
 maintainer: zhuzihou
 status: in_progress
 ---
 
 # Topo Tier2 Gate Recovery — Status Snapshot (2026-04-03)
+
+> Status note (2026-04-10): This document remains the implementation and probe
+> status snapshot for Tier2 gate recovery. For latest end-to-end rollout status,
+> see
+> `docs/records/research/operations/grscenes_test0_dedup_rollout_status_20260410.md`.
+> The pending rollout statements below should be read as historical context.
 
 Branch: `feat/topo_precheck_recovery_v1`
 
