@@ -112,10 +112,16 @@ def _count_layout_asset_usage(dataset_root: Path, *, dataset_rel: bool) -> Count
                         items = []
                     for r in items:
                         ap = getattr(r, "assetPath", "") or ""
-                        subset_rel = _abs_to_subset_rel(_abs_from_layout_ref(base_dir, ap))
+                        subset_rel = _abs_to_subset_rel(
+                            _abs_from_layout_ref(base_dir, ap)
+                        )
                         if not subset_rel:
                             continue
-                        key = _to_dataset_rel_asset_path(subset_rel, dataset_name) if dataset_rel else subset_rel
+                        key = (
+                            _to_dataset_rel_asset_path(subset_rel, dataset_name)
+                            if dataset_rel
+                            else subset_rel
+                        )
                         counts[key] += 1
 
             if prim.HasAuthoredPayloads():
@@ -127,10 +133,16 @@ def _count_layout_asset_usage(dataset_root: Path, *, dataset_rel: bool) -> Count
                         items = []
                     for r in items:
                         ap = getattr(r, "assetPath", "") or ""
-                        subset_rel = _abs_to_subset_rel(_abs_from_layout_ref(base_dir, ap))
+                        subset_rel = _abs_to_subset_rel(
+                            _abs_from_layout_ref(base_dir, ap)
+                        )
                         if not subset_rel:
                             continue
-                        key = _to_dataset_rel_asset_path(subset_rel, dataset_name) if dataset_rel else subset_rel
+                        key = (
+                            _to_dataset_rel_asset_path(subset_rel, dataset_name)
+                            if dataset_rel
+                            else subset_rel
+                        )
                         counts[key] += 1
 
     return counts
@@ -153,11 +165,15 @@ def _read_revoked_edges(path: Optional[str]) -> Set[Tuple[str, str]]:
             old_asset = item.get("old_asset")
             canonical_asset = item.get("canonical_asset")
             if isinstance(old_asset, str) and isinstance(canonical_asset, str):
-                revoked.add((_norm_asset_path(old_asset), _norm_asset_path(canonical_asset)))
+                revoked.add(
+                    (_norm_asset_path(old_asset), _norm_asset_path(canonical_asset))
+                )
     return revoked
 
 
-def _connected_components(nodes: Sequence[str], edges: Sequence[Tuple[str, str]]) -> List[List[str]]:
+def _connected_components(
+    nodes: Sequence[str], edges: Sequence[Tuple[str, str]]
+) -> List[List[str]]:
     adjacency: Dict[str, Set[str]] = defaultdict(set)
     for left, right in edges:
         adjacency[left].add(right)
@@ -202,7 +218,9 @@ def _infer_dedup_mode(report_path: Path, explicit_mode: Optional[str]) -> str:
 
 def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def _run_legacy(args: argparse.Namespace) -> int:
@@ -296,7 +314,10 @@ def _run_legacy(args: argparse.Namespace) -> int:
             "canonical_selections": canonical_selections,
         },
     )
-    print(f"DONE groups_included={group_kept} mapping_pairs={len(mapping)} out={out_mapping}", flush=True)
+    print(
+        f"DONE groups_included={group_kept} mapping_pairs={len(mapping)} out={out_mapping}",
+        flush=True,
+    )
     return 0
 
 
@@ -311,7 +332,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
     mode_index: Dict[Tuple[str, str], str] = {}
     if args.mode_reports_dir:
         mode_index = _cvt.build_mode_index(args.mode_reports_dir)
-        print(f"[bbox-gated] mode_index loaded: {len(mode_index)} entries from {args.mode_reports_dir}", flush=True)
+        print(
+            f"[bbox-gated] mode_index loaded: {len(mode_index)} entries from {args.mode_reports_dir}",
+            flush=True,
+        )
 
     certificate_rows: List[Dict[str, object]] = []
     eligible_edges: List[Tuple[str, str]] = []
@@ -350,6 +374,7 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
         groups_included += 1
         initial_canonical = _component_canonical(paths, usage)
         all_nodes.update(paths)
+        group_members = [str(dataset_root / path) for path in paths]
 
         for old_asset in paths:
             if old_asset == initial_canonical:
@@ -358,7 +383,7 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             candidate_pair_count += 1
 
             # Per-pair mode resolution via mode_index
-            if mode_index:
+            if args.mode_reports_dir:
                 canon_uid = _cvt._uid_from_path(str(dataset_root / initial_canonical))
                 old_uid = _cvt._uid_from_path(str(dataset_root / old_asset))
                 pair_mode = mode_index.get((canon_uid, old_uid))
@@ -369,16 +394,14 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
 
             pair_mode_counts[pair_mode] += 1
 
-            # Transitive pairs are NOT supported this round — reject immediately
             if pair_mode == "transitive":
-                cert = _cvt._base_pair_certificate(
+                cert = _cvt.build_transitive_pair_certificate(
                     old_usd=str(dataset_root / old_asset),
                     canonical_usd=str(dataset_root / initial_canonical),
-                    mode=pair_mode,
+                    group_members=group_members,
+                    mode_index=mode_index,
                     policy=args.bbox_policy,
                 )
-                cert["eligible"] = False
-                cert["reject_reason"] = "transitive_not_supported"
             else:
                 cert = _cvt.build_pair_certificate(
                     old_usd=str(dataset_root / old_asset),
@@ -445,7 +468,10 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
         best_coverage = -1
         for node in component:
             coverage = len(cert_out.get(node, set()) & set(component))
-            if coverage > best_coverage or (coverage == best_coverage and (best_canonical is None or node < best_canonical)):
+            if coverage > best_coverage or (
+                coverage == best_coverage
+                and (best_canonical is None or node < best_canonical)
+            ):
                 best_canonical = node
                 best_coverage = coverage
         canonical = best_canonical or component[0]
@@ -535,7 +561,11 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
                 mode: dict(sorted(counts.items()))
                 for mode, counts in sorted(reject_reason_by_mode.items())
             },
-            "revoked_edge_count": sum(1 for row in certificate_rows if row.get("reject_reason") == "revoked_edge"),
+            "revoked_edge_count": sum(
+                1
+                for row in certificate_rows
+                if row.get("reject_reason") == "revoked_edge"
+            ),
         },
     )
     _write_json(
@@ -639,7 +669,7 @@ def main() -> int:
         "--mode-reports-dir",
         default=None,
         help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/). "
-             "REQUIRED when --bbox-gated is set.",
+        "REQUIRED when --bbox-gated is set.",
     )
     args = ap.parse_args()
 
@@ -656,7 +686,9 @@ def main() -> int:
         }
         missing = [flag for flag, value in required.items() if not value]
         if missing:
-            raise SystemExit(f"Missing required bbox-gated outputs: {', '.join(missing)}")
+            raise SystemExit(
+                f"Missing required bbox-gated outputs: {', '.join(missing)}"
+            )
         return _run_bbox_gated(args)
 
     return _run_legacy(args)

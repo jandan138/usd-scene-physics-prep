@@ -21,7 +21,7 @@ import sys
 import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import numpy as np
 
@@ -34,6 +34,7 @@ except ImportError as exc:
 
 try:
     import compute_vertex_transform as _cvt
+
     _CVT_AVAILABLE = True
 except ImportError:
     _cvt = None  # type: ignore
@@ -54,16 +55,120 @@ def _uid_from_ref(ref_path: str) -> Optional[str]:
     return None
 
 
+def _certificate_mode_from_row(row: Dict[str, object]) -> Optional[str]:
+    mode = row.get("transitive_effective_mode")
+    if isinstance(mode, str) and mode:
+        return mode
+
+    mode = row.get("mode")
+    if mode != "transitive":
+        return mode if isinstance(mode, str) and mode else None
+
+    witness_modes = row.get("transitive_witness_modes")
+    if isinstance(witness_modes, list):
+        ranked_modes = [
+            candidate
+            for candidate in ("shape_invariant", "topo_filesize", "geom_only")
+            if candidate in witness_modes
+        ]
+        if ranked_modes:
+            return ranked_modes[0]
+    return "transitive"
+
+
+def _is_certified_certificate_row(row: Dict[str, object]) -> bool:
+    return bool(row.get("eligible")) and not row.get("reject_reason")
+
+
+def _load_certificate_lookup(
+    certificate_jsonl: Optional[str],
+) -> Optional[Dict[str, Dict[Tuple[str, str], str]]]:
+    if not certificate_jsonl:
+        return None
+
+    by_path: Dict[Tuple[str, str], str] = {}
+    by_uid: Dict[Tuple[str, str], str] = {}
+    with open(certificate_jsonl, "r", encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            if not isinstance(row, dict):
+                continue
+            if not _is_certified_certificate_row(row):
+                continue
+            effective_mode = _certificate_mode_from_row(row)
+            if not effective_mode:
+                continue
+
+            old_asset = row.get("old_asset")
+            canonical_asset = row.get("canonical_asset")
+            if isinstance(old_asset, str) and isinstance(canonical_asset, str):
+                by_path[(_norm_abs(canonical_asset), _norm_abs(old_asset))] = (
+                    effective_mode
+                )
+                old_uid = _uid_from_ref(old_asset)
+                canonical_uid = _uid_from_ref(canonical_asset)
+                if old_uid and canonical_uid:
+                    by_uid[(canonical_uid, old_uid)] = effective_mode
+
+    return {
+        "by_path": by_path,
+        "by_uid": by_uid,
+    }
+
+
+def _lookup_certificate_mode(
+    left_refs: List[str],
+    right_refs: List[str],
+    certificate_lookup: Dict[str, Dict[Tuple[str, str], str]],
+) -> Optional[str]:
+    if not left_refs or not right_refs:
+        return None
+
+    path_pairs = (
+        (_norm_abs(right_refs[0]), _norm_abs(left_refs[0])),
+        (_norm_abs(left_refs[0]), _norm_abs(right_refs[0])),
+    )
+    for pair in path_pairs:
+        cert_mode = certificate_lookup.get("by_path", {}).get(pair)
+        if cert_mode:
+            return cert_mode
+
+    left_uid = _uid_from_ref(left_refs[0])
+    right_uid = _uid_from_ref(right_refs[0])
+    if not left_uid or not right_uid:
+        return None
+
+    uid_pairs = (
+        (right_uid, left_uid),
+        (left_uid, right_uid),
+    )
+    for pair in uid_pairs:
+        cert_mode = certificate_lookup.get("by_uid", {}).get(pair)
+        if cert_mode:
+            return cert_mode
+    return None
+
+
 def _lookup_prim_dedup_mode(
     left_refs: List[str],
     right_refs: List[str],
     mode_index: Optional[Dict],
+    certificate_lookup: Optional[Dict[str, Dict[Tuple[str, str], str]]] = None,
 ) -> Optional[str]:
     """Determine dedup mode for a ref-changed prim."""
-    if not mode_index or left_refs == right_refs:
+    if left_refs == right_refs:
         return None
     old_uid = _uid_from_ref(left_refs[0]) if left_refs else None
     canon_uid = _uid_from_ref(right_refs[0]) if right_refs else None
+    if certificate_lookup and left_refs and right_refs:
+        cert_mode = _lookup_certificate_mode(left_refs, right_refs, certificate_lookup)
+        if cert_mode:
+            return cert_mode
+    if not mode_index:
+        return None
     if old_uid and canon_uid:
         return (
             mode_index.get((canon_uid, old_uid))
@@ -85,8 +190,7 @@ _ASSET_MESH_CACHE: Dict[str, List[Tuple[str, List[Tuple[float, float, float]]]]]
 
 def _find_backup_by_pattern(scene_dir: str, prefix: str) -> Optional[str]:
     candidates = [
-        f for f in os.listdir(scene_dir)
-        if f.startswith(prefix) and f.endswith(".usd")
+        f for f in os.listdir(scene_dir) if f.startswith(prefix) and f.endswith(".usd")
     ]
     if not candidates:
         return None
@@ -101,8 +205,7 @@ def _find_backup_by_pattern(scene_dir: str, prefix: str) -> Optional[str]:
 
 def _find_latest_backup_by_pattern(scene_dir: str, prefix: str) -> Optional[str]:
     candidates = [
-        f for f in os.listdir(scene_dir)
-        if f.startswith(prefix) and f.endswith(".usd")
+        f for f in os.listdir(scene_dir) if f.startswith(prefix) and f.endswith(".usd")
     ]
     if not candidates:
         return None
@@ -115,7 +218,9 @@ def _find_latest_backup_by_pattern(scene_dir: str, prefix: str) -> Optional[str]
     return os.path.join(scene_dir, candidates[-1])
 
 
-def select_layout(scene_dir: str, mode: str, explicit_name: Optional[str] = None) -> Optional[str]:
+def select_layout(
+    scene_dir: str, mode: str, explicit_name: Optional[str] = None
+) -> Optional[str]:
     if explicit_name:
         candidate = os.path.join(scene_dir, explicit_name)
         return candidate if os.path.isfile(candidate) else None
@@ -133,7 +238,9 @@ def _norm_abs(path: str) -> str:
     return os.path.normpath(os.path.abspath(path.replace("\\", "/")))
 
 
-def build_old_asset_locator(bak_root: Optional[str], dataset_root: str) -> Dict[str, str]:
+def build_old_asset_locator(
+    bak_root: Optional[str], dataset_root: str
+) -> Dict[str, str]:
     locator: Dict[str, str] = {}
     if not bak_root:
         return locator
@@ -157,7 +264,14 @@ def build_old_asset_locator(bak_root: Optional[str], dataset_root: str) -> Dict[
                 if not os.path.isfile(usd_path):
                     continue
                 original_abs = _norm_abs(
-                    os.path.join(dataset_root, "GRScenes_assets", category, uid, "usd", f"{uid}.usd")
+                    os.path.join(
+                        dataset_root,
+                        "GRScenes_assets",
+                        category,
+                        uid,
+                        "usd",
+                        f"{uid}.usd",
+                    )
                 )
                 locator[original_abs] = _norm_abs(usd_path)
     return locator
@@ -193,24 +307,32 @@ def discover_scene_pairs(
                 continue
             left_scene_dir = os.path.join(left_base, scene_id)
             right_scene_dir = os.path.join(right_base, scene_id)
-            left_layout = select_layout(left_scene_dir, left_mode, explicit_name=left_layout_name)
-            right_layout = select_layout(right_scene_dir, right_mode, explicit_name=right_layout_name)
+            left_layout = select_layout(
+                left_scene_dir, left_mode, explicit_name=left_layout_name
+            )
+            right_layout = select_layout(
+                right_scene_dir, right_mode, explicit_name=right_layout_name
+            )
             if left_layout and right_layout:
                 pairs.append((left_layout, right_layout, full_id))
             elif left_layout and not right_layout:
-                right_only.append({
-                    "scene_id": full_id,
-                    "missing_side": "right",
-                    "left_layout": left_layout,
-                    "right_mode": right_mode,
-                })
+                right_only.append(
+                    {
+                        "scene_id": full_id,
+                        "missing_side": "right",
+                        "left_layout": left_layout,
+                        "right_mode": right_mode,
+                    }
+                )
             elif right_layout and not left_layout:
-                left_only.append({
-                    "scene_id": full_id,
-                    "missing_side": "left",
-                    "right_layout": right_layout,
-                    "left_mode": left_mode,
-                })
+                left_only.append(
+                    {
+                        "scene_id": full_id,
+                        "missing_side": "left",
+                        "right_layout": right_layout,
+                        "left_mode": left_mode,
+                    }
+                )
 
         for scene_id in sorted(left_ids - right_ids):
             full_id = f"{subcategory}/{scene_id}"
@@ -218,13 +340,19 @@ def discover_scene_pairs(
                 continue
             if scene_filter and scene_filter not in full_id:
                 continue
-            left_layout = select_layout(os.path.join(left_base, scene_id), left_mode, explicit_name=left_layout_name)
+            left_layout = select_layout(
+                os.path.join(left_base, scene_id),
+                left_mode,
+                explicit_name=left_layout_name,
+            )
             if left_layout:
-                right_only.append({
-                    "scene_id": full_id,
-                    "missing_side": "right_root",
-                    "left_layout": left_layout,
-                })
+                right_only.append(
+                    {
+                        "scene_id": full_id,
+                        "missing_side": "right_root",
+                        "left_layout": left_layout,
+                    }
+                )
 
         for scene_id in sorted(right_ids - left_ids):
             full_id = f"{subcategory}/{scene_id}"
@@ -232,13 +360,19 @@ def discover_scene_pairs(
                 continue
             if scene_filter and scene_filter not in full_id:
                 continue
-            right_layout = select_layout(os.path.join(right_base, scene_id), right_mode, explicit_name=right_layout_name)
+            right_layout = select_layout(
+                os.path.join(right_base, scene_id),
+                right_mode,
+                explicit_name=right_layout_name,
+            )
             if right_layout:
-                left_only.append({
-                    "scene_id": full_id,
-                    "missing_side": "left_root",
-                    "right_layout": right_layout,
-                })
+                left_only.append(
+                    {
+                        "scene_id": full_id,
+                        "missing_side": "left_root",
+                        "right_layout": right_layout,
+                    }
+                )
 
     return pairs, left_only, right_only
 
@@ -340,7 +474,7 @@ def _find_all_meshes_with_points_composed(prim, xform_cache):
             gf_p = Gf.Vec3d(float(p[0]), float(p[1]), float(p[2]))
             wp = world_xform.Transform(gf_p)
             world_pts.append([wp[0], wp[1], wp[2]])
-        rel_path = str(child.GetPath())[len(root_path):]
+        rel_path = str(child.GetPath())[len(root_path) :]
         results.append((rel_path, np.array(world_pts, dtype=np.float64)))
     return results
 
@@ -382,7 +516,7 @@ def _load_asset_meshes_in_asset_space(asset_actual_path: str):
             gf_p = Gf.Vec3d(float(p[0]), float(p[1]), float(p[2]))
             wp = mesh_xform.Transform(gf_p)
             mesh_points.append((wp[0], wp[1], wp[2]))
-        rel_path = str(child.GetPath())[len(root_path):]
+        rel_path = str(child.GetPath())[len(root_path) :]
         meshes.append((rel_path, mesh_points))
 
     _ASSET_MESH_CACHE[asset_actual_path] = meshes
@@ -437,10 +571,7 @@ def _displacement_stats(values: Sequence[float]) -> Dict[str, float]:
 
 
 def _breakdown(values: Sequence[float], thresholds: Sequence[float]) -> Dict[str, int]:
-    return {
-        f"gt_{thr}": int(sum(1 for v in values if v > thr))
-        for thr in thresholds
-    }
+    return {f"gt_{thr}": int(sum(1 for v in values if v > thr)) for thr in thresholds}
 
 
 def compare_scene(
@@ -456,6 +587,7 @@ def compare_scene(
     eps_angle: float,
     eps_geom: float,
     mode_index: Optional[Dict] = None,
+    certificate_lookup: Optional[Dict[str, Dict[Tuple[str, str], str]]] = None,
 ) -> Dict[str, object]:
     result: Dict[str, object] = {
         "scene_id": scene_id,
@@ -513,8 +645,12 @@ def compare_scene(
             meshes_left = _find_all_meshes_with_points_composed(left_prim, xc_left)
             meshes_right = _find_all_meshes_with_points_composed(right_prim, xc_right)
         else:
-            meshes_left = _find_all_meshes_with_points(left_prim, left_refs[0], xc_left, left_locator)
-            meshes_right = _find_all_meshes_with_points(right_prim, right_refs[0], xc_right, right_locator)
+            meshes_left = _find_all_meshes_with_points(
+                left_prim, left_refs[0], xc_left, left_locator
+            )
+            meshes_right = _find_all_meshes_with_points(
+                right_prim, right_refs[0], xc_right, right_locator
+            )
         if not meshes_left or not meshes_right:
             no_mesh_count += 1
             continue
@@ -556,8 +692,12 @@ def compare_scene(
         pts_right_all = np.vstack([pts for _, pts in meshes_right])
         bbox_left = _bbox_from_points(pts_left_all)
         bbox_right = _bbox_from_points(pts_right_all)
-        bbox_min_delta = [round(abs(a - b), 6) for a, b in zip(bbox_left["min"], bbox_right["min"])]
-        bbox_max_delta = [round(abs(a - b), 6) for a, b in zip(bbox_left["max"], bbox_right["max"])]
+        bbox_min_delta = [
+            round(abs(a - b), 6) for a, b in zip(bbox_left["min"], bbox_right["min"])
+        ]
+        bbox_max_delta = [
+            round(abs(a - b), 6) for a, b in zip(bbox_left["max"], bbox_right["max"])
+        ]
         bbox_delta_max = round(max(max(bbox_min_delta), max(bbox_max_delta)), 6)
         footprint_left = _footprint_signature(pts_left_all)
         footprint_right = _footprint_signature(pts_right_all)
@@ -568,24 +708,31 @@ def compare_scene(
             ),
             6,
         )
-        footprint_axis_delta = _axis_delta_deg(footprint_left["axis_deg"], footprint_right["axis_deg"])
+        footprint_axis_delta = _axis_delta_deg(
+            footprint_left["axis_deg"], footprint_right["axis_deg"]
+        )
 
         parts = path.split("/")
         category = parts[4] if len(parts) >= 5 else "unknown"
         category_disps[category].append(displacement)
 
         # Per-prim dedup mode lookup
-        prim_mode = _lookup_prim_dedup_mode(left_refs, right_refs, mode_index)
+        prim_mode = _lookup_prim_dedup_mode(
+            left_refs,
+            right_refs,
+            mode_index,
+            certificate_lookup,
+        )
 
         # Mode-aware effective bbox threshold
         if prim_mode == "geom_only":
-            effective_eps_bbox = eps_bbox          # 0.01 (strict, V=Identity exact)
+            effective_eps_bbox = eps_bbox  # 0.01 (strict, V=Identity exact)
         elif prim_mode in ("topo_filesize", "shape_invariant"):
-            effective_eps_bbox = 0.15              # observe phase — NOT final standard
+            effective_eps_bbox = 0.15  # observe phase — NOT final standard
         elif prim_mode == "transitive":
-            effective_eps_bbox = eps_bbox           # strict for unsupported mode
+            effective_eps_bbox = eps_bbox  # strict for unsupported mode
         else:
-            effective_eps_bbox = eps_bbox           # unknown -> strict
+            effective_eps_bbox = eps_bbox  # unknown -> strict
 
         hard_failures: List[str] = []
         soft_failures: List[str] = []
@@ -597,9 +744,15 @@ def compare_scene(
             )
             bbox_target = soft_failures if is_observe_tier2 else hard_failures
 
-            if _max_abs_axis_delta(bbox_left["min"], bbox_right["min"]) > effective_eps_bbox:
+            if (
+                _max_abs_axis_delta(bbox_left["min"], bbox_right["min"])
+                > effective_eps_bbox
+            ):
                 bbox_target.append("bbox_min_delta_gt_eps")
-            if _max_abs_axis_delta(bbox_left["max"], bbox_right["max"]) > effective_eps_bbox:
+            if (
+                _max_abs_axis_delta(bbox_left["max"], bbox_right["max"])
+                > effective_eps_bbox
+            ):
                 bbox_target.append("bbox_max_delta_gt_eps")
             if footprint_extent_delta > effective_eps_bbox:
                 bbox_target.append("footprint_extent_delta_gt_eps")
@@ -647,10 +800,14 @@ def compare_scene(
     compared.sort(key=lambda x: x["displacement"], reverse=True)
     all_disps = [c["displacement"] for c in compared]
     all_max_mesh = [c["max_per_mesh_displacement"] for c in compared]
-    all_vertex_rmse = [c["vertex_rmse"] for c in compared if c["vertex_rmse"] is not None]
+    all_vertex_rmse = [
+        c["vertex_rmse"] for c in compared if c["vertex_rmse"] is not None
+    ]
     ref_changed_disps = [c["displacement"] for c in compared if c["ref_changed"]]
     ref_same_disps = [c["displacement"] for c in compared if not c["ref_changed"]]
-    ref_changed_hard_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("hard_fail"))
+    ref_changed_hard_fail_count = sum(
+        1 for c in compared if c["ref_changed"] and c.get("hard_fail")
+    )
     blocking_reason_counts: Dict[str, int] = defaultdict(int)  # hard failures only
     blocking_by_mode: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for c in compared:
@@ -662,7 +819,9 @@ def compare_scene(
             blocking_by_mode[m][reason] += 1
 
     # Soft warnings (observe+tier2 bbox checks) — recorded but not blocking
-    ref_changed_soft_fail_count = sum(1 for c in compared if c["ref_changed"] and c.get("soft_fail"))
+    ref_changed_soft_fail_count = sum(
+        1 for c in compared if c["ref_changed"] and c.get("soft_fail")
+    )
     soft_reason_counts: Dict[str, int] = defaultdict(int)
     for c in compared:
         if not c.get("ref_changed"):
@@ -678,39 +837,41 @@ def compare_scene(
             "displaced_breakdown": _breakdown(disps, DISP_THRESHOLDS),
         }
 
-    result.update({
-        "total_prims_left": len(left_by_path),
-        "total_prims_right": len(right_by_path),
-        "total_common": len(common_paths),
-        "total_compared": len(compared),
-        "total_no_mesh": no_mesh_count,
-        "only_in_left": len(only_left),
-        "only_in_right": len(only_right),
-        "only_in_left_paths": only_left[:20],
-        "only_in_right_paths": only_right[:20],
-        "displacement_stats": _displacement_stats(all_disps),
-        "displaced_breakdown": _breakdown(all_disps, DISP_THRESHOLDS),
-        "max_per_mesh_breakdown": _breakdown(all_max_mesh, DISP_THRESHOLDS),
-        "vertex_rmse_stats": _displacement_stats(all_vertex_rmse),
-        "vertex_rmse_breakdown": _breakdown(all_vertex_rmse, DISP_THRESHOLDS),
-        "vertex_rmse_count": len(all_vertex_rmse),
-        "ref_changed_count": len(ref_changed_disps),
-        "ref_changed_hard_fail_count": ref_changed_hard_fail_count,
-        "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
-        "blocking_reason_counts_by_mode": {
-            mode: dict(sorted(counts.items()))
-            for mode, counts in sorted(blocking_by_mode.items())
-        },
-        "ref_changed_soft_fail_count": ref_changed_soft_fail_count,
-        "soft_reason_counts": dict(sorted(soft_reason_counts.items())),
-        "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
-        "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
-        "ref_same_count": len(ref_same_disps),
-        "ref_same_breakdown": _breakdown(ref_same_disps, DISP_THRESHOLDS),
-        "ref_same_displacement_stats": _displacement_stats(ref_same_disps),
-        "category_breakdown": category_summary,
-        "top_20_worst": compared[:20],
-    })
+    result.update(
+        {
+            "total_prims_left": len(left_by_path),
+            "total_prims_right": len(right_by_path),
+            "total_common": len(common_paths),
+            "total_compared": len(compared),
+            "total_no_mesh": no_mesh_count,
+            "only_in_left": len(only_left),
+            "only_in_right": len(only_right),
+            "only_in_left_paths": only_left[:20],
+            "only_in_right_paths": only_right[:20],
+            "displacement_stats": _displacement_stats(all_disps),
+            "displaced_breakdown": _breakdown(all_disps, DISP_THRESHOLDS),
+            "max_per_mesh_breakdown": _breakdown(all_max_mesh, DISP_THRESHOLDS),
+            "vertex_rmse_stats": _displacement_stats(all_vertex_rmse),
+            "vertex_rmse_breakdown": _breakdown(all_vertex_rmse, DISP_THRESHOLDS),
+            "vertex_rmse_count": len(all_vertex_rmse),
+            "ref_changed_count": len(ref_changed_disps),
+            "ref_changed_hard_fail_count": ref_changed_hard_fail_count,
+            "blocking_reason_counts": dict(sorted(blocking_reason_counts.items())),
+            "blocking_reason_counts_by_mode": {
+                mode: dict(sorted(counts.items()))
+                for mode, counts in sorted(blocking_by_mode.items())
+            },
+            "ref_changed_soft_fail_count": ref_changed_soft_fail_count,
+            "soft_reason_counts": dict(sorted(soft_reason_counts.items())),
+            "ref_changed_breakdown": _breakdown(ref_changed_disps, DISP_THRESHOLDS),
+            "ref_changed_displacement_stats": _displacement_stats(ref_changed_disps),
+            "ref_same_count": len(ref_same_disps),
+            "ref_same_breakdown": _breakdown(ref_same_disps, DISP_THRESHOLDS),
+            "ref_same_displacement_stats": _displacement_stats(ref_same_disps),
+            "category_breakdown": category_summary,
+            "top_20_worst": compared[:20],
+        }
+    )
     return result
 
 
@@ -725,8 +886,12 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_only_right = sum(int(r.get("only_in_right", 0)) for r in ok_results)
     total_ref_changed = sum(int(r.get("ref_changed_count", 0)) for r in ok_results)
     total_ref_same = sum(int(r.get("ref_same_count", 0)) for r in ok_results)
-    total_ref_changed_hard_fail = sum(int(r.get("ref_changed_hard_fail_count", 0)) for r in ok_results)
-    total_ref_changed_soft_fail = sum(int(r.get("ref_changed_soft_fail_count", 0)) for r in ok_results)
+    total_ref_changed_hard_fail = sum(
+        int(r.get("ref_changed_hard_fail_count", 0)) for r in ok_results
+    )
+    total_ref_changed_soft_fail = sum(
+        int(r.get("ref_changed_soft_fail_count", 0)) for r in ok_results
+    )
 
     total_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_mesh_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
@@ -735,7 +900,9 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
     total_ref_changed_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     total_ref_same_disp = {f"gt_{thr}": 0 for thr in DISP_THRESHOLDS}
     blocking_reason_counts: Dict[str, int] = defaultdict(int)  # hard failures only
-    blocking_by_mode_agg: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    blocking_by_mode_agg: Dict[str, Dict[str, int]] = defaultdict(
+        lambda: defaultdict(int)
+    )
     soft_reason_counts_agg: Dict[str, int] = defaultdict(int)
 
     category_acc = defaultdict(list)
@@ -768,10 +935,12 @@ def compute_aggregate(scene_results: Iterable[Dict[str, object]]) -> Dict[str, o
                 category_acc[category].append(float(max_disp))
 
         for item in r.get("top_20_worst", []):
-            global_worst.append({
-                "scene_id": r["scene_id"],
-                **item,
-            })
+            global_worst.append(
+                {
+                    "scene_id": r["scene_id"],
+                    **item,
+                }
+            )
 
     global_worst.sort(key=lambda x: x["displacement"], reverse=True)
 
@@ -849,7 +1018,9 @@ def build_audit_verdict(
         "total_no_mesh": int(aggregate.get("total_no_mesh", 0)),
         "ref_changed_fail_count": int(aggregate.get("ref_changed_hard_fail_count", 0)),
         "blocking_reason_counts": aggregate.get("blocking_reason_counts", {}),
-        "ref_changed_soft_fail_count": int(aggregate.get("ref_changed_soft_fail_count", 0)),
+        "ref_changed_soft_fail_count": int(
+            aggregate.get("ref_changed_soft_fail_count", 0)
+        ),
         "soft_reason_counts": aggregate.get("soft_reason_counts", {}),
     }
 
@@ -860,15 +1031,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument("--left-root", required=True)
     parser.add_argument("--right-root", required=True)
-    parser.add_argument("--left-mode", choices=sorted(VALID_LAYOUT_MODES), default="current")
-    parser.add_argument("--right-mode", choices=sorted(VALID_LAYOUT_MODES), default="current")
+    parser.add_argument(
+        "--left-mode", choices=sorted(VALID_LAYOUT_MODES), default="current"
+    )
+    parser.add_argument(
+        "--right-mode", choices=sorted(VALID_LAYOUT_MODES), default="current"
+    )
     parser.add_argument("--left-layout-name", default=None)
     parser.add_argument("--right-layout-name", default=None)
     parser.add_argument("--label", required=True, help="Label for this comparison run")
     parser.add_argument("--out", required=True, help="Output JSON path")
-    parser.add_argument("--verdict-out", default=None, help="Optional authoritative audit verdict JSON path.")
+    parser.add_argument(
+        "--verdict-out",
+        default=None,
+        help="Optional authoritative audit verdict JSON path.",
+    )
     parser.add_argument("--scene-filter", default=None)
-    parser.add_argument("--scene-list-json", default=None, help="Optional JSON array of exact scene ids (e.g. home/SCENE) to compare.")
+    parser.add_argument(
+        "--scene-list-json",
+        default=None,
+        help="Optional JSON array of exact scene ids (e.g. home/SCENE) to compare.",
+    )
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--left-bak-root", default=None)
     parser.add_argument("--right-bak-root", default=None)
@@ -881,10 +1064,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--eps-pos", type=float, default=0.01)
     parser.add_argument("--eps-angle", type=float, default=1.0)
     parser.add_argument("--eps-geom", type=float, default=0.01)
-    parser.add_argument("--allow-no-mesh", action="store_true",
-                        help="Downgrade total_no_mesh>0 from hard-fail to warning in audit verdict.")
-    parser.add_argument("--mode-reports-dir", default=None,
-                        help="Directory containing dedup mode reports for mode-aware thresholds.")
+    parser.add_argument(
+        "--allow-no-mesh",
+        action="store_true",
+        help="Downgrade total_no_mesh>0 from hard-fail to warning in audit verdict.",
+    )
+    parser.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory containing dedup mode reports for mode-aware thresholds.",
+    )
+    parser.add_argument(
+        "--certificate-jsonl",
+        default=None,
+        help="Optional pair certificate JSONL for certificate-aware transitive audit semantics.",
+    )
     args = parser.parse_args(argv)
 
     left_root = os.path.abspath(args.left_root)
@@ -896,9 +1090,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     mode_index = None
     if args.mode_reports_dir and _CVT_AVAILABLE:
         mode_index = _cvt.build_mode_index(args.mode_reports_dir)
-        print(f"Mode index loaded: {len(mode_index)} entries from {args.mode_reports_dir}")
+        print(
+            f"Mode index loaded: {len(mode_index)} entries from {args.mode_reports_dir}"
+        )
     elif args.mode_reports_dir and not _CVT_AVAILABLE:
-        print("WARNING: --mode-reports-dir given but compute_vertex_transform not importable; mode-aware thresholds disabled")
+        print(
+            "WARNING: --mode-reports-dir given but compute_vertex_transform not importable; mode-aware thresholds disabled"
+        )
+
+    certificate_lookup = _load_certificate_lookup(args.certificate_jsonl)
+    if certificate_lookup is not None:
+        cert_count = len(certificate_lookup.get("by_uid", {}))
+        print(
+            f"Certificate lookup loaded: {cert_count} uid pairs from {args.certificate_jsonl}"
+        )
+
     scene_ids = None
     if args.scene_list_json:
         payload = json.loads(open(args.scene_list_json, "r", encoding="utf-8").read())
@@ -908,7 +1114,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Right root: {right_root}")
     print(f"Modes:      {args.left_mode} vs {args.right_mode}")
     if args.left_layout_name or args.right_layout_name:
-        print(f"Layout names: left={args.left_layout_name} right={args.right_layout_name}")
+        print(
+            f"Layout names: left={args.left_layout_name} right={args.right_layout_name}"
+        )
     print(f"Label:      {args.label}")
     print(f"Backup locators: left={len(left_locator)} right={len(right_locator)}")
 
@@ -949,6 +1157,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     eps_angle=float(args.eps_angle),
                     eps_geom=float(args.eps_geom),
                     mode_index=mode_index,
+                    certificate_lookup=certificate_lookup,
                 )
             )
     else:
@@ -967,6 +1176,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     eps_angle=float(args.eps_angle),
                     eps_geom=float(args.eps_geom),
                     mode_index=mode_index,
+                    certificate_lookup=certificate_lookup,
                 ): scene_id
                 for left_layout, right_layout, scene_id in pairs
             }
@@ -985,7 +1195,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 scene_results.append(result)
                 if result.get("status") == "ok":
                     displaced = result.get("displaced_breakdown", {}).get("gt_0.01", 0)
-                    vrmse_bad = result.get("vertex_rmse_breakdown", {}).get("gt_0.01", 0)
+                    vrmse_bad = result.get("vertex_rmse_breakdown", {}).get(
+                        "gt_0.01", 0
+                    )
                     compared = result.get("total_compared", 0)
                     print(
                         f"  [{done}/{len(pairs)}] {scene_id}: ok "
@@ -993,7 +1205,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                         f"vertex_rmse>0.01={vrmse_bad}"
                     )
                 else:
-                    print(f"  [{done}/{len(pairs)}] {scene_id}: ERROR {result.get('error')}")
+                    print(
+                        f"  [{done}/{len(pairs)}] {scene_id}: ERROR {result.get('error')}"
+                    )
 
     scene_results.sort(key=lambda r: r["scene_id"])
     elapsed = round(time.time() - t0, 1)
@@ -1046,7 +1260,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("=" * 72)
     print("PAIRWISE COMPARISON SUMMARY")
     print("=" * 72)
-    print(f"Scenes ok/error:         {aggregate['scenes_ok']}/{aggregate['scenes_error']}")
+    print(
+        f"Scenes ok/error:         {aggregate['scenes_ok']}/{aggregate['scenes_error']}"
+    )
     print(f"Total compared prims:    {aggregate['total_compared']}")
     print(f"Displaced > 0.01:        {aggregate['displaced_breakdown']['gt_0.01']}")
     print(f"Displaced > 0.1:         {aggregate['displaced_breakdown']['gt_0.1']}")
@@ -1063,7 +1279,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Ref changed soft warns:  {aggregate['ref_changed_soft_fail_count']}")
     print(f"Ref same prims:          {aggregate['total_ref_same']}")
     print(f"Ref same > 0.01:         {aggregate['ref_same_breakdown']['gt_0.01']}")
-    print(f"Only in left/right:      {aggregate['total_only_in_left']}/{aggregate['total_only_in_right']}")
+    print(
+        f"Only in left/right:      {aggregate['total_only_in_left']}/{aggregate['total_only_in_right']}"
+    )
     print(f"Audit passed:            {verdict['passed']}")
     print(f"Report saved to:         {args.out}")
     if args.verdict_out:

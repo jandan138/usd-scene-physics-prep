@@ -54,6 +54,7 @@ def _ensure_pxr():
     if _pxr_loaded:
         return
     from pxr import Gf as _Gf, Usd as _Usd, UsdGeom as _UsdGeom
+
     Gf = _Gf
     Usd = _Usd
     UsdGeom = _UsdGeom
@@ -69,6 +70,11 @@ MAX_VERTICES_FOR_ALIGNMENT = 5000
 # Threshold for considering alignment successful
 ALIGNMENT_THRESHOLD = 0.05
 BBOX_GATED_ALLOWED_MODES = ("geom_only", "topo_filesize", "shape_invariant")
+_TRANSITIVE_WITNESS_MODE_RISK = {
+    "geom_only": 0,
+    "topo_filesize": 1,
+    "shape_invariant": 2,
+}
 
 # NN fallback constants — see docs/operations/topo_vertex_shuffle_correspondence_fix_plan.md
 # Baseline bbox_delta above this triggers NN attempt (spike data: shuffle pairs all > 0.15)
@@ -125,6 +131,7 @@ def _base_pair_certificate(
 # ---------------------------------------------------------------------------
 # USD vertex extraction
 # ---------------------------------------------------------------------------
+
 
 def _get_local_matrix(prim):
     """Return local transform matrix of a prim as Gf.Matrix4d."""
@@ -213,6 +220,7 @@ def extract_instance_space_vertices(asset_usd: str) -> Optional[np.ndarray]:
 # Procrustes alignment
 # ---------------------------------------------------------------------------
 
+
 def _try_single_procrustes(
     a_centered: np.ndarray,
     b_centered: np.ndarray,
@@ -287,7 +295,7 @@ def _try_single_procrustes(
     # Evaluate on full set (row-vector): residual = || a_centered @ (s*R) - b_centered ||
     a_aligned = a_centered @ (scale * R)
     diffs = np.linalg.norm(a_aligned - b_centered, axis=1)
-    rmse = float(np.sqrt(np.mean(diffs ** 2)))
+    rmse = float(np.sqrt(np.mean(diffs**2)))
 
     return R, scale, rmse
 
@@ -328,9 +336,9 @@ def procrustes_full(pts_canon: np.ndarray, pts_old: np.ndarray) -> np.ndarray:
     # Try 4 combinations: (allow_reflection, allow_scale)
     combos = [
         (False, False),  # rotation only
-        (True, False),   # rotation + reflection
-        (False, True),   # rotation + scale
-        (True, True),    # rotation + reflection + scale
+        (True, False),  # rotation + reflection
+        (False, True),  # rotation + scale
+        (True, True),  # rotation + reflection + scale
     ]
 
     best_R = np.eye(3)
@@ -361,7 +369,10 @@ def procrustes_full(pts_canon: np.ndarray, pts_old: np.ndarray) -> np.ndarray:
 # Shuffle-gated NN fallback (shared helper for topo_filesize same-vtx-count)
 # ---------------------------------------------------------------------------
 
-def _bbox_delta_max_abs(V_np: np.ndarray, pts_canon: np.ndarray, pts_old: np.ndarray) -> float:
+
+def _bbox_delta_max_abs(
+    V_np: np.ndarray, pts_canon: np.ndarray, pts_old: np.ndarray
+) -> float:
     """Compute max absolute bbox delta after applying V to canonical points."""
     canon_h = np.hstack([pts_canon, np.ones((len(pts_canon), 1))])
     canon_transformed = (canon_h @ V_np)[:, :3]
@@ -400,7 +411,10 @@ def _nn_procrustes_core(
 
     best_R, best_s, best_rmse = np.eye(3), 1.0, float("inf")
     for allow_refl, allow_scl in [
-        (False, False), (True, False), (False, True), (True, True),
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
     ]:
         R, s, rmse = _try_single_procrustes(a, b, allow_refl, allow_scl)
         if rmse < best_rmse:
@@ -430,7 +444,8 @@ def _nn_procrustes_in_normalized_space(
         (V_4x4, nn_close_pct, nn_unique_ratio)
     """
     V, nn_close_pct, nn_unique_ratio, _nn_mean = _nn_procrustes_core(
-        pts_canon, pts_old,
+        pts_canon,
+        pts_old,
     )
     return V, nn_close_pct, nn_unique_ratio
 
@@ -465,12 +480,14 @@ def _topo_same_vtx_with_nn_fallback(
 
     # Kill-switch: DEDUP_DISABLE_NN_FALLBACK=1 → always use baseline
     if os.environ.get("DEDUP_DISABLE_NN_FALLBACK") == "1":
-        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     baseline_bbox = _bbox_delta_max_abs(V_baseline, pts_canon, pts_old)
     if baseline_bbox <= _NN_FALLBACK_BASELINE_THRESHOLD:
-        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     # Baseline is bad — attempt NN fallback
@@ -480,7 +497,8 @@ def _topo_same_vtx_with_nn_fallback(
         )
     except Exception as exc:
         logger.warning("NN fallback failed (%s), keeping baseline V", exc)
-        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     candidate_bbox = _bbox_delta_max_abs(V_nn, pts_canon, pts_old)
@@ -491,22 +509,29 @@ def _topo_same_vtx_with_nn_fallback(
         if candidate_bbox > _NN_FALLBACK_ACCEPT_THRESHOLD:
             logger.debug(
                 "NN fallback: candidate_bbox=%.6f > %.4f, keeping baseline",
-                candidate_bbox, _NN_FALLBACK_ACCEPT_THRESHOLD,
+                candidate_bbox,
+                _NN_FALLBACK_ACCEPT_THRESHOLD,
             )
-            _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+            _last_v_source.clear()
+            _last_v_source["v_source"] = "baseline"
             return V_baseline
 
         logger.info(
             "NN fallback accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
             "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f)",
-            baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio,
+            baseline_bbox,
+            candidate_bbox,
+            nn_close_pct,
+            nn_unique_ratio,
         )
-        _last_v_source.clear(); _last_v_source["v_source"] = "tier1_shuffle"
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "tier1_shuffle"
         return V_nn
 
     # Gate 1B: Tier2 — relaxed NN gate for non-shuffle pairs
     if os.environ.get("DEDUP_DISABLE_NN_TIER2") == "1":
-        _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+        _last_v_source.clear()
+        _last_v_source["v_source"] = "baseline"
         return V_baseline
 
     # Allow env override for bbox threshold
@@ -518,14 +543,20 @@ def _topo_same_vtx_with_nn_fallback(
         except ValueError:
             pass
 
-    if (nn_close_pct >= _NN_TIER2_CLOSE_PCT_FLOOR
-            and candidate_bbox <= tier2_bbox
-            and nn_mean_dist_norm <= _NN_TIER2_MEAN_DIST_THRESHOLD
-            and nn_unique_ratio >= _NN_TIER2_UNIQUE_THRESHOLD):
+    if (
+        nn_close_pct >= _NN_TIER2_CLOSE_PCT_FLOOR
+        and candidate_bbox <= tier2_bbox
+        and nn_mean_dist_norm <= _NN_TIER2_MEAN_DIST_THRESHOLD
+        and nn_unique_ratio >= _NN_TIER2_UNIQUE_THRESHOLD
+    ):
         logger.info(
             "NN Tier2 accepted: baseline_bbox=%.4f -> candidate_bbox=%.6f "
             "(nn_close_pct=%.1f%%, nn_unique_ratio=%.3f, nn_mean_dist_norm=%.6f)",
-            baseline_bbox, candidate_bbox, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm,
+            baseline_bbox,
+            candidate_bbox,
+            nn_close_pct,
+            nn_unique_ratio,
+            nn_mean_dist_norm,
         )
         _last_v_source.clear()
         _last_v_source["v_source"] = "tier2_nn"
@@ -537,15 +568,20 @@ def _topo_same_vtx_with_nn_fallback(
     logger.debug(
         "NN Tier2 rejected: candidate_bbox=%.6f, nn_close_pct=%.1f%%, "
         "nn_unique_ratio=%.3f, nn_mean_dist_norm=%.6f",
-        candidate_bbox, nn_close_pct, nn_unique_ratio, nn_mean_dist_norm,
+        candidate_bbox,
+        nn_close_pct,
+        nn_unique_ratio,
+        nn_mean_dist_norm,
     )
-    _last_v_source.clear(); _last_v_source["v_source"] = "baseline"
+    _last_v_source.clear()
+    _last_v_source["v_source"] = "baseline"
     return V_baseline
 
 
 # ---------------------------------------------------------------------------
 # Shape-invariant V computation
 # ---------------------------------------------------------------------------
+
 
 def _normalize_to_unit_bbox(pts: np.ndarray) -> Tuple[np.ndarray, np.ndarray, float]:
     """Normalize points to unit bounding box (uniform scale, preserving aspect).
@@ -630,7 +666,7 @@ def icp_in_normalized_space(
         t_acc = t_acc @ R_step + t_step
 
         # Check convergence
-        rmse = float(np.sqrt(np.mean(dists ** 2)))
+        rmse = float(np.sqrt(np.mean(dists**2)))
         if abs(prev_rmse - rmse) < 1e-8:
             break
         prev_rmse = rmse
@@ -638,12 +674,14 @@ def icp_in_normalized_space(
     # Final RMSE
     final_transformed = src @ R_acc + t_acc
     dists_final, _ = tree.query(final_transformed)
-    rmse_final = float(np.sqrt(np.mean(dists_final ** 2)))
+    rmse_final = float(np.sqrt(np.mean(dists_final**2)))
 
     return R_acc, t_acc, rmse_final
 
 
-def _flat_normal_axis(pts_norm: np.ndarray, var_threshold: float = 0.01) -> Optional[int]:
+def _flat_normal_axis(
+    pts_norm: np.ndarray, var_threshold: float = 0.01
+) -> Optional[int]:
     """Return the normal axis index if pts_norm is a flat (planar) asset.
 
     Computes per-axis variance of the normalized vertices.  If the smallest
@@ -719,7 +757,7 @@ def compute_V_shape_invariant(
         if rel_diff >= size_diff_threshold:
             raise RuntimeError(
                 f"size diff mismatch: dim[{i}] rel_diff={rel_diff:.3f} >= {size_diff_threshold} "
-                f"(canon={ec:.4f}, old={eo:.4f}, diff={abs(ec-eo):.4f})"
+                f"(canon={ec:.4f}, old={eo:.4f}, diff={abs(ec - eo):.4f})"
             )
 
     # Normalize both to unit bbox
@@ -738,7 +776,8 @@ def compute_V_shape_invariant(
             "compute_V_shape_invariant: plane normal mismatch "
             "(canon_axis=%d, old_axis=%d) — setting R_norm=Identity, t_norm=0 "
             "(scale-only V).",
-            c_ax, o_ax,
+            c_ax,
+            o_ax,
         )
         R_norm = np.eye(3, dtype=np.float64)
         t_norm = np.zeros(3, dtype=np.float64)
@@ -754,8 +793,12 @@ def compute_V_shape_invariant(
         best_R = np.eye(3)
         best_s = 1.0
         best_rmse = float("inf")
-        for allow_refl, allow_scl in [(False, False), (True, False),
-                                       (False, True), (True, True)]:
+        for allow_refl, allow_scl in [
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ]:
             R, s, rmse = _try_single_procrustes(a, b, allow_refl, allow_scl)
             if rmse < best_rmse:
                 best_R, best_s, best_rmse = R, s, rmse
@@ -797,6 +840,7 @@ def compute_V_shape_invariant(
 # Mode index and dispatch
 # ---------------------------------------------------------------------------
 
+
 def _uid_from_path(p: str) -> str:
     """Extract uid from path like .../category/uid/usd/uid.usd"""
     return os.path.basename(os.path.dirname(os.path.dirname(p)))
@@ -826,9 +870,7 @@ def build_mode_index(dedup_dir: str) -> Dict[Tuple[str, str], str]:
         if not os.path.isdir(mode_dir):
             continue
         for cat in os.listdir(mode_dir):
-            report = os.path.join(
-                mode_dir, cat, f"{cat}_asset_mesh_dedup_{mode}.json"
-            )
+            report = os.path.join(mode_dir, cat, f"{cat}_asset_mesh_dedup_{mode}.json")
             if not os.path.isfile(report):
                 continue
             with open(report) as f:
@@ -890,7 +932,7 @@ def _build_group_graph(
     graph: Dict[str, List[Tuple[str, str, str]]] = defaultdict(list)
 
     for i, u1 in enumerate(uids):
-        for u2 in uids[i + 1:]:
+        for u2 in uids[i + 1 :]:
             mode = mode_index.get((u1, u2))
             if mode is not None:
                 graph[u1].append((u2, mode, uid_to_path[u2]))
@@ -899,12 +941,134 @@ def _build_group_graph(
     return dict(graph)
 
 
+def _sorted_graph_neighbors(
+    graph: Dict[str, List[Tuple[str, str, str]]],
+    uid: str,
+) -> List[Tuple[str, str, str]]:
+    return sorted(
+        graph.get(uid, []),
+        key=lambda item: (
+            _TRANSITIVE_WITNESS_MODE_RISK.get(item[1], 99),
+            item[0],
+            item[1],
+            item[2],
+        ),
+    )
+
+
+def _path_witness_key(path: List[Tuple[str, str, str, str, str]]) -> Tuple[Any, ...]:
+    mode_risks = tuple(_TRANSITIVE_WITNESS_MODE_RISK.get(step[2], 99) for step in path)
+    mode_names = tuple(step[2] for step in path)
+    uid_chain = tuple([path[0][0]] + [step[1] for step in path]) if path else tuple()
+    return (sum(mode_risks), mode_risks, mode_names, uid_chain)
+
+
+def _witness_metadata_from_path(
+    path: List[Tuple[str, str, str, str, str]],
+) -> Dict[str, Any]:
+    uids = [path[0][0]] if path else []
+    modes = []
+    usd_paths = [path[0][3]] if path else []
+    for _, to_uid, mode, _, to_usd in path:
+        uids.append(to_uid)
+        modes.append(mode)
+        usd_paths.append(to_usd)
+    return {
+        "uids": uids,
+        "modes": modes,
+        "usd_paths": usd_paths,
+        "length": len(path),
+    }
+
+
+def _compute_edge_V(
+    from_uid: str, to_uid: str, mode: str, from_usd: str, to_usd: str
+) -> np.ndarray:
+    if mode == "geom_only":
+        return np.eye(4, dtype=np.float64)
+
+    pts_from = extract_instance_space_vertices(from_usd)
+    pts_to = extract_instance_space_vertices(to_usd)
+    if pts_from is None or pts_to is None:
+        raise RuntimeError(f"Could not extract vertices for edge {from_uid}->{to_uid}")
+
+    if mode == "topo_filesize":
+        if len(pts_from) != len(pts_to):
+            return compute_V_shape_invariant(pts_from, pts_to)
+        return _topo_same_vtx_with_nn_fallback(pts_from, pts_to)
+    if mode == "shape_invariant":
+        return compute_V_shape_invariant(pts_from, pts_to)
+    if len(pts_from) == len(pts_to):
+        return procrustes_full(pts_from, pts_to)
+    return compute_V_shape_invariant(pts_from, pts_to)
+
+
+def _find_transitive_witness_path(
+    old_usd: str,
+    canonical_usd: str,
+    group_members: List[str],
+    mode_index: Dict[Tuple[str, str], str],
+) -> List[Tuple[str, str, str, str, str]]:
+    canonical_uid = _uid_from_path(canonical_usd)
+    old_uid = _uid_from_path(old_usd)
+
+    if canonical_uid == old_uid:
+        return []
+
+    graph = _build_group_graph(group_members, mode_index)
+    uid_to_path = {_uid_from_path(p): p for p in group_members}
+    shortest_candidates: List[List[Tuple[str, str, str, str, str]]] = []
+    visited_depth: Dict[str, int] = {canonical_uid: 0}
+    queue: deque = deque()
+    queue.append((canonical_uid, []))
+    best_depth: Optional[int] = None
+
+    while queue:
+        cur_uid, path = queue.popleft()
+        cur_depth = len(path)
+        if best_depth is not None and cur_depth >= best_depth:
+            continue
+        for neighbor_uid, mode, neighbor_usd in _sorted_graph_neighbors(graph, cur_uid):
+            next_depth = cur_depth + 1
+            prev_depth = visited_depth.get(neighbor_uid)
+            if prev_depth is not None and prev_depth < next_depth:
+                continue
+            new_path = path + [
+                (
+                    cur_uid,
+                    neighbor_uid,
+                    mode,
+                    uid_to_path.get(cur_uid, ""),
+                    neighbor_usd,
+                )
+            ]
+            if neighbor_uid == old_uid:
+                best_depth = (
+                    next_depth if best_depth is None else min(best_depth, next_depth)
+                )
+                if next_depth == best_depth:
+                    shortest_candidates.append(new_path)
+                continue
+            visited_depth[neighbor_uid] = next_depth
+            queue.append((neighbor_uid, new_path))
+
+    if not shortest_candidates:
+        raise RuntimeError(
+            f"No transitive path from canonical={canonical_uid} to old={old_uid} "
+            f"in group of {len(group_members)} members"
+        )
+
+    return min(shortest_candidates, key=_path_witness_key)
+
+
 def find_transitive_V(
     old_usd: str,
     canonical_usd: str,
     group_members: List[str],
     mode_index: Dict[Tuple[str, str], str],
-) -> np.ndarray:
+    *,
+    return_witness: bool = False,
+) -> Any:
     """BFS through group members to find V via intermediate steps.
 
     Finds a path from canonical to old where each edge has a direct dedup
@@ -922,41 +1086,16 @@ def find_transitive_V(
     Raises:
         RuntimeError: If no path found between canonical and old.
     """
-    canonical_uid = _uid_from_path(canonical_usd)
-    old_uid = _uid_from_path(old_usd)
-
-    if canonical_uid == old_uid:
-        return np.eye(4, dtype=np.float64)
-
-    graph = _build_group_graph(group_members, mode_index)
-
-    # BFS from canonical_uid to old_uid
-    visited: Set[str] = {canonical_uid}
-    # Queue entries: (current_uid, path_of_edges)
-    # Each edge: (from_uid, to_uid, mode, to_usd_path)
-    queue: deque = deque()
-    queue.append((canonical_uid, []))
-
-    uid_to_path = {_uid_from_path(p): p for p in group_members}
-
-    while queue:
-        cur_uid, path = queue.popleft()
-        for neighbor_uid, mode, neighbor_usd in graph.get(cur_uid, []):
-            if neighbor_uid in visited:
-                continue
-            new_path = path + [(cur_uid, neighbor_uid, mode,
-                                uid_to_path.get(cur_uid, ""),
-                                neighbor_usd)]
-            if neighbor_uid == old_uid:
-                # Found path — accumulate V
-                return _accumulate_V_along_path(new_path)
-            visited.add(neighbor_uid)
-            queue.append((neighbor_uid, new_path))
-
-    raise RuntimeError(
-        f"No transitive path from canonical={canonical_uid} to old={old_uid} "
-        f"in group of {len(group_members)} members"
+    path = _find_transitive_witness_path(
+        old_usd=old_usd,
+        canonical_usd=canonical_usd,
+        group_members=group_members,
+        mode_index=mode_index,
     )
+    V_total = _accumulate_V_along_path(path)
+    if return_witness:
+        return V_total, _witness_metadata_from_path(path)
+    return V_total
 
 
 def _accumulate_V_along_path(
@@ -970,38 +1109,73 @@ def _accumulate_V_along_path(
     V_total = np.eye(4, dtype=np.float64)
 
     for from_uid, to_uid, mode, from_usd, to_usd in path:
-        if mode == "geom_only":
-            V_step = np.eye(4, dtype=np.float64)
-        else:
-            # Extract vertices and compute V for this edge
-            pts_from = extract_instance_space_vertices(from_usd)
-            pts_to = extract_instance_space_vertices(to_usd)
-            if pts_from is None or pts_to is None:
-                raise RuntimeError(
-                    f"Could not extract vertices for edge {from_uid}->{to_uid}"
-                )
-            if mode == "topo_filesize":
-                if len(pts_from) != len(pts_to):
-                    V_step = compute_V_shape_invariant(pts_from, pts_to)
-                else:
-                    V_step = _topo_same_vtx_with_nn_fallback(pts_from, pts_to)
-            elif mode == "shape_invariant":
-                V_step = compute_V_shape_invariant(pts_from, pts_to)
-            else:
-                # Unknown mode — try Procrustes
-                if len(pts_from) == len(pts_to):
-                    V_step = procrustes_full(pts_from, pts_to)
-                else:
-                    V_step = compute_V_shape_invariant(pts_from, pts_to)
-
+        V_step = _compute_edge_V(from_uid, to_uid, mode, from_usd, to_usd)
         V_total = V_total @ V_step
 
     return V_total
 
 
+def _evaluate_certificate_with_V(
+    cert: Dict[str, Any],
+    *,
+    canonical_pts: np.ndarray,
+    old_pts: np.ndarray,
+    V: np.ndarray,
+    mode: str,
+) -> Dict[str, Any]:
+    canon_h = np.hstack([canonical_pts, np.ones((len(canonical_pts), 1))])
+    canon_transformed = (canon_h @ V)[:, :3]
+
+    bbox_old = {
+        "min": old_pts.min(axis=0).tolist(),
+        "max": old_pts.max(axis=0).tolist(),
+    }
+    bbox_new = {
+        "min": canon_transformed.min(axis=0).tolist(),
+        "max": canon_transformed.max(axis=0).tolist(),
+    }
+    delta_min = [abs(a - b) for a, b in zip(bbox_old["min"], bbox_new["min"])]
+    delta_max = [abs(a - b) for a, b in zip(bbox_old["max"], bbox_new["max"])]
+    max_abs = max(max(delta_min), max(delta_max))
+
+    cert["bbox_delta"] = {"min": delta_min, "max": delta_max, "max_abs": max_abs}
+    cert["bbox_delta_available"] = True
+    centroid_old = np.mean(old_pts, axis=0)
+    centroid_new = np.mean(canon_transformed, axis=0)
+    cert["centroid_delta"] = float(np.linalg.norm(centroid_old - centroid_new))
+    cert["footprint_extent_delta"] = 0.0
+    cert["footprint_axis_delta"] = 0.0
+
+    if len(old_pts) == len(canon_transformed):
+        cert["vertex_rmse"] = float(
+            np.sqrt(np.mean(np.sum((old_pts - canon_transformed) ** 2, axis=1)))
+        )
+        cert["rmse_available"] = True
+        cert["rmse_unavailable_reason"] = None
+    else:
+        cert["vertex_rmse"] = None
+        cert["rmse_available"] = False
+        cert["rmse_unavailable_reason"] = "vertex_count_mismatch"
+
+    CERT_BBOX_PRECHECK_THRESHOLD = 0.5
+    if max_abs > CERT_BBOX_PRECHECK_THRESHOLD:
+        cert["eligible"] = False
+        cert["reject_reason"] = f"bbox_precheck_failed_{mode}"
+        if mode == "transitive":
+            cert["transitive_endpoint_verification_passed"] = False
+        return cert
+
+    cert["eligible"] = True
+    cert["reject_reason"] = None
+    if mode == "transitive":
+        cert["transitive_endpoint_verification_passed"] = True
+    return cert
+
+
 # ---------------------------------------------------------------------------
 # Pair certification
 # ---------------------------------------------------------------------------
+
 
 def build_pair_certificate(
     old_usd: str,
@@ -1075,49 +1249,24 @@ def build_pair_certificate(
         _proof = "geom_only_exact_world_proof"
     else:
         try:
-            V = compute_V_for_pair(old_usd, canonical_usd, mode)
+            V_np = _compute_numpy_V_for_pair(old_usd, canonical_usd, mode)
             cert["v_source"] = _last_v_source.get("v_source", "baseline")
             if cert["v_source"] == "tier2_nn":
                 cert["tier2_nn_bbox"] = _last_v_source.get("tier2_nn_bbox")
-                cert["tier2_nn_unique_ratio"] = _last_v_source.get("tier2_nn_unique_ratio")
-                cert["tier2_nn_mean_dist_norm"] = _last_v_source.get("tier2_nn_mean_dist_norm")
-            V_np = np.array(
-                [[V[i][j] for j in range(4)] for i in range(4)],
-                dtype=np.float64,
-            ) if not isinstance(V, np.ndarray) else V
-            # Transform canonical pts using V (row-vector: p_old ≈ p_canon @ V)
-            canon_h = np.hstack([canonical_pts, np.ones((len(canonical_pts), 1))])
-            canon_transformed = (canon_h @ V_np)[:, :3]
-
-            bbox_old = {"min": old_pts.min(axis=0).tolist(), "max": old_pts.max(axis=0).tolist()}
-            bbox_new = {"min": canon_transformed.min(axis=0).tolist(), "max": canon_transformed.max(axis=0).tolist()}
-            delta_min = [abs(a - b) for a, b in zip(bbox_old["min"], bbox_new["min"])]
-            delta_max = [abs(a - b) for a, b in zip(bbox_old["max"], bbox_new["max"])]
-            max_abs = max(max(delta_min), max(delta_max))
-
-            cert["bbox_delta"] = {"min": delta_min, "max": delta_max, "max_abs": max_abs}
-            cert["bbox_delta_available"] = True
-            centroid_old = np.mean(old_pts, axis=0)
-            centroid_new = np.mean(canon_transformed, axis=0)
-            cert["centroid_delta"] = float(np.linalg.norm(centroid_old - centroid_new))
-            cert["footprint_extent_delta"] = 0.0
-            cert["footprint_axis_delta"] = 0.0
-
-            if len(old_pts) == len(canon_transformed):
-                cert["vertex_rmse"] = float(np.sqrt(np.mean(
-                    np.sum((old_pts - canon_transformed) ** 2, axis=1))))
-                cert["rmse_available"] = True
-            else:
-                cert["vertex_rmse"] = None
-                cert["rmse_available"] = False
-                cert["rmse_unavailable_reason"] = "vertex_count_mismatch"
-
-            # Cert pre-check: gross failure gate (0.5 threshold)
-            CERT_BBOX_PRECHECK_THRESHOLD = 0.5
-            if max_abs > CERT_BBOX_PRECHECK_THRESHOLD:
-                cert["eligible"] = False
-                cert["reject_reason"] = f"bbox_precheck_failed_{mode}"
-                cert["bbox_delta_available"] = True
+                cert["tier2_nn_unique_ratio"] = _last_v_source.get(
+                    "tier2_nn_unique_ratio"
+                )
+                cert["tier2_nn_mean_dist_norm"] = _last_v_source.get(
+                    "tier2_nn_mean_dist_norm"
+                )
+            cert = _evaluate_certificate_with_V(
+                cert,
+                canonical_pts=canonical_pts,
+                old_pts=old_pts,
+                V=V_np,
+                mode=mode,
+            )
+            if not cert["eligible"]:
                 return cert
 
         except Exception as exc:
@@ -1145,9 +1294,93 @@ def build_pair_certificate(
     return cert
 
 
+def build_transitive_pair_certificate(
+    old_usd: str,
+    canonical_usd: str,
+    *,
+    group_members: List[str],
+    mode_index: Dict[Tuple[str, str], str],
+    policy: str = "bbox_primary_rmse_observe",
+) -> Dict[str, Any]:
+    cert = _base_pair_certificate(
+        old_usd=old_usd,
+        canonical_usd=canonical_usd,
+        mode="transitive",
+        policy=policy,
+    )
+
+    if not old_usd or not canonical_usd:
+        cert["reject_reason"] = "missing_asset_path"
+        cert["rmse_unavailable_reason"] = "missing_asset_path"
+        return cert
+
+    if not os.path.isfile(old_usd):
+        cert["reject_reason"] = "old_asset_missing"
+        cert["rmse_unavailable_reason"] = "old_asset_missing"
+        return cert
+
+    if not os.path.isfile(canonical_usd):
+        cert["reject_reason"] = "canonical_asset_missing"
+        cert["rmse_unavailable_reason"] = "canonical_asset_missing"
+        return cert
+
+    old_pts = extract_instance_space_vertices(old_usd)
+    canonical_pts = extract_instance_space_vertices(canonical_usd)
+    if old_pts is None or canonical_pts is None:
+        cert["reject_reason"] = "mesh_probe_failed"
+        cert["rmse_unavailable_reason"] = "mesh_probe_failed"
+        return cert
+
+    try:
+        V_np, witness = find_transitive_V(
+            old_usd,
+            canonical_usd,
+            group_members,
+            mode_index,
+            return_witness=True,
+        )
+        cert["v_source"] = "transitive_witness"
+        cert["transitive_witness_uids"] = witness.get("uids", [])
+        cert["transitive_witness_modes"] = witness.get("modes", [])
+        cert["transitive_witness_length"] = witness.get("length", 0)
+        cert["transitive_endpoint_pair_directly_verified"] = True
+        cert["transitive_endpoint_verification_kind"] = "composed_witness_V"
+        cert["transitive_endpoint_verification_passed"] = False
+        cert = _evaluate_certificate_with_V(
+            cert,
+            canonical_pts=canonical_pts,
+            old_pts=old_pts,
+            V=V_np,
+            mode="transitive",
+        )
+        if not cert["eligible"]:
+            return cert
+    except Exception as exc:
+        cert["eligible"] = False
+        cert["reject_reason"] = "v_computation_failed_transitive"
+        cert["bbox_delta"] = None
+        cert["bbox_delta_available"] = False
+        cert["centroid_delta"] = None
+        cert["vertex_rmse"] = None
+        cert["rmse_available"] = False
+        cert["rmse_unavailable_reason"] = str(exc)[:200]
+        cert["footprint_extent_delta"] = 0.0
+        cert["footprint_axis_delta"] = 0.0
+        cert.setdefault("transitive_endpoint_pair_directly_verified", False)
+        cert.setdefault("transitive_endpoint_verification_kind", None)
+        cert.setdefault("transitive_endpoint_verification_passed", False)
+        return cert
+
+    cert["alternate_proof_kind"] = "transitive_bbox_gated_proof"
+    cert["alternate_proof_passed"] = True
+    cert["proof_source"] = "transitive_bbox_gated_proof"
+    return cert
+
+
 # ---------------------------------------------------------------------------
 # Top-level dispatch
 # ---------------------------------------------------------------------------
+
 
 def numpy_to_gf_matrix4d(m: np.ndarray):
     """Convert a 4x4 numpy array to pxr.Gf.Matrix4d.
@@ -1163,6 +1396,47 @@ def numpy_to_gf_matrix4d(m: np.ndarray):
     for i in range(4):
         gf_m.SetRow(i, Gf.Vec4d(*m[i].tolist()))
     return gf_m
+
+
+def _compute_numpy_V_for_pair(
+    old_usd: str,
+    canonical_usd: str,
+    mode: str,
+    mode_index: Optional[Dict[Tuple[str, str], str]] = None,
+    group_members: Optional[List[str]] = None,
+):
+    """Compute V matrix for a dedup pair as a 4x4 numpy array.
+
+    This helper keeps certificate evaluation free of pxr/Gf requirements.
+    """
+
+    if mode == "geom_only":
+        return np.eye(4, dtype=np.float64)
+
+    if mode == "transitive":
+        if mode_index is None or group_members is None:
+            raise ValueError(
+                "mode_index and group_members required for transitive mode"
+            )
+        return find_transitive_V(old_usd, canonical_usd, group_members, mode_index)
+
+    pts_canon = extract_instance_space_vertices(canonical_usd)
+    pts_old = extract_instance_space_vertices(old_usd)
+    if pts_canon is None or pts_old is None:
+        raise RuntimeError(
+            f"Could not extract vertices: canon={pts_canon is not None}, "
+            f"old={pts_old is not None}"
+        )
+
+    if mode == "topo_filesize":
+        if len(pts_canon) == len(pts_old):
+            return _topo_same_vtx_with_nn_fallback(pts_canon, pts_old)
+        return compute_V_shape_invariant(pts_canon, pts_old)
+
+    if mode == "shape_invariant":
+        return compute_V_shape_invariant(pts_canon, pts_old)
+
+    raise ValueError(f"Unknown mode: {mode!r}")
 
 
 def compute_V_for_pair(
@@ -1192,36 +1466,11 @@ def compute_V_for_pair(
     """
     _ensure_pxr()
 
-    if mode == "geom_only":
-        return Gf.Matrix4d(1.0)  # Identity
-
-    if mode == "transitive":
-        if mode_index is None or group_members is None:
-            raise ValueError(
-                "mode_index and group_members required for transitive mode"
-            )
-        V_np = find_transitive_V(
-            old_usd, canonical_usd, group_members, mode_index
-        )
-        return numpy_to_gf_matrix4d(V_np)
-
-    # Extract vertices
-    pts_canon = extract_instance_space_vertices(canonical_usd)
-    pts_old = extract_instance_space_vertices(old_usd)
-    if pts_canon is None or pts_old is None:
-        raise RuntimeError(
-            f"Could not extract vertices: canon={pts_canon is not None}, "
-            f"old={pts_old is not None}"
-        )
-
-    if mode == "topo_filesize":
-        if len(pts_canon) == len(pts_old):
-            V_np = _topo_same_vtx_with_nn_fallback(pts_canon, pts_old)
-        else:
-            V_np = compute_V_shape_invariant(pts_canon, pts_old)
-    elif mode == "shape_invariant":
-        V_np = compute_V_shape_invariant(pts_canon, pts_old)
-    else:
-        raise ValueError(f"Unknown mode: {mode!r}")
-
+    V_np = _compute_numpy_V_for_pair(
+        old_usd,
+        canonical_usd,
+        mode,
+        mode_index=mode_index,
+        group_members=group_members,
+    )
     return numpy_to_gf_matrix4d(V_np)

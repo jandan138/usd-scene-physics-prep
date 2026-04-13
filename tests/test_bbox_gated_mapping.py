@@ -6,8 +6,16 @@ import sys
 from argparse import Namespace
 from collections import Counter
 
+import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_VENDORED_ISAAC_PY310 = os.path.join(
+    _REPO_ROOT, "third_party", "runtime_deps", "isaac_py310"
+)
+
+sys.path.insert(0, _VENDORED_ISAAC_PY310)
+sys.path.insert(0, os.path.join(_REPO_ROOT, "scripts"))
 
 import c1_build_bulk_mapping_from_dedup_report as mapping_mod
 
@@ -45,7 +53,9 @@ def test_bbox_gated_filters_and_rebuilds(tmp_path, monkeypatch):
             "GRScenes_assets/chair/c/usd/c.usd": 1,
         }
     )
-    monkeypatch.setattr(mapping_mod, "_count_layout_asset_usage", lambda *args, **kwargs: usage)
+    monkeypatch.setattr(
+        mapping_mod, "_count_layout_asset_usage", lambda *args, **kwargs: usage
+    )
 
     def _fake_cert(old_usd, canonical_usd, mode, policy):
         old_rel = old_usd.split("/GRScenes_assets/", 1)[1]
@@ -145,7 +155,9 @@ def test_bbox_gated_revoked_edge_removed(tmp_path, monkeypatch):
 
     dataset_root = tmp_path / "dataset"
     (dataset_root / "GRScenes100").mkdir(parents=True)
-    monkeypatch.setattr(mapping_mod, "_count_layout_asset_usage", lambda *args, **kwargs: Counter())
+    monkeypatch.setattr(
+        mapping_mod, "_count_layout_asset_usage", lambda *args, **kwargs: Counter()
+    )
     monkeypatch.setattr(
         mapping_mod._cvt,
         "build_pair_certificate",
@@ -190,5 +202,251 @@ def test_bbox_gated_revoked_edge_removed(tmp_path, monkeypatch):
     mapping = json.loads(out_mapping.read_text(encoding="utf-8"))
     assert mapping == {}
 
-    cert_rows = [json.loads(line) for line in out_cert_jsonl.read_text(encoding="utf-8").splitlines() if line.strip()]
+    cert_rows = [
+        json.loads(line)
+        for line in out_cert_jsonl.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     assert cert_rows[0]["reject_reason"] == "revoked_edge"
+
+
+def test_bbox_gated_empty_mode_index_uses_transitive_builder_inputs(
+    tmp_path, monkeypatch
+):
+    report = tmp_path / "report.json"
+    _write_report(
+        report,
+        [
+            {
+                "sig": "g1",
+                "usd_paths": [
+                    "/root/GRScenes_assets/chair/a/usd/a.usd",
+                    "/root/GRScenes_assets/chair/b/usd/b.usd",
+                    "/root/GRScenes_assets/chair/c/usd/c.usd",
+                ],
+            }
+        ],
+    )
+
+    dataset_root = tmp_path / "dataset"
+    (dataset_root / "GRScenes100").mkdir(parents=True)
+
+    monkeypatch.setattr(
+        mapping_mod,
+        "_count_layout_asset_usage",
+        lambda *args, **kwargs: Counter({"GRScenes_assets/chair/b/usd/b.usd": 10}),
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt, "build_mode_index", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "_uid_from_path",
+        lambda path: os.path.splitext(os.path.basename(path))[0],
+    )
+    monkeypatch.setattr(mapping_mod._cvt.os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "extract_instance_space_vertices",
+        lambda _path: np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ],
+            dtype=np.float64,
+        ),
+    )
+
+    captured_calls = []
+
+    def _fake_find_transitive_V(
+        old_usd, canonical_usd, group_members, mode_index, return_witness=False
+    ):
+        captured_calls.append(
+            {
+                "old_usd": old_usd,
+                "canonical_usd": canonical_usd,
+                "group_members": list(group_members),
+                "mode_index": dict(mode_index),
+                "return_witness": return_witness,
+            }
+        )
+        witness = {
+            "uids": ["b", "a" if old_usd.endswith("a.usd") else "c"],
+            "modes": ["geom_only"],
+            "length": 1,
+        }
+        return np.eye(4, dtype=np.float64), witness
+
+    monkeypatch.setattr(mapping_mod._cvt, "find_transitive_V", _fake_find_transitive_V)
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "build_pair_certificate",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("non-transitive builder should not be used")
+        ),
+    )
+
+    out_mapping = tmp_path / "filtered_mapping.json"
+    out_stats = tmp_path / "filtered_mapping.stats.json"
+    out_cert_jsonl = tmp_path / "pair_certificates.jsonl"
+    out_cert_summary = tmp_path / "pair_certificate_summary.json"
+    out_graph = tmp_path / "certified_graph.json"
+    args = Namespace(
+        report=str(report),
+        dataset_root=str(dataset_root),
+        category=None,
+        out_mapping_json=str(out_mapping),
+        out_stats_json=str(out_stats),
+        progress_every=0,
+        bbox_policy="bbox_primary_rmse_observe",
+        dedup_mode="geom_only",
+        out_certificate_jsonl=str(out_cert_jsonl),
+        out_certificate_summary_json=str(out_cert_summary),
+        out_certified_graph_json=str(out_graph),
+        revoked_edges_jsonl=None,
+        mode_reports_dir=str(tmp_path / "mode_reports"),
+    )
+
+    mapping_mod._run_bbox_gated(args)
+
+    mapping = json.loads(out_mapping.read_text(encoding="utf-8"))
+    assert mapping == {
+        "GRScenes_assets/chair/a/usd/a.usd": "GRScenes_assets/chair/b/usd/b.usd",
+        "GRScenes_assets/chair/c/usd/c.usd": "GRScenes_assets/chair/b/usd/b.usd",
+    }
+
+    expected_group_members = [
+        str(dataset_root / "GRScenes_assets/chair/a/usd/a.usd"),
+        str(dataset_root / "GRScenes_assets/chair/b/usd/b.usd"),
+        str(dataset_root / "GRScenes_assets/chair/c/usd/c.usd"),
+    ]
+    assert captured_calls == [
+        {
+            "old_usd": str(dataset_root / "GRScenes_assets/chair/a/usd/a.usd"),
+            "canonical_usd": str(dataset_root / "GRScenes_assets/chair/b/usd/b.usd"),
+            "group_members": expected_group_members,
+            "mode_index": {},
+            "return_witness": True,
+        },
+        {
+            "old_usd": str(dataset_root / "GRScenes_assets/chair/c/usd/c.usd"),
+            "canonical_usd": str(dataset_root / "GRScenes_assets/chair/b/usd/b.usd"),
+            "group_members": expected_group_members,
+            "mode_index": {},
+            "return_witness": True,
+        },
+    ]
+
+    cert_rows = [
+        json.loads(line)
+        for line in out_cert_jsonl.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert [row["pair_mode"] for row in cert_rows] == ["transitive", "transitive"]
+
+
+def test_bbox_gated_rejected_transitive_pair_uses_real_reject_reason(
+    tmp_path, monkeypatch
+):
+    report = tmp_path / "report.json"
+    _write_report(
+        report,
+        [
+            {
+                "sig": "g1",
+                "usd_paths": [
+                    "/root/GRScenes_assets/chair/a/usd/a.usd",
+                    "/root/GRScenes_assets/chair/b/usd/b.usd",
+                ],
+            }
+        ],
+    )
+
+    dataset_root = tmp_path / "dataset"
+    (dataset_root / "GRScenes100").mkdir(parents=True)
+
+    monkeypatch.setattr(
+        mapping_mod,
+        "_count_layout_asset_usage",
+        lambda *args, **kwargs: Counter({"GRScenes_assets/chair/b/usd/b.usd": 10}),
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt, "build_mode_index", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "_uid_from_path",
+        lambda path: os.path.splitext(os.path.basename(path))[0],
+    )
+    monkeypatch.setattr(mapping_mod._cvt.os.path, "isfile", lambda _path: True)
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "extract_instance_space_vertices",
+        lambda _path: np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+            ],
+            dtype=np.float64,
+        ),
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "find_transitive_V",
+        lambda *args, **kwargs: (
+            np.array(
+                [
+                    [1.0, 0.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [1.0, 0.0, 0.0, 1.0],
+                ],
+                dtype=np.float64,
+            ),
+            {"uids": ["b", "a"], "modes": ["geom_only"], "length": 1},
+        ),
+    )
+    monkeypatch.setattr(
+        mapping_mod._cvt,
+        "build_pair_certificate",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("non-transitive builder should not be used")
+        ),
+    )
+
+    out_mapping = tmp_path / "filtered_mapping.json"
+    out_stats = tmp_path / "filtered_mapping.stats.json"
+    out_cert_jsonl = tmp_path / "pair_certificates.jsonl"
+    out_cert_summary = tmp_path / "pair_certificate_summary.json"
+    out_graph = tmp_path / "certified_graph.json"
+    args = Namespace(
+        report=str(report),
+        dataset_root=str(dataset_root),
+        category=None,
+        out_mapping_json=str(out_mapping),
+        out_stats_json=str(out_stats),
+        progress_every=0,
+        bbox_policy="bbox_primary_rmse_observe",
+        dedup_mode="geom_only",
+        out_certificate_jsonl=str(out_cert_jsonl),
+        out_certificate_summary_json=str(out_cert_summary),
+        out_certified_graph_json=str(out_graph),
+        revoked_edges_jsonl=None,
+        mode_reports_dir=str(tmp_path / "mode_reports"),
+    )
+
+    mapping_mod._run_bbox_gated(args)
+
+    mapping = json.loads(out_mapping.read_text(encoding="utf-8"))
+    assert mapping == {}
+
+    summary = json.loads(out_cert_summary.read_text(encoding="utf-8"))
+    assert summary["reject_reason_counts"] == {"bbox_precheck_failed_transitive": 1}
+    assert summary["reject_reason_counts_by_mode"] == {
+        "transitive": {"bbox_precheck_failed_transitive": 1}
+    }
