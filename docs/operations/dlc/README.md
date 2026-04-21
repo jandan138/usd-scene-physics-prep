@@ -181,7 +181,7 @@ These environment variables can be set before running `submit_batch.py` or `laun
 | 环境变量 | 默认值 | 说明 |
 |----------|--------|------|
 | `DLC_WORKSPACE_ID` | `270969` | DLC 工作空间 ID / DLC workspace ID |
-| `DLC_RESOURCE_ID` | `quotalplclkpgjgv` | DLC 资源配额 ID / Resource quota ID |
+| `DLC_RESOURCE_ID` | `launch_job.sh` 按 GPU 模板解析 | DLC 资源配额 ID / Resource quota ID |
 | `DLC_IMAGE` | `dsw-registry-vpc.cn-beijing.cr.aliyuncs.com/pai-training-algorithm/isaac-sim:isaacsim450-vnc-v8` | Docker 镜像地址 / Docker image URI |
 | `DLC_CODE_ROOT` | `/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep` | 代码在容器内的挂载路径 / Code mount path in container |
 | `DLC_BIN` | `$CODE_ROOT/dlc` | DLC CLI 二进制路径 / DLC CLI binary path |
@@ -410,17 +410,34 @@ which dlc || ls -la /cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/
 # 首次使用需要配置 AccessKey
 ./dlc config
 
-# 需要输入:
-# - AccessKey ID
-# - AccessKey Secret
-# - Endpoint: dlc.cn-beijing.aliyuncs.com
+# 当前仓库实际可工作的配置:
+# - Endpoint: pai-dlc.cn-beijing.aliyuncs.com
 # - Region: cn-beijing
 ```
+
+**Important**:
+
+- 当前仓库的 SmartBot workspace `270969` 需要使用北京配置。
+- 如果本地 `dlc` CLI 仍指向上海配置（例如 `pai-dlc.cn-shanghai.aliyuncs.com` / `cn-shanghai`），
+  可能会把配置问题伪装成权限问题，表现为：
+  - `PaiDLC:CreateJob`
+  - `PaiDLC:ListJobs`
+
+排查顺序建议：
+
+1. 先确认 `~/.dlc/config` 中的 endpoint / region
+2. 再执行只读验证：
+
+```bash
+./dlc get job -w 270969 --page_size 3
+```
+
+如果上海配置失败、北京配置成功，则根因是 DLC 客户端配置，不是提交参数或 workspace 权限。
 
 ### 7.3 验证
 
 ```bash
-./dlc get jobs
+./dlc get job -w 270969 --page_size 3
 # 如果返回任务列表, 说明配置成功
 ```
 

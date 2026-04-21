@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import importlib.util
 from pathlib import Path
 import sys
@@ -78,3 +79,46 @@ def test_build_bbox_audit_cmd_includes_certificate_jsonl_and_mode_reports_dir(tm
     assert "--mode-reports-dir" in cmd
     mode_idx = cmd.index("--mode-reports-dir")
     assert cmd[mode_idx + 1] == args.mode_reports_dir
+
+
+def test_run_tolerates_log_write_enospc(monkeypatch, tmp_path, capsys):
+    class FakeProc:
+        def __init__(self):
+            self.stdout = iter(["line-1\n", "line-2\n"])
+
+        def wait(self):
+            return 0
+
+    class FlakyLog:
+        def __init__(self):
+            self.write_count = 0
+            self.closed = False
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            self.close()
+            return False
+
+        def write(self, text):
+            self.write_count += 1
+            if self.write_count >= 4:
+                raise OSError(errno.ENOSPC, "No space left on device")
+
+        def flush(self):
+            return None
+
+        def close(self):
+            self.closed = True
+
+    flaky = FlakyLog()
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: flaky)
+    monkeypatch.setattr(mod.subprocess, "Popen", lambda *args, **kwargs: FakeProc())
+
+    rc = mod._run(["echo", "hi"], cwd=tmp_path, log_path=tmp_path / "run.log")
+
+    assert rc == 0
+    err = capsys.readouterr().err
+    assert "run.log" in err
+    assert flaky.closed is True

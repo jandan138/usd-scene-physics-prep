@@ -76,27 +76,63 @@ class BBoxCategoryPlan:
 
 def _run(cmd: list[str], *, cwd: Path, log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    with log_path.open("w", encoding="utf-8") as f:
-        f.write("# cmd\n")
-        f.write(" ".join(cmd) + "\n\n")
-        f.flush()
-        env = os.environ.copy()
-        env.setdefault("TF_LOG", "0")
-        env.setdefault("TF_WARN_OUTPUT_FILE", str(log_path))
-        proc = subprocess.Popen(
-            cmd,
-            cwd=str(cwd),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-            env=env,
-        )
-        assert proc.stdout is not None
-        for line in proc.stdout:
-            sys.stdout.write(line)
-            f.write(line)
-        return proc.wait()
+    log_file = None
+    log_failed = False
+
+    def _disable_log(exc: OSError) -> None:
+        nonlocal log_file, log_failed
+        if log_failed:
+            return
+        log_failed = True
+        sys.stderr.write(f"[bbox-autorun] log write disabled for {log_path}: {exc}\n")
+        if log_file is not None:
+            try:
+                log_file.close()
+            except OSError:
+                pass
+            log_file = None
+
+    def _write_log(text: str, *, flush: bool = False) -> None:
+        if log_file is None or log_failed:
+            return
+        try:
+            log_file.write(text)
+            if flush:
+                log_file.flush()
+        except OSError as exc:
+            _disable_log(exc)
+
+    try:
+        log_file = log_path.open("w", encoding="utf-8", buffering=1)
+    except OSError as exc:
+        _disable_log(exc)
+
+    _write_log("# cmd\n")
+    _write_log(" ".join(cmd) + "\n\n", flush=True)
+
+    env = os.environ.copy()
+    env.setdefault("TF_LOG", "0")
+    env.setdefault("TF_WARN_OUTPUT_FILE", str(log_path))
+    proc = subprocess.Popen(
+        cmd,
+        cwd=str(cwd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        env=env,
+    )
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        _write_log(line)
+    rc = proc.wait()
+    if log_file is not None:
+        try:
+            log_file.close()
+        except OSError as exc:
+            _disable_log(exc)
+    return rc
 
 
 def _list_categories(dataset_root: Path) -> list[str]:

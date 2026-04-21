@@ -81,6 +81,11 @@ The landed capability is now end-to-end in code:
 - historical GRScenes-test0 rollout totals are still the pre-rerun state from
   the earlier non-transitive bundle until a fresh real-data rerun is executed
 - this change updates capability, not the stored historical run outputs
+- a staged rerun probe has now produced real transitive-capable outputs for a
+  six-category retry set plus an isolated `wall` validation run; see
+  `docs/records/research/operations/2026-04-15_transitive_probe_stage_conclusion.md`
+- the authoritative transitive-capable full rerun has now completed; see
+  `docs/records/research/operations/2026-04-18_transitive_full_rerun_conclusion.md`
 
 ## Verification
 
@@ -115,6 +120,8 @@ Conclusion:
 - `docs/records/changes/2026-04-13_transitive_bbox_audit_certificate_semantics.md`
 - `docs/records/changes/2026-04-13_pair_certificate_numpy_v_path.md`
 - `docs/records/changes/2026-04-13_task4_transitive_bbox_gating.md`
+- `docs/records/research/operations/2026-04-18_transitive_full_rerun_conclusion.md`
+- `docs/records/research/operations/2026-04-15_transitive_probe_stage_conclusion.md`
 - `docs/records/research/operations/grscenes_test0_dedup_rollout_status_20260410.md`
 
 ## Concerns

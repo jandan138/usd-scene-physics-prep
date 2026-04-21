@@ -1,7 +1,7 @@
 ---
 title: "GRScenes-test0 Dedup Rollout Status"
 created_at: 2026-04-10
-updated_at: 2026-04-13
+updated_at: 2026-04-18
 maintainer: OpenCode
 status: active
 code_reference:
@@ -18,16 +18,16 @@ doc_class: record
 
 ## Summary
 
-This note captures the rollout status for the bbox-gated GRScenes-test0 dedup
-path after the transitive bbox-gating code landing.
+This note now serves as the historical baseline-status record for the
+bbox-gated GRScenes-test0 dedup path.
 
-Two facts are true at the same time:
+Two facts are now true at the same time:
 
 - code support for certifying and auditing transitive edges is now landed in the
   repo
-- the currently cited rollout totals still reflect the historical pre-rerun
-  state from the `test0_rebuilt_dedup` artifact family, because no fresh
-  GRScenes-test0 rerun has been executed yet with the transitive-capable stack
+- the table below still preserves the old historical pre-rerun totals from the
+  `test0_rebuilt_dedup` artifact family, even though a fresh transitive-capable
+  full rerun has now completed successfully
 
 ## Landed Capability Update
 
@@ -41,7 +41,7 @@ The repo can now do all of the following for transitive edges:
 This closes the earlier code gap where transitive rows were either unsupported
 at mapping time or had to fall back to stricter legacy audit semantics.
 
-## Current Rollout Totals Remain Historical
+## Historical Rollout Totals
 
 The most recent repository-backed historical rollout state comes from:
 
@@ -66,23 +66,20 @@ Additional historical rollout facts:
   final rerun ledger
 - Step 6 is still evidenced only as `dry_run` in the rerun ledgers
 
-These numbers are still useful as rollout history, but they should not be
-presented as transitive-refreshed totals.
+These numbers remain useful as rollout history, but they are no longer the most
+current rerun result.
+
+For the final transitive-capable rerun conclusion, see:
+
+- `docs/records/research/operations/2026-04-18_transitive_full_rerun_conclusion.md`
 
 ## Interpretation
 
-- the feature landing changes what the stack is capable of certifying and
-  auditing
-- it does not retroactively change artifacts already written by earlier runs
-- any rollout report, yield comparison, or promotion decision that needs
-  transitive coverage must come from a fresh rerun
+This status note is now historical background rather than the latest state.
 
-## Next Required Operational Step
+The fresh transitive-capable full rerun has completed successfully and should be
+treated as the current repository-backed rerun result.
 
-Run a fresh GRScenes-test0 bbox-gated rerun with the transitive-capable stack,
-then replace the historical totals above with rerun-derived totals and verdicts.
+Reference:
 
-Until that rerun exists, the correct status statement is:
-
-> Transitive certification and audit support are landed in code, but GRScenes-test0
-> rollout totals still reflect the pre-rerun historical state.
+- `docs/records/research/operations/2026-04-18_transitive_full_rerun_conclusion.md`
