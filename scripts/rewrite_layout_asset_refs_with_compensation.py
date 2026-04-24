@@ -96,7 +96,9 @@ def _load_mapping(mapping_path: str, subset_root: str) -> List[MappingPair]:
                 if isinstance(old, str) and isinstance(canonical, str):
                     pairs.append((old, canonical))
     else:
-        raise ValueError("Unsupported mapping JSON format. Use dict {old: canonical} or list of {old, canonical}.")
+        raise ValueError(
+            "Unsupported mapping JSON format. Use dict {old: canonical} or list of {old, canonical}."
+        )
 
     out: List[MappingPair] = []
     for old_p, canonical_p in pairs:
@@ -114,6 +116,31 @@ def _load_mapping(mapping_path: str, subset_root: str) -> List[MappingPair]:
         seen.add(k)
         unique.append(mp)
     return unique
+
+
+def _load_certificate_lookup(
+    certificate_jsonl: str,
+    subset_root: str,
+) -> Dict[Tuple[str, str], Dict[str, Any]]:
+    lookup: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    with open(certificate_jsonl, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            if not bool(row.get("eligible")):
+                continue
+            if row.get("reject_reason") not in (None, ""):
+                continue
+            old_path = row.get("old_asset") or row.get("old_usd")
+            canonical_path = row.get("canonical_asset") or row.get("canonical_usd")
+            if not isinstance(old_path, str) or not isinstance(canonical_path, str):
+                continue
+            old_abs = _resolve_under_subset_or_abs(subset_root, old_path)
+            canonical_abs = _resolve_under_subset_or_abs(subset_root, canonical_path)
+            lookup[(old_abs, canonical_abs)] = row
+    return lookup
 
 
 def _resolve_under_subset_or_abs(subset_root: str, p: str) -> str:
@@ -141,6 +168,57 @@ def _resolve_under_subset_or_abs(subset_root: str, p: str) -> str:
 
     # Default: treat as subset-root relative.
     return _norm_abs(os.path.join(subset_root, s))
+
+
+def _category_root_from_asset_abs(asset_abs: str) -> str:
+    return _norm_abs(os.path.dirname(os.path.dirname(os.path.dirname(asset_abs))))
+
+
+def _uid_from_asset_abs(asset_abs: str) -> str:
+    return os.path.basename(os.path.dirname(os.path.dirname(asset_abs)))
+
+
+def _build_transitive_witness_inputs(
+    old_abs: str,
+    canonical_abs: str,
+    cert_row: Dict[str, Any],
+) -> Tuple[Dict[Tuple[str, str], str], List[str]]:
+    witness_uids = cert_row.get("transitive_witness_uids") or []
+    witness_modes = cert_row.get("transitive_witness_modes") or []
+    if not isinstance(witness_uids, list) or len(witness_uids) < 2:
+        raise ValueError("missing transitive_witness_uids")
+    if (
+        not isinstance(witness_modes, list)
+        or len(witness_modes) != len(witness_uids) - 1
+    ):
+        raise ValueError("transitive witness modes do not match witness path")
+
+    old_root = _category_root_from_asset_abs(old_abs)
+    canonical_root = _category_root_from_asset_abs(canonical_abs)
+    if old_root != canonical_root:
+        raise ValueError("transitive witness spans multiple category roots")
+
+    old_uid = _uid_from_asset_abs(old_abs)
+    canonical_uid = _uid_from_asset_abs(canonical_abs)
+    uid_to_path: Dict[str, str] = {
+        old_uid: old_abs,
+        canonical_uid: canonical_abs,
+    }
+    for uid in witness_uids:
+        if not isinstance(uid, str):
+            raise ValueError("transitive witness uid must be a string")
+        uid_to_path.setdefault(
+            uid, _norm_abs(os.path.join(old_root, uid, "usd", f"{uid}.usd"))
+        )
+
+    group_members = [uid_to_path[uid] for uid in witness_uids]
+    mode_index: Dict[Tuple[str, str], str] = {}
+    for lhs_uid, rhs_uid, mode in zip(witness_uids, witness_uids[1:], witness_modes):
+        if not isinstance(mode, str):
+            raise ValueError("transitive witness mode must be a string")
+        mode_index[(lhs_uid, rhs_uid)] = mode
+        mode_index[(rhs_uid, lhs_uid)] = mode
+    return mode_index, group_members
 
 
 def _resolve_ref_asset_path(base_dir: str, asset_path: str) -> str:
@@ -179,6 +257,7 @@ def _get_asset_internal_matrix(asset_usd_abs: str) -> Gf.Matrix4d:
     """
     # Import shared helpers (avoids duplicating chain-walk logic)
     import sys as _sys
+
     _scripts_dir = os.path.dirname(os.path.abspath(__file__))
     if _scripts_dir not in _sys.path:
         _sys.path.insert(0, _scripts_dir)
@@ -231,9 +310,13 @@ def _ensure_matrix_xform(prim) -> None:
         return
 
     # Author a single xformOp:transform.
-    prim.CreateAttribute("xformOpOrder", Sdf.ValueTypeNames.TokenArray, custom=False).Set(["xformOp:transform"])
+    prim.CreateAttribute(
+        "xformOpOrder", Sdf.ValueTypeNames.TokenArray, custom=False
+    ).Set(["xformOp:transform"])
     if not prim.HasAttribute("xformOp:transform"):
-        prim.CreateAttribute("xformOp:transform", Sdf.ValueTypeNames.Matrix4d, custom=False)
+        prim.CreateAttribute(
+            "xformOp:transform", Sdf.ValueTypeNames.Matrix4d, custom=False
+        )
 
 
 def _set_local_matrix(prim, m: Gf.Matrix4d) -> None:
@@ -255,7 +338,9 @@ def _iter_asset_values(v: Any) -> Iterable[Sdf.AssetPath]:
     return []
 
 
-def _rewrite_reference_listop(refs, base_dir: str, old_abs: str, new_abs: str) -> Tuple[Any, int]:
+def _rewrite_reference_listop(
+    refs, base_dir: str, old_abs: str, new_abs: str
+) -> Tuple[Any, int]:
     if not refs:
         return refs, 0
 
@@ -310,7 +395,9 @@ def _rewrite_reference_listop(refs, base_dir: str, old_abs: str, new_abs: str) -
     return new_refs, changed
 
 
-def _rewrite_payload_listop(payloads, base_dir: str, old_abs: str, new_abs: str) -> Tuple[Any, int]:
+def _rewrite_payload_listop(
+    payloads, base_dir: str, old_abs: str, new_abs: str
+) -> Tuple[Any, int]:
     if not payloads:
         return payloads, 0
 
@@ -562,6 +649,7 @@ def rewrite_layout(
     max_preview: int,
     v_matrix_mode: str = "none",
     mode_reports_dir: Optional[str] = None,
+    certificate_jsonl: Optional[str] = None,
     bbox_gated: bool = False,
     bbox_policy: str = "bbox_primary_rmse_observe",
 ) -> Dict[str, Any]:
@@ -574,10 +662,14 @@ def rewrite_layout(
 
     # --- V matrix setup ---
     _v_mode_index = None
-    _v_matrix_cache: Dict[Tuple[str, str], Gf.Matrix4d] = {}
+    _certificate_lookup: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    _v_matrix_cache: Dict[Tuple[str, str], Tuple[Optional[Gf.Matrix4d], str]] = {}
     if v_matrix_mode == "auto" and apply_compensation:
         import importlib.util as _ilu
-        _cvt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "compute_vertex_transform.py")
+
+        _cvt_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "compute_vertex_transform.py"
+        )
         _spec = _ilu.spec_from_file_location("compute_vertex_transform", _cvt_path)
         _cvt = _ilu.module_from_spec(_spec)
         _spec.loader.exec_module(_cvt)
@@ -585,6 +677,10 @@ def rewrite_layout(
             _v_mode_index = _cvt.build_mode_index(mode_reports_dir)
         else:
             _v_mode_index = {}
+        if certificate_jsonl:
+            _certificate_lookup = _load_certificate_lookup(
+                certificate_jsonl, subset_root
+            )
 
     def _get_V_cached(old_abs: str, new_abs: str) -> Tuple[Optional[Gf.Matrix4d], str]:
         """Get V matrix and dedup mode for a pair, with caching.
@@ -600,8 +696,37 @@ def rewrite_layout(
         if cached is not None:
             return cached
         mode = _cvt.determine_compensation_mode(old_abs, new_abs, _v_mode_index)
+        if mode == "transitive":
+            cert_row = _certificate_lookup.get(key)
+            if cert_row is None:
+                _v_matrix_cache[key] = (None, mode)
+                return None, mode
+            try:
+                local_mode_index, group_members = _build_transitive_witness_inputs(
+                    old_abs,
+                    new_abs,
+                    cert_row,
+                )
+                V = _cvt.compute_V_for_pair(
+                    old_abs,
+                    new_abs,
+                    mode,
+                    mode_index=local_mode_index,
+                    group_members=group_members,
+                )
+            except RuntimeError as e:
+                if "aspect ratio mismatch" in str(e):
+                    _v_matrix_cache[key] = (None, "aspect_ratio_rejected")
+                    return None, "aspect_ratio_rejected"
+                V = None
+            except Exception:
+                V = None
+            _v_matrix_cache[key] = (V, mode)
+            return V, mode
         try:
-            V = _cvt.compute_V_for_pair(old_abs, new_abs, mode, mode_index=_v_mode_index)
+            V = _cvt.compute_V_for_pair(
+                old_abs, new_abs, mode, mode_index=_v_mode_index
+            )
         except RuntimeError as e:
             if "aspect ratio mismatch" in str(e):
                 _v_matrix_cache[key] = (None, "aspect_ratio_rejected")
@@ -692,7 +817,7 @@ def rewrite_layout(
         rejected_keys: List[str] = []
         for old_abs, canonical_abs in mapping_by_old.items():
             V, dedup_mode = _get_V_cached(old_abs, canonical_abs)
-            if V is None:
+            if V is None and dedup_mode == "aspect_ratio_rejected":
                 rejected_keys.append(old_abs)
                 changes.append(
                     {
@@ -717,18 +842,24 @@ def rewrite_layout(
         new_refs = refs
         ref_changed_pairs: List[Tuple[str, str]] = []
         if refs:
-            new_refs, ref_count, ref_changed_pairs = _rewrite_reference_listop_with_mapping(refs, base_dir, mapping_by_old)
+            new_refs, ref_count, ref_changed_pairs = (
+                _rewrite_reference_listop_with_mapping(refs, base_dir, mapping_by_old)
+            )
         else:
             ref_count = 0
 
         new_pls = pls
         payload_changed_pairs: List[Tuple[str, str]] = []
         if pls:
-            new_pls, payload_count, payload_changed_pairs = _rewrite_payload_listop_with_mapping(pls, base_dir, mapping_by_old)
+            new_pls, payload_count, payload_changed_pairs = (
+                _rewrite_payload_listop_with_mapping(pls, base_dir, mapping_by_old)
+            )
         else:
             payload_count = 0
 
-        asset_attr_previews = _preview_asset_attr_mapping_changes(prim, base_dir, mapping_by_old)
+        asset_attr_previews = _preview_asset_attr_mapping_changes(
+            prim, base_dir, mapping_by_old
+        )
 
         if bbox_gated and (ref_count or payload_count or asset_attr_previews):
             if payload_count:
@@ -739,7 +870,12 @@ def rewrite_layout(
                     old_abs=old_abs,
                     canonical_abs=new_abs,
                     scene_shape="payload",
-                    details={"changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in payload_changed_pairs]},
+                    details={
+                        "changed_pairs": [
+                            {"old_abs": a, "new_abs": b}
+                            for a, b in payload_changed_pairs
+                        ]
+                    },
                 )
                 continue
 
@@ -761,7 +897,9 @@ def rewrite_layout(
                     prim_path_str,
                     "multi_ref_changed_prim_disabled_bbox_phase1",
                     scene_shape="multi_ref",
-                    details={"changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq]},
+                    details={
+                        "changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq]
+                    },
                 )
                 continue
 
@@ -790,7 +928,13 @@ def rewrite_layout(
                         scene_shape="references",
                     )
                     continue
-                if dedup_mode not in ("geom_only", "identity", "topo_filesize", "shape_invariant"):
+                if dedup_mode not in (
+                    "geom_only",
+                    "identity",
+                    "topo_filesize",
+                    "shape_invariant",
+                    "transitive",
+                ):
                     _record_reject(
                         prim_path_str,
                         f"mode_not_enabled_{dedup_mode}",
@@ -802,7 +946,9 @@ def rewrite_layout(
                 if dedup_mode in ("geom_only", "identity"):
                     old_internal = _get_internal_cached(old_abs)
                     canonical_internal = _get_internal_cached(new_abs)
-                    new_local = canonical_internal.GetInverse() * old_internal * old_local
+                    new_local = (
+                        canonical_internal.GetInverse() * old_internal * old_local
+                    )
                 else:
                     new_local = V * old_local
             except Exception as e:
@@ -871,7 +1017,11 @@ def rewrite_layout(
                         if dedup_mode in ("geom_only", "identity"):
                             old_internal = _get_internal_cached(old_abs)
                             canonical_internal = _get_internal_cached(new_abs)
-                            new_local = canonical_internal.GetInverse() * old_internal * old_local
+                            new_local = (
+                                canonical_internal.GetInverse()
+                                * old_internal
+                                * old_local
+                            )
                         else:
                             new_local = V * old_local
                         _set_local_matrix(prim, new_local)
@@ -901,7 +1051,9 @@ def rewrite_layout(
                         {
                             "prim": prim_path_str,
                             "kind": "xform_compensation_skipped_multi_ref",
-                            "changed_pairs": [{"old_abs": a, "new_abs": b} for a, b in uniq],
+                            "changed_pairs": [
+                                {"old_abs": a, "new_abs": b} for a, b in uniq
+                            ],
                         }
                     )
 
@@ -999,7 +1151,10 @@ def rewrite_layout(
             "reject_records": reject_records,
             "change_records": len(changes),
         },
-        "mapping_pairs": [{"old_abs": mp.old_abs, "canonical_abs": mp.canonical_abs} for mp in mapping_pairs],
+        "mapping_pairs": [
+            {"old_abs": mp.old_abs, "canonical_abs": mp.canonical_abs}
+            for mp in mapping_pairs
+        ],
         "changes_preview": changes[: max_preview if max_preview > 0 else 0],
     }
 
@@ -1007,7 +1162,12 @@ def rewrite_layout(
         report_out = _norm_abs(report_out)
         os.makedirs(os.path.dirname(report_out) or ".", exist_ok=True)
         with open(report_out, "w", encoding="utf-8") as f:
-            json.dump({"summary": summary, "changes": changes}, f, indent=2, ensure_ascii=False)
+            json.dump(
+                {"summary": summary, "changes": changes},
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
     if not dry_run:
         if set_instanceable and rewritten_prims:
@@ -1018,9 +1178,17 @@ def rewrite_layout(
                 try:
                     prim.SetInstanceable(True)
                     instanceable_set += 1
-                    changes.append({"prim": str(p), "kind": "set_instanceable", "value": True})
+                    changes.append(
+                        {"prim": str(p), "kind": "set_instanceable", "value": True}
+                    )
                 except Exception as e:
-                    changes.append({"prim": str(p), "kind": "set_instanceable_error", "error": str(e)})
+                    changes.append(
+                        {
+                            "prim": str(p),
+                            "kind": "set_instanceable_error",
+                            "error": str(e),
+                        }
+                    )
 
             # Update counts post-apply
             summary["counts"]["instanceable_set"] = instanceable_set
@@ -1028,7 +1196,12 @@ def rewrite_layout(
 
             if report_out:
                 with open(report_out, "w", encoding="utf-8") as f:
-                    json.dump({"summary": summary, "changes": changes}, f, indent=2, ensure_ascii=False)
+                    json.dump(
+                        {"summary": summary, "changes": changes},
+                        f,
+                        indent=2,
+                        ensure_ascii=False,
+                    )
 
         stage.GetRootLayer().Save()
 
@@ -1111,7 +1284,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if subset_root is None:
         inferred = _find_subset_root_from_layout(layout_usd)
         if inferred is None:
-            raise SystemExit("Failed to infer --subset-root; please provide it explicitly")
+            raise SystemExit(
+                "Failed to infer --subset-root; please provide it explicitly"
+            )
         subset_root = inferred
 
     mapping_pairs = _load_mapping(args.mapping_json, subset_root)

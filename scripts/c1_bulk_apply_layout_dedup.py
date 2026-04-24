@@ -35,10 +35,13 @@ def _append_jsonl(path: Path, rows: List[Dict]) -> None:
         for row in rows:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
+
 def _load_rewriter_module():
     scripts_dir = Path(__file__).resolve().parent
     mod_path = scripts_dir / "rewrite_layout_asset_refs_with_compensation.py"
-    spec = importlib.util.spec_from_file_location("rewrite_layout_asset_refs_with_compensation", mod_path)
+    spec = importlib.util.spec_from_file_location(
+        "rewrite_layout_asset_refs_with_compensation", mod_path
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Failed to load module spec from: {mod_path}")
     module = importlib.util.module_from_spec(spec)
@@ -50,10 +53,18 @@ def _load_rewriter_module():
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset-root", default="GRScenes-test1")
-    ap.add_argument("--layout-root", default=None, help="If set, scan layouts under this dir (default: <dataset>/GRScenes100)")
+    ap.add_argument(
+        "--layout-root",
+        default=None,
+        help="If set, scan layouts under this dir (default: <dataset>/GRScenes100)",
+    )
     ap.add_argument("--mapping-json", required=True)
-    ap.add_argument("--group-label", required=True, help="Label used in report filenames")
-    ap.add_argument("--out-name", required=True, help="Output filename written next to layout.usd")
+    ap.add_argument(
+        "--group-label", required=True, help="Label used in report filenames"
+    )
+    ap.add_argument(
+        "--out-name", required=True, help="Output filename written next to layout.usd"
+    )
     ap.add_argument(
         "--scene-files",
         default="layout.usd,start_result_interaction.usd,start_result_navigation.usd",
@@ -64,34 +75,63 @@ def main() -> int:
     ap.add_argument("--set-instanceable", action="store_true")
     ap.add_argument("--no-compensation", action="store_true")
     ap.add_argument("--max-preview", type=int, default=0)
-    ap.add_argument("--v-matrix-mode", choices=["none", "auto"], default="none",
-                    help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)")
-    ap.add_argument("--mode-reports-dir", default=None,
-                    help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)")
-    ap.add_argument("--bbox-gated", action="store_true", help="Enable bbox-gated fail-closed apply behavior.")
+    ap.add_argument(
+        "--v-matrix-mode",
+        choices=["none", "auto"],
+        default="none",
+        help="V matrix compensation mode: 'none' (legacy) or 'auto' (mode-dispatched)",
+    )
+    ap.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory containing dedup mode reports (geom_only/, topo_filesize/, shape_invariant/)",
+    )
+    ap.add_argument(
+        "--bbox-gated",
+        action="store_true",
+        help="Enable bbox-gated fail-closed apply behavior.",
+    )
     ap.add_argument(
         "--bbox-policy",
         choices=["bbox_primary_rmse_observe", "bbox_primary_rmse_harder"],
         default="bbox_primary_rmse_observe",
         help="BBox-gated policy label recorded in apply summaries.",
     )
-    ap.add_argument("--mapping-stats-json", default=None, help="Optional mapping stats JSON for traceability.")
-    ap.add_argument("--certificate-jsonl", default=None, help="Optional pair certificate JSONL for traceability.")
-    ap.add_argument("--baseline-root", default=None, help="Optional canonical baseline root recorded in summaries.")
-    ap.add_argument("--reject-ledger-jsonl", default=None, help="Optional JSONL ledger aggregating bbox-gated rejects.")
+    ap.add_argument(
+        "--mapping-stats-json",
+        default=None,
+        help="Optional mapping stats JSON for traceability.",
+    )
+    ap.add_argument(
+        "--certificate-jsonl",
+        default=None,
+        help="Optional pair certificate JSONL for traceability.",
+    )
+    ap.add_argument(
+        "--baseline-root",
+        default=None,
+        help="Optional canonical baseline root recorded in summaries.",
+    )
+    ap.add_argument(
+        "--reject-ledger-jsonl",
+        default=None,
+        help="Optional JSONL ledger aggregating bbox-gated rejects.",
+    )
     ap.add_argument(
         "--input-layout-name",
         default=None,
         help="If set, read from this filename instead of 'layout.usd' for the layout rewrite step "
-             "(output is still written to --out-name). Useful for re-running from a snapshot, "
-             "e.g. layout.pre_c1_normalize_only.20260315_chain_fix_v1.usd",
+        "(output is still written to --out-name). Useful for re-running from a snapshot, "
+        "e.g. layout.pre_c1_normalize_only.20260315_chain_fix_v1.usd",
     )
     args = ap.parse_args()
 
     rw = _load_rewriter_module()
 
     dataset_root = Path(args.dataset_root)
-    layout_root = Path(args.layout_root) if args.layout_root else (dataset_root / "GRScenes100")
+    layout_root = (
+        Path(args.layout_root) if args.layout_root else (dataset_root / "GRScenes100")
+    )
     report_dir = Path(args.report_dir)
     report_dir.mkdir(parents=True, exist_ok=True)
 
@@ -105,11 +145,15 @@ def main() -> int:
     # Derive suffix from out-name, e.g. layout.c1_x.usd -> .c1_x
     out_bn = Path(args.out_name).name
     if not out_bn.endswith(".usd") or not out_bn.startswith("layout"):
-        raise SystemExit(f"--out-name must look like 'layout.<suffix>.usd' (got: {args.out_name})")
+        raise SystemExit(
+            f"--out-name must look like 'layout.<suffix>.usd' (got: {args.out_name})"
+        )
     out_stem = out_bn[: -len(".usd")]
     out_suffix = out_stem[len("layout") :]
     if not out_suffix:
-        raise SystemExit(f"--out-name must include a suffix after 'layout' (got: {args.out_name})")
+        raise SystemExit(
+            f"--out-name must include a suffix after 'layout' (got: {args.out_name})"
+        )
 
     summaries: List[Dict] = []
     changed_layouts = 0
@@ -133,7 +177,9 @@ def main() -> int:
             if scene_fn == "layout.usd":
                 out_path = scene_dir / args.out_name
             else:
-                base = scene_fn[: -len(".usd")] if scene_fn.endswith(".usd") else scene_fn
+                base = (
+                    scene_fn[: -len(".usd")] if scene_fn.endswith(".usd") else scene_fn
+                )
                 out_path = scene_dir / f"{base}{out_suffix}.usd"
 
             report_out = str(
@@ -153,6 +199,7 @@ def main() -> int:
                 max_preview=int(args.max_preview),
                 v_matrix_mode=args.v_matrix_mode,
                 mode_reports_dir=args.mode_reports_dir,
+                certificate_jsonl=args.certificate_jsonl,
                 bbox_gated=bool(args.bbox_gated),
                 bbox_policy=args.bbox_policy,
             )
@@ -204,15 +251,28 @@ def main() -> int:
         "per_layout": summaries,
     }
 
-    (report_dir / "batch_summary.json").write_text(json.dumps(batch_summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (report_dir / "batch_summary.json").write_text(
+        json.dumps(batch_summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     print(f"WROTE {report_dir / 'batch_summary.json'}")
 
     # Simple spotcheck list
     ranked = []
     for s in summaries:
         c = s.get("counts") or {}
-        score = int(c.get("refs_changed", 0)) + int(c.get("payloads_changed", 0)) + int(c.get("asset_attrs_changed", 0))
-        ranked.append((score, int(c.get("xform_compensated", 0)), s.get("layout_in"), s.get("layout_out")))
+        score = (
+            int(c.get("refs_changed", 0))
+            + int(c.get("payloads_changed", 0))
+            + int(c.get("asset_attrs_changed", 0))
+        )
+        ranked.append(
+            (
+                score,
+                int(c.get("xform_compensated", 0)),
+                s.get("layout_in"),
+                s.get("layout_out"),
+            )
+        )
     ranked.sort(key=lambda x: (-x[0], -x[1], str(x[2] or "")))
 
     md_lines = [
@@ -232,7 +292,9 @@ def main() -> int:
         if score <= 0:
             continue
         md_lines.append(f"- score={score} xform_compensated={xfc} in={lin} out={lout}")
-    (report_dir / "spotcheck_list.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    (report_dir / "spotcheck_list.md").write_text(
+        "\n".join(md_lines) + "\n", encoding="utf-8"
+    )
     print(f"WROTE {report_dir / 'spotcheck_list.md'}")
 
     return 0
