@@ -1,7 +1,7 @@
 ---
 title: "GRScenes-test0 Dedup Rollout Status"
 created_at: 2026-04-10
-updated_at: 2026-04-18
+updated_at: 2026-04-21
 maintainer: OpenCode
 status: active
 code_reference:
@@ -65,6 +65,9 @@ Additional historical rollout facts:
 - the completed rerun state ends with no remaining failed categories in the
   final rerun ledger
 - Step 6 is still evidenced only as `dry_run` in the rerun ledgers
+- later investigation showed the dry-run apply outputs shared one suffixed
+  layout filename per scene, so the rerun should not be read as a completed
+  promoted duplicate-removed baseline
 
 These numbers remain useful as rollout history, but they are no longer the most
 current rerun result.
@@ -77,8 +80,10 @@ For the final transitive-capable rerun conclusion, see:
 
 This status note is now historical background rather than the latest state.
 
-The fresh transitive-capable full rerun has completed successfully and should be
-treated as the current repository-backed rerun result.
+The fresh transitive-capable full rerun should be treated as the current
+repository-backed dry-run result for metrics and certification evidence, but not
+as a confirmed promoted duplicate-removed baseline. See the full rerun
+conclusion for the overwrite caveat and dry-run reuse boundary.
 
 Reference:
 

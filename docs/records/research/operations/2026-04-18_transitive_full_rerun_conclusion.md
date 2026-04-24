@@ -7,7 +7,7 @@ code_reference:
   - scripts/dlc/launch_job.sh
   - scripts/dlc/run_task.sh
 created_at: 2026-04-18
-updated_at: 2026-04-18
+updated_at: 2026-04-21
 maintainer: OpenCode
 status: active
 doc_class: record
@@ -17,8 +17,9 @@ doc_class: record
 
 ## Summary
 
-The authoritative GRScenes-test0 transitive-capable full rerun has completed
-successfully.
+The authoritative GRScenes-test0 transitive-capable full rerun completed
+successfully as a dry-run evidence set, but it should not currently be
+described as a true promoted duplicate-removed baseline.
 
 Full rerun job:
 
@@ -33,6 +34,15 @@ Operational result:
 - `9` categories finished as `category_skip`
 - `0` categories failed
 - Step 6 remained `dry_run`
+
+Important post-run correction:
+
+- category dry-run apply outputs all wrote the same suffixed layout filename per
+  scene
+- Step 6 stayed `dry_run`, so those suffixed outputs were never promoted back to
+  `layout.usd`
+- the later exported baseline therefore reflects dry-run-derived scene snapshots
+  rather than a cumulative promote-applied clone
 
 Feature result:
 
@@ -169,19 +179,40 @@ This is the key evidence that the feature moved the pipeline from
 "transitive edges are blocked" to "transitive edges are evaluated under the same
 certificate and audit contract as direct edges".
 
+## Dry-Run Reuse Boundary
+
+The rerun artifacts remain useful, but not all layers are reusable in the same
+way.
+
+- `01_cert/filtered_mapping.json` remains reusable as input to a future
+  promoted-clone pass because the stored mappings use dataset-relative
+  `GRScenes_assets/...` paths that can be resolved under a new clone root
+- `02_apply` suffixed layouts are not reusable as final promoted outputs because
+  each category re-read `layout.usd` and overwrote the same suffixed filename
+  instead of accumulating category rewrites
+- `03_audit` artifacts remain evidence that those dry-run apply outputs passed
+  audit in the source rerun, but they do not prove completion for a fresh clone
+  that will have different cumulative `layout.usd` state
+- `04_step6` dry-run artifacts are historical evidence only; they do not prove
+  clone-local promote, post-promote scans, or soft-delete completion
+
 ## Bottom Line
 
-The transitive-capable GRScenes-test0 full rerun succeeded and produced a real
-improvement over the historical rollout.
+The transitive-capable GRScenes-test0 full rerun succeeded as a dry-run metrics
+and certification pass and produced a real improvement over the historical
+rollout.
 
-- the rerun is complete
-- the output remains dry-run authoritative rather than promote-applied
+- the rerun metrics and pair certification evidence are complete
+- `01_cert` artifacts are reusable as inputs to a future promoted-clone pass
+- the exported baseline remains a dry-run-derived delivery snapshot rather than
+  a promote-applied duplicate-removed clone
 - the transitive feature recovered `2073` additional mapping pairs
 - the old unsupported bucket was eliminated and replaced with more informative
   transitive-specific rejection buckets
 
 The next decision is no longer "does the feature work?"
 
-The next decision is whether to treat this dry-run rerun as the accepted new
-rollout baseline and what follow-up, if any, is required for the underlying
-missing-reference noise in the dataset chain.
+The next decision is whether to run a fresh apply/audit/Step 6 `apply` pass on
+a user-side clone so category rewrites accumulate into `layout.usd` and produce
+a true duplicate-removed promoted clone, and what follow-up, if any, is
+required for the underlying missing-reference noise in the dataset chain.

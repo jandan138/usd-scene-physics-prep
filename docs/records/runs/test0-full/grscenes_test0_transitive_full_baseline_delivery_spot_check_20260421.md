@@ -19,6 +19,11 @@ User-facing read-only spot check of delivery root:
 
 - `/cpfs/user/zhuzihou/assets/GRScenes-test0-transitive-full-baseline-20260418`
 
+This spot check validates packaging and immediate readability only. It does not
+establish that the delivery root is a promote-applied duplicate-removed clone;
+later investigation showed the source suffixed layouts came from non-cumulative
+dry-run apply outputs.
+
 Requested checks:
 
 - top-level structure and manifest/readme coherence
@@ -45,7 +50,10 @@ Observed top-level entries:
 - retained assets: `85549`
 - dangling references: `35`
 
-`README.md` explicitly states dangling references are recorded rather than rewritten away. `MANIFEST.json` records provenance roots in the repo workspace as source-of-truth metadata.
+`README.md` explicitly states dangling references are recorded rather than
+rewritten away. `MANIFEST.json` records provenance roots in the repo workspace
+as source-of-truth metadata. This packaging coherence does not by itself prove
+promote semantics for the source rerun layouts.
 
 # Scene Checks
 
@@ -93,10 +101,15 @@ Verified these retained asset files exist at the expected bundled locations:
 
 # Immediate Usability Concern
 
-The primary downstream issue is not path portability but retained dangling references:
+The immediate downstream issues are retained dangling references and the broader
+semantic caveat that this bundle is a dry-run-derived delivery snapshot rather
+than a proven promote-applied clone:
 
 - `dangling_references.json` reports `35` known missing assets
 - one sampled home layout reproduces this immediately as a USD warning on open
+- later investigation showed the source rerun suffix layouts were overwritten
+  across categories during dry-run execution, so this bundle should not be used
+  as evidence that duplicate-removal promotion already completed in place
 
 This means a downstream user can open the dataset, but some scenes may log missing-asset warnings and load with incomplete content.
 

@@ -4,7 +4,7 @@ code_reference:
   - scripts/export_transitive_full_baseline_dataset.py
   - tests/test_export_transitive_full_baseline_dataset.py
 created_at: 2026-04-20
-updated_at: 2026-04-20
+updated_at: 2026-04-21
 maintainer: OpenCode
 status: active
 ---
@@ -13,14 +13,31 @@ status: active
 
 ## Summary
 
-Added `scripts/export_transitive_full_baseline_dataset.py` to derive a fresh slim delivery dataset from the authoritative transitive full rerun dataset root.
+Added `scripts/export_transitive_full_baseline_dataset.py` to derive a fresh
+slim delivery dataset from the dry-run transitive full rerun dataset root.
 
 The exporter:
-- reads final rerun layouts from `GRScenes100/**/layout.c1_v8_tier2_rollout_transitive_full_dlc_bbox_primary_rmse_observe_v1.usd`
+- reads dry-run rerun layouts from `GRScenes100/**/layout.c1_v8_tier2_rollout_transitive_full_dlc_bbox_primary_rmse_observe_v1.usd`
 - writes them to the delivery tree as `layout.usd`
 - copies `Material/` wholesale
 - retains only referenced `GRScenes_assets`
 - emits `MANIFEST.json`, `asset_pruning_summary.json`, `dangling_references.json`, and `README.md`
+
+## Correction
+
+Later investigation confirmed that the source suffixed layouts were not a true
+cumulative promoted baseline:
+
+- category dry-run apply outputs wrote the same suffixed layout filename per
+  scene
+- Step 6 remained `dry_run`, so those suffixed outputs were never promoted back
+  to `layout.usd`
+- the exported bundle is therefore a dry-run-derived delivery snapshot rather
+  than a true duplicate-removed promoted clone
+
+Operationally, only the `01_cert` mapping artifacts from the dry-run rerun are
+directly reusable for a future promoted-clone pass. The `02_apply~04_step6`
+artifacts remain evidence and debugging material, not completed promoted state.
 
 ## Code Changes
 
@@ -123,6 +140,9 @@ Observed delivery result:
 - `retained_asset_count`: `85549`
 - `dangling_reference_count`: `35`
 - `omitted_asset_count`: `98`
+- note: the low omitted count reflects the later-confirmed dry-run overwrite
+  issue in the source suffixed layouts, not the full dedup potential suggested
+  by the rerun mapping metrics
 - required top-level outputs present:
   - `GRScenes100/`
   - `GRScenes_assets/`
@@ -136,3 +156,5 @@ Observed delivery result:
 
 - The smoke output is intentionally left under `/tmp/grscenes-test0-transitive-full-baseline-smoke` for inspection.
 - The exporter currently counts rerun metrics by summing numeric top-level keys from `*.stats.json`; if future stats files add unrelated numeric fields, the aggregation may need tightening.
+- This exporter should now be described as producing a dry-run-derived delivery
+  snapshot, not a promoted duplicate-removed baseline clone.

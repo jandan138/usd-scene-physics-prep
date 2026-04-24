@@ -309,7 +309,7 @@ def build_plan(
     )
 
 
-def _is_bbox_done(category_root: Path) -> bool:
+def _is_bbox_done(category_root: Path, *, step6_mode: str = "off") -> bool:
     verdict = category_root / "03_audit" / "audit_verdict.json"
     if not verdict.exists():
         return False
@@ -317,7 +317,11 @@ def _is_bbox_done(category_root: Path) -> bool:
         payload = json.loads(verdict.read_text(encoding="utf-8"))
     except Exception:
         return False
-    return bool(payload.get("passed"))
+    if not bool(payload.get("passed")):
+        return False
+    if step6_mode == "apply":
+        return _is_step6_complete(category_root / "04_step6")
+    return True
 
 
 def build_bbox_plan(
@@ -438,7 +442,8 @@ def _run_bbox_gated(args: argparse.Namespace) -> int:
             c
             for c in categories
             if not _is_bbox_done(
-                c1_bulk_dir / f"{c}_{args.bbox_policy}_{args.out_version}"
+                c1_bulk_dir / f"{c}_{args.bbox_policy}_{args.out_version}",
+                step6_mode=args.step6_mode,
             )
         ]
     if args.max_categories and args.max_categories > 0:

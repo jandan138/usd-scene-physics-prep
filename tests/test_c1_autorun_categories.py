@@ -122,3 +122,45 @@ def test_run_tolerates_log_write_enospc(monkeypatch, tmp_path, capsys):
     err = capsys.readouterr().err
     assert "run.log" in err
     assert flaky.closed is True
+
+
+def test_is_bbox_done_requires_step6_complete_in_apply_mode(tmp_path):
+    category_root = tmp_path / "blanket_bbox_primary_rmse_observe_v1"
+    audit = category_root / "03_audit" / "audit_verdict.json"
+    audit.parent.mkdir(parents=True, exist_ok=True)
+    audit.write_text('{"passed": true}\n', encoding="utf-8")
+
+    step6 = category_root / "04_step6"
+    step6.mkdir(parents=True, exist_ok=True)
+    (step6 / "post_promote_full_usd_scan_excluding_backups_pxr.json").write_text(
+        '{"hit_files": 0}\n', encoding="utf-8"
+    )
+
+    assert mod._is_bbox_done(category_root, step6_mode="apply") is False
+
+
+def test_is_bbox_done_accepts_complete_step6_in_apply_mode(tmp_path):
+    category_root = tmp_path / "bed_bbox_primary_rmse_observe_v1"
+    audit = category_root / "03_audit" / "audit_verdict.json"
+    audit.parent.mkdir(parents=True, exist_ok=True)
+    audit.write_text('{"passed": true}\n', encoding="utf-8")
+
+    step6 = category_root / "04_step6"
+    step6.mkdir(parents=True, exist_ok=True)
+    (step6 / "post_promote_full_usd_scan_excluding_backups_pxr.json").write_text(
+        '{"hit_files": 0}\n', encoding="utf-8"
+    )
+    (step6 / "post_soft_delete_layout_scan_pxr.json").write_text(
+        '{"hit_layouts": 0}\n', encoding="utf-8"
+    )
+
+    assert mod._is_bbox_done(category_root, step6_mode="apply") is True
+
+
+def test_is_bbox_done_keeps_audit_only_semantics_outside_apply_mode(tmp_path):
+    category_root = tmp_path / "chair_bbox_primary_rmse_observe_v1"
+    audit = category_root / "03_audit" / "audit_verdict.json"
+    audit.parent.mkdir(parents=True, exist_ok=True)
+    audit.write_text('{"passed": true}\n', encoding="utf-8")
+
+    assert mod._is_bbox_done(category_root, step6_mode="dry_run") is True

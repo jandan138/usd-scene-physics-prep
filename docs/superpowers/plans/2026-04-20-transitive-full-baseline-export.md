@@ -5,7 +5,7 @@ code_reference:
   - tests/test_export_transitive_full_baseline_dataset.py
   - docs/records/changes/2026-04-20_transitive_full_baseline_export.md
 created_at: 2026-04-20
-updated_at: 2026-04-20
+updated_at: 2026-04-21
 maintainer: OpenCode
 status: approved
 doc_class: record
@@ -15,9 +15,11 @@ doc_class: record
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a repeatable exporter that derives a slim delivery dataset from the successful transitive full rerun, keeping only scene-referenced assets while copying `Material/` wholesale.
+**Goal:** Build a repeatable exporter that derives a slim delivery dataset from the successful dry-run transitive full rerun outputs, keeping only scene-referenced assets while copying `Material/` wholesale.
 
-**Architecture:** A single export script reads final rerun layout outputs from the rerun dataset root (`GRScenes100/**/layout.<suffix>.usd`), writes them into a new delivery root as `layout.usd`, computes the referenced asset closure, copies only those `GRScenes_assets`, copies `Material/` whole, and emits manifest/summary files. The full rerun result root is used for metrics/provenance, not as the physical source of scene layouts. Tests use small filesystem fixtures and monkeypatched reference extraction so the export logic is verified without requiring the real 149G dataset.
+**Architecture:** A single export script reads dry-run rerun layout outputs from the rerun dataset root (`GRScenes100/**/layout.<suffix>.usd`), writes them into a new delivery root as `layout.usd`, computes the referenced asset closure, copies only those `GRScenes_assets`, copies `Material/` whole, and emits manifest/summary files. The full rerun result root is used for metrics/provenance, not as the physical source of scene layouts. Tests use small filesystem fixtures and monkeypatched reference extraction so the export logic is verified without requiring the real 149G dataset.
+
+**Correction:** This historical plan describes a dry-run-derived delivery export only. Later investigation showed the source suffixed layouts were not a cumulative promote-applied clone because category dry-run apply outputs wrote the same suffixed filenames and Step 6 stayed `dry_run`. Producing a true duplicate-removed promoted clone requires a separate apply/audit/Step 6 `apply` pass on a cloned dataset root.
 
 **Tech Stack:** Python 3, pathlib, json, shutil, pytest, optional pxr/USD for reference extraction in the production script
 

@@ -6,7 +6,7 @@ code_reference:
   - scripts/rewrite_layout_asset_refs_with_compensation.py
   - check_reports/test0_rebuilt_dedup/c1_bulk_v8_tier2_rollout_transitive_full_dlc_20260415
 created_at: 2026-04-20
-updated_at: 2026-04-20
+updated_at: 2026-04-21
 maintainer: OpenCode
 status: approved
 doc_class: record
@@ -17,12 +17,14 @@ doc_class: record
 ## Goal
 
 Generate a new slim delivery dataset under `/cpfs/user/zhuzihou/assets` from the
-successful transitive-capable GRScenes-test0 full rerun, while preserving the
-current repo-side baseline and rerun roots as authoritative provenance.
+successful dry-run transitive-capable GRScenes-test0 full rerun outputs, while
+preserving the current repo-side baseline and rerun roots as provenance. This
+design does not describe a true promoted duplicate-removed clone.
 
 ## Current Context
 
-The final dry-run authoritative rerun result already exists and is successful.
+The final dry-run rerun result already exists and is successful as a metrics and
+delivery-snapshot source.
 
 Current authoritative inputs:
 
@@ -38,6 +40,9 @@ Important constraints:
 - Step 6 stayed in `dry_run`, so final scene outputs are the generated
   `layout.c1_v8_tier2_rollout_transitive_full_dlc_bbox_primary_rmse_observe_v1.usd`
   files, not overwritten `layout.usd`
+- later investigation confirmed that category dry-run apply outputs wrote the
+  same suffixed layout filenames per scene, so these files are dry-run-derived
+  scene snapshots rather than a cumulative promote-applied baseline
 - the repo-side rerun dataset and full rerun outputs must remain intact for
   traceability
 - `Material/` may remain untrimmed for this phase
@@ -96,8 +101,9 @@ Reference closure rule:
 - remove all other asset directories from the delivery dataset by omission
 
 This is the actual slimming mechanism. It is not based on historical candidate
-counts or union-removable counts. It is based only on the final authoritative
-scene outputs.
+counts or union-removable counts. It is based only on the exported dry-run scene
+outputs and therefore should not be confused with producing a true
+duplicate-removed promoted clone.
 
 ## Material Rule
 
@@ -123,8 +129,8 @@ Policy:
 - record any unresolved references into `dangling_references.json`
 - surface counts and representative paths in `MANIFEST.json` and `README.md`
 
-This keeps the export aligned with the accepted dry-run baseline rather than
-introducing an extra behavior-changing cleanup step.
+This keeps the export aligned with the dry-run-derived delivery snapshot rather
+than introducing an extra behavior-changing cleanup step.
 
 ## Manifest And Summary Files
 
@@ -155,10 +161,13 @@ Must record:
 
 Must explain:
 
-- this is a slim delivery dataset derived from the transitive-capable full rerun
+- this is a slim delivery dataset derived from dry-run transitive-capable full
+  rerun outputs
 - `layout.usd` in this directory corresponds to the final rerun layout outputs
 - the repo-side baseline and rerun roots remain the provenance source of truth
 - known dangling-reference warnings are recorded, not rewritten away
+- this directory is not proof that the repo-side baseline was promote-applied
+  into a duplicate-removed clone
 
 ## Verification Requirements
 
@@ -194,7 +203,7 @@ This export does not:
 
 - overwrite or mutate the current rerun dataset root
 - mutate repo-side authoritative rerun outputs
-- attempt final promote semantics beyond the already accepted dry-run result
+- attempt final promote semantics beyond the available dry-run-derived outputs
 - trim `Material/` by reference closure in this phase
 - rewrite dangling references out of final layouts
 
@@ -217,7 +226,8 @@ require modification of the source dataset roots.
 
 ## Bottom Line
 
-The correct low-risk next step is to derive a new slim delivery dataset from the
-successful full rerun outputs, with final scene layouts exposed as `layout.usd`,
-unused assets omitted, `Material/` copied whole, and provenance preserved in
-manifest files rather than by mutating the current baseline roots.
+The correct low-risk next step described by this historical design is to derive
+a dry-run-derived delivery dataset from the successful full rerun outputs, with
+final scene layouts exposed as `layout.usd`, unused assets omitted,
+`Material/` copied whole, and provenance preserved in manifest files rather
+than by mutating the current baseline roots.
