@@ -499,6 +499,28 @@ three additional issues (fixed in commit `b3a0636`):
 - Missing `--v-matrix-mode` argument (needed for parity with the combined merge
   code path)
 
+### Phase 2 V Matrix Compensation Fix
+
+Phase 2 merges all category sidecars by re-applying the combined mapping to the
+baseline `layout.usd` (same as Phase 1 apply). The initial implementation used
+`v_matrix_mode="none"` as a lazy workaround, which caused visual displacement
+because the merge skipped V matrix compensation for deduped asset placements.
+
+**Fix**: Changed `v_matrix_mode` from `"none"` to `"auto"` in both
+`_combined_merge()` and `_sequential_merge()`, and added `--mode-reports-dir`
+CLI argument to both `c1_phase2_merge_scan_delete.py` and
+`orchestrate_c1_parallel.py` so the mode reports directory
+(`check_reports/test0_rebuilt_dedup/v8_prededup`) is passed through to the
+`rewrite_layout()` call. This allows the V matrix compensation logic to look up
+dedup mode information (geom_only vs shape_invariant vs transitive) and compute
+the correct transform compensation for each asset pair.
+
+`--certificate-jsonl` is NOT passed for Phase 2, because combining certificates
+from all categories is complex. For transitive pairs without certificates,
+`rewrite_layout` records an `xform_compensation_error` (the reference is still
+rewritten, but without V compensation). Since transitive pairs are rare in
+practice, this is an acceptable trade-off.
+
 ### Specific Arguments: Wrong vs Correct
 
 #### Step 1 – Build Mapping (`c1_build_bulk_mapping_from_dedup_report.py`)

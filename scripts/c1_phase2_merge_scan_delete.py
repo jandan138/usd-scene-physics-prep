@@ -16,7 +16,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ def _combined_merge(
     dataset_root: Path,
     combined_mapping: Dict[str, str],
     scene_files: List[str],
+    mode_reports_dir: Optional[str] = None,
 ):
     """Apply combined mapping to all scene files in one pass.
 
@@ -104,7 +105,8 @@ def _combined_merge(
                 dry_run=False,
                 report_out=None,
                 max_preview=0,
-                v_matrix_mode="none",
+                v_matrix_mode="auto",
+                mode_reports_dir=mode_reports_dir,
             )
             log.info("Merged %s", scene_path.relative_to(dataset_root))
 
@@ -117,6 +119,7 @@ def _sequential_merge(
     categories: List[str],
     group_label: str,
     scene_files: List[str],
+    mode_reports_dir: Optional[str] = None,
 ):
     """Fallback: apply categories one by one via in-place rewrite_layout calls.
 
@@ -170,7 +173,8 @@ def _sequential_merge(
                     dry_run=False,
                     report_out=None,
                     max_preview=0,
-                    v_matrix_mode="none",  # safe default for sequential fallback
+                    v_matrix_mode="auto",
+                    mode_reports_dir=mode_reports_dir,
                 )
                 log.info("Merged %s (cat=%s)", scene_path.relative_to(dataset_root), cat)
 
@@ -250,6 +254,12 @@ def main() -> int:
         help="JSON list of category names (default: discover from c1_bulk)",
     )
     ap.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory of mode reports for V matrix compensation "
+             "(default: auto-discover or skip)",
+    )
+    ap.add_argument(
         "--scene-files",
         default="layout.usd,start_result_interaction.usd,"
                 "start_result_navigation.usd",
@@ -315,12 +325,14 @@ def main() -> int:
         _sequential_merge(
             dataset_root, c1_bulk, policy, version, categories,
             group_label, scene_files,
+            mode_reports_dir=args.mode_reports_dir,
         )
     else:
         print("[Phase2] No conflicts — using combined mapping "
               f"({len(combined_mapping)} pairs)", flush=True)
         _combined_merge(
             dataset_root, combined_mapping, scene_files,
+            mode_reports_dir=args.mode_reports_dir,
         )
 
     merge_elapsed = time.time() - t0

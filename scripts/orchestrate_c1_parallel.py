@@ -70,11 +70,14 @@ def launch_job(
 
 
 def _discover_categories_from_report(report_path: str) -> List[str]:
-    """Extract category names from dedup report using streaming JSON parser."""
+    """Extract category names from dedup report using streaming JSON parser.
+
+    The report format is: {"meta": ..., "duplicates": [...], "assets": ..., "errors": ...}
+    """
     import ijson
     cats: set = set()
     with open(report_path, "rb") as f:
-        for group in ijson.items(f, "item"):
+        for group in ijson.items(f, "duplicates.item"):
             for p in group.get("usd_paths", []):
                 parts = Path(p).parts
                 for i, part in enumerate(parts):
@@ -251,6 +254,8 @@ def submit_phase2(args: argparse.Namespace) -> int:
         f"--group-label {args.group_label} "
         f"--categories-file {cats_file}"
     )
+    if args.mode_reports_dir:
+        command_args += f" --mode-reports-dir {args.mode_reports_dir}"
 
     print("Submitting Phase 2 job (timeout=480min)...")
     r = launch_job(
@@ -397,6 +402,12 @@ Mock mode (dry-run):
                     help="Group label for sidecar naming")
     p3.add_argument("--data-sources", default=DEFAULT_DATA_SOURCES,
                     help="Comma-separated DLC data source IDs")
+    p3.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory of mode reports for V matrix compensation "
+             "(default: auto-discover or skip)",
+    )
 
     p4 = sub.add_parser("status", help="Print completion status table")
     p4.add_argument("--c1-bulk-dir", required=True, help="C1 bulk processing directory")

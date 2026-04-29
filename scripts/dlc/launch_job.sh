@@ -118,7 +118,7 @@ echo "Resolved config -> GPU=$WORKER_GPU CPU=$WORKER_CPU Memory=$WORKER_MEMORY S
 # 这是阿里云 PAI-DLC 的命令行工具
 "$DLC_BIN" submit pytorchjob --name=$JOB_NAME \
     --workers=1 \
-    --job_max_running_time_minutes=0 \
+    --job_max_running_time_minutes=${DLC_JOB_TIMEOUT:-0} \
     --worker_gpu=$WORKER_GPU \
     --worker_cpu=$WORKER_CPU \
     --worker_memory=$WORKER_MEMORY \
