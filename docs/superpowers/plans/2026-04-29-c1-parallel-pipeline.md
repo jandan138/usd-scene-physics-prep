@@ -1,3 +1,19 @@
+---
+title: C1 Parallel Acceleration Pipeline Implementation Plan
+code_reference:
+  - scripts/c1_phase1_apply_and_audit.py
+  - scripts/c1_phase2_merge_scan_delete.py
+  - scripts/c1_parallel_merge.py
+  - scripts/scan_utils.py
+  - scripts/orchestrate_c1_parallel.py
+  - scripts/dlc/launch_job.sh
+created_at: 2026-04-29
+updated_at: 2026-04-29
+maintainer: OpenCode
+status: active
+doc_class: record
+---
+
 # C1 Parallel Acceleration Pipeline — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended)
