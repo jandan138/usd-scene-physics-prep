@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -136,11 +137,14 @@ def _sequential_merge(
             str(Path(__file__).resolve().parent / "c1_bulk_apply_layout_dedup.py"),
             "--mapping-json", str(mapping_path),
             "--dataset-root", str(dataset_root),
+            "--group-label", f"{group_label}_{cat}",
             "--report-dir",
             str(c1_bulk / f"_phase2_seq_merge_{cat}"),
             "--out-name",
             f"layout.parallel_{group_label}.{cat}_{policy}_{version}.usd",
             "--scene-files", ",".join(scene_files),
+            "--set-instanceable",
+            "--v-matrix-mode", "auto",
         ]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
