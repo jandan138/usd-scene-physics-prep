@@ -10,7 +10,7 @@ code_reference:
 created_at: 2026-04-29
 updated_at: 2026-04-29
 maintainer: OpenCode
-status: design (reviewed, v2)
+status: reviewed, v3
 doc_class: record
 ---
 
@@ -489,15 +489,44 @@ battle-tested script (like `c1_autorun_categories.py`) already shells out to
 the same targets, use it as the authoritative reference for correct argument
 names and values.
 
-### Prevention
+### Phase 2 Function Signature Mismatches
 
-The Phase 2 script (`scripts/c1_phase2_merge_scan_delete.py`) was
-**proactively reviewed** for the same class of bugs before testing. This caught
-three additional issues (fixed in commit `b3a0636`):
-- Missing required `--group-label` in the sequential merge subprocess call
-- Missing `--set-instanceable` flag
-- Missing `--v-matrix-mode` argument (needed for parity with the combined merge
-  code path)
+The initial Phase 2 implementation plan called the `rewrite_layout()` function
+and constructed `MappingPair` objects with fabricated signatures. The actual
+`MappingPair` namedtuple (`scripts/rewrite_layout_asset_refs_with_compensation.py`)
+uses fields `(old, canonical)` but the plan's `_load_mapping_from_dict()` constructed
+them as `MappingPair(old_key=..., canonical_key=...)` — nonexistent field names.
+Additionally, `rewrite_layout()` uses keyword-only parameters (`mapping_pairs`,
+`apply_compensation`, `set_instanceable`) that were either missing or incorrectly
+passed as positional args.
+
+Fixed in commit `b3a0636`:
+- Corrected `MappingPair` construction to `MappingPair(old=..., canonical=...)`
+- Added missing required args: `--group-label`, `--set-instanceable`, `--v-matrix-mode`
+- Corrected `rewrite_layout()` call to use keyword arguments matching the actual signature
+
+### Phase 2 Sequential Merge Dead-End
+
+The initial Phase 2 implementation's `_sequential_merge()` function wrote sidecar
+files (with `--out-name`) instead of modifying the scene files in-place. This meant
+the sequential merge produced per-category sidecars just like Phase 1, leaving
+the baseline scene files untouched — a dead-end.
+
+**Fix** (commit `c2bf569`): Changed `_sequential_merge()` to pass the same file
+as both input and output (`--scene-files` with in-place rewrites), copying the
+baseline to a `.baseline` backup first (matching the `_combined_merge()` approach).
+
+### Phase 2 Empty Mapping Guard
+
+Some categories have zero dedup pairs (filtered_mapping.json is empty or doesn't
+exist). The initial Phase 2 code called `rewrite_layout()` with an empty mapping,
+which caused unnecessary no-op rewrites to every scene file. Additionally,
+empty mappings passed to `merge_category_mappings()` added no pairs but were
+logged as successful.
+
+**Fix** (commit `c2bf569`): Added explicit guard in `discover_category_mappings()`
+to skip categories with empty mappings. Added guard in `_combined_merge()` and
+`_sequential_merge()` to skip categories with no mapping file.
 
 ### Phase 2 V Matrix Compensation Fix
 

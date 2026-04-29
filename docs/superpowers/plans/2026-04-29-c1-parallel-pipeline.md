@@ -10,7 +10,7 @@ code_reference:
 created_at: 2026-04-29
 updated_at: 2026-04-29
 maintainer: OpenCode
-status: active
+status: implemented
 doc_class: record
 ---
 
@@ -1725,3 +1725,74 @@ Expected: sidecar files exist with parallel_ prefix.
 7. Task 7 (autorun export)
 8. Task 8 (full test suite)
 9. Task 9 (Isaac Sim smoke test)
+
+---
+
+## Post-Implementation Fixes
+
+The following bugs were discovered and fixed during code review and integration
+testing. They are documented here to prevent recurrence in future pipeline work.
+
+### Fix 1: CLI Argument Fabrication Bug (Phase 1)
+
+**Issue**: The Phase 1 script (`scripts/c1_phase1_apply_and_audit.py`) fabricated
+subprocess arguments for all three steps (build mapping, bulk apply, placement
+audit) based on what seemed plausible rather than inspecting the target scripts'
+actual `argparse.ArgumentParser` definitions. Every subprocess call failed with
+`unrecognized arguments` errors.
+
+**Root Cause**: The implementation plan's pseudocode used invented arg names
+(`--layout-root`, `--out-dir`, `--subset-dirs`, `--mode`, `--output-basename`,
+`--bak-root`, `--no-bbox-gated`) that don't exist in any target script.
+
+**Fix** (commit `0220513`): Referenced `scripts/c1_autorun_categories.py` as the
+gold standard for subprocess command construction, matched every argument to the
+actual argparse definitions, and switched from `sys.executable` to `ISAAC_PY`
+(Isaac Sim Python wrapper required for pxr imports).
+
+### Fix 2: Phase 2 Function Signature Mismatches
+
+**Issue**: The Phase 2 script (`scripts/c1_phase2_merge_scan_delete.py`) called
+`rewrite_layout()` and constructed `MappingPair` objects with incorrect field
+names. `MappingPair` uses fields `(old, canonical)` but the code used
+`MappingPair(old_key=..., canonical_key=...)`.
+
+**Fix** (commit `b3a0636`): Corrected `MappingPair` construction and
+`rewrite_layout()` calls to match the actual keyword-only signature. Added
+missing required CLI flags: `--group-label`, `--set-instanceable`, `--v-matrix-mode`.
+
+### Fix 3: Phase 2 Sequential Merge Dead-End
+
+**Issue**: The `_sequential_merge()` function wrote sidecar files via `--out-name`
+instead of modifying scene files in-place. The sequential merge path therefore
+produced sidecars just like Phase 1, leaving baseline scene files untouched.
+
+**Fix** (commit `c2bf569`): Changed `_sequential_merge()` to apply rewrites
+in-place (passing scene file as both input and output), copying each baseline
+to a `.baseline` backup first (matching the `_combined_merge()` approach).
+
+### Fix 4: Phase 2 Empty Mapping Guard
+
+**Issue**: Some categories have zero dedup pairs (empty or nonexistent
+`filtered_mapping.json`). Without a guard, `rewrite_layout()` was called with
+empty mappings, causing unnecessary no-op rewrites on every scene file.
+
+**Fix** (commit `c2bf569`): Added explicit guard in `discover_category_mappings()`
+to skip categories with empty mappings. Added guards in `_combined_merge()` and
+`_sequential_merge()` to skip categories with no mapping file.
+
+### Fix 5: Phase 2 V Matrix Compensation
+
+**Issue**: Phase 2's `_combined_merge()` and `_sequential_merge()` initially used
+`v_matrix_mode="none"`, which skipped V matrix compensation for deduped asset
+placements. This caused visual displacement because asset transforms were not
+compensated for the difference between the old and canonical asset meshes.
+
+**Fix** (commit `d56f5e3`): Changed `v_matrix_mode` from `"none"` to `"auto"` in
+both merge paths. Added `--mode-reports-dir` CLI argument to both
+`c1_phase2_merge_scan_delete.py` and `orchestrate_c1_parallel.py` so the mode
+reports directory (containing dedup mode info per asset pair) is passed through
+to `rewrite_layout()`. `--certificate-jsonl` is intentionally NOT passed for
+Phase 2 (combining certificates from all categories is complex; transitive pairs
+without certificates get an `xform_compensation_error` but the reference is still
+rewritten — acceptable since transitive pairs are rare in practice).
