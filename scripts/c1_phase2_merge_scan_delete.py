@@ -12,7 +12,6 @@ import json
 import logging
 import os
 import shutil
-import subprocess
 import sys
 import time
 from datetime import datetime
@@ -63,11 +62,6 @@ def _load_mapping_from_dict(mapping: Dict[str, str], subset_root: str):
     return pairs
 
 
-def _sanitize_basename(fname: str) -> str:
-    """Strip leading './' and normalize slashes for safe backup naming."""
-    return fname.replace("/", "_").replace("\\", "_").replace(".", "_").lstrip("_")
-
-
 def _combined_merge(
     dataset_root: Path,
     combined_mapping: Dict[str, str],
@@ -92,7 +86,7 @@ def _combined_merge(
                 continue
 
             # Backup baseline if not already backed up
-            backup = scene_path.with_suffix(f".baseline_{_sanitize_basename(sf)}.usd")
+            backup = scene_path.with_suffix(".baseline.usd")
             if not backup.exists():
                 shutil.copy2(str(scene_path), str(backup))
                 log.info("Backed up %s -> %s", scene_path.name, backup.name)
@@ -110,7 +104,7 @@ def _combined_merge(
                 dry_run=False,
                 report_out=None,
                 max_preview=0,
-                v_matrix_mode="auto",
+                v_matrix_mode="none",
             )
             log.info("Merged %s", scene_path.relative_to(dataset_root))
 
@@ -124,7 +118,20 @@ def _sequential_merge(
     group_label: str,
     scene_files: List[str],
 ):
-    """Fallback: apply categories one by one via subprocess call to c1_bulk_apply_layout_dedup."""
+    """Fallback: apply categories one by one via in-place rewrite_layout calls.
+
+    Uses the same rewrite_layout approach as _combined_merge, but processes
+    each category's mapping file iteratively.  This avoids the sidecar-
+    vs-original dead-end where mega-scan reads the unmodified layout.usd.
+    """
+    pxr_ok, pxr_err = _is_pxr_available()
+    if not pxr_ok:
+        raise SystemExit(
+            f"pxr.Usd not available — must run in Isaac Sim environment: {pxr_err}"
+        )
+
+    rl = _load_rewrite_module()
+
     for cat in categories:
         mapping_path = (
             c1_bulk / f"{cat}_{policy}_{version}" / "01_cert" / "filtered_mapping.json"
@@ -132,23 +139,40 @@ def _sequential_merge(
         if not mapping_path.exists():
             log.warning("Skipping %s: mapping not found", cat)
             continue
-        cmd = [
-            sys.executable,
-            str(Path(__file__).resolve().parent / "c1_bulk_apply_layout_dedup.py"),
-            "--mapping-json", str(mapping_path),
-            "--dataset-root", str(dataset_root),
-            "--group-label", f"{group_label}_{cat}",
-            "--report-dir",
-            str(c1_bulk / f"_phase2_seq_merge_{cat}"),
-            "--out-name",
-            f"layout.parallel_{group_label}.{cat}_{policy}_{version}.usd",
-            "--scene-files", ",".join(scene_files),
-            "--set-instanceable",
-            "--v-matrix-mode", "auto",
-        ]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            log.error("Sequential merge failed for %s: %s", cat, r.stderr[:500])
+
+        mapping = json.loads(mapping_path.read_text())
+        pairs = _load_mapping_from_dict(mapping, str(dataset_root))
+
+        if not pairs:
+            log.warning("Skipping %s: mapping is empty", cat)
+            continue
+
+        layout_files = sorted(dataset_root.glob("GRScenes100/**/layout.usd"))
+        for layout_path in layout_files:
+            scene_dir = layout_path.parent
+            for sf in scene_files:
+                scene_path = scene_dir / sf
+                if not scene_path.exists():
+                    continue
+
+                backup = scene_path.with_suffix(".baseline.usd")
+                if not backup.exists():
+                    shutil.copy2(str(scene_path), str(backup))
+                    log.info("Backed up %s -> %s", scene_path.name, backup.name)
+
+                rl.rewrite_layout(
+                    layout_usd=str(scene_path),
+                    out_usd=str(scene_path),  # in-place
+                    subset_root=str(dataset_root),
+                    mapping_pairs=pairs,
+                    apply_compensation=True,
+                    set_instanceable=True,
+                    dry_run=False,
+                    report_out=None,
+                    max_preview=0,
+                    v_matrix_mode="none",  # safe default for sequential fallback
+                )
+                log.info("Merged %s (cat=%s)", scene_path.relative_to(dataset_root), cat)
 
 
 def _mega_soft_delete(
@@ -273,6 +297,12 @@ def main() -> int:
     print(f"[Phase2] Loaded {len(cat_mappings)} category mappings", flush=True)
 
     combined_mapping, conflicts = merge_category_mappings(cat_mappings)
+    if not combined_mapping:
+        print("[Phase2] ERROR: combined mapping is empty — nothing to merge",
+              flush=True)
+        _write_merge_report(c1_bulk, "empty_mapping")
+        return 1
+
     if conflicts:
         print(f"[Phase2] WARNING: {len(conflicts)} conflicts detected",
               flush=True)
