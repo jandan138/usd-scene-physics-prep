@@ -112,7 +112,7 @@ def main():
     reject_ledger_jsonl = apply_dir / "rewrite_reject_ledger.jsonl"
     audit_report_json = audit_dir / "placement_pairwise_compare.json"
     audit_verdict_json = audit_dir / "audit_verdict.json"
-    out_name = f"layout.{group_label}_{args.bbox_policy}_{args.out_version}.usd"
+    out_name = f"layout.{group_label}_{category}_{args.bbox_policy}_{args.out_version}.usd"
 
     script_dir = Path(__file__).resolve().parent
 
