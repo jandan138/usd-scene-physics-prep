@@ -85,6 +85,9 @@ def _combined_merge(
             scene_path = scene_dir / sf
             if not scene_path.exists():
                 continue
+            if scene_path.stat().st_size == 0:
+                log.warning("Skipping 0-byte file %s", scene_path)
+                continue
 
             # Backup baseline if not already backed up
             backup = scene_path.with_suffix(".baseline.usd")
@@ -156,6 +159,9 @@ def _sequential_merge(
             for sf in scene_files:
                 scene_path = scene_dir / sf
                 if not scene_path.exists():
+                    continue
+                if scene_path.stat().st_size == 0:
+                    log.warning("Skipping 0-byte file %s", scene_path)
                     continue
 
                 backup = scene_path.with_suffix(".baseline.usd")
