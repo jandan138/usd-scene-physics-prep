@@ -243,6 +243,8 @@ def _iter_usd_files(root: Path, *, exclude_dir_contains: Sequence[str]) -> List[
                 continue
             if ".parallel_" in fn:
                 continue
+            if ".baseline." in fn:
+                continue
             out.append(Path(dirpath) / fn)
     out.sort()
     return out

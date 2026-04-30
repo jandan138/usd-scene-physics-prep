@@ -99,6 +99,15 @@ class TestIterUsdFiles:
         assert "layout.usd" in names
         assert "layout.parallel_test.usd" not in names
 
+    def test_excludes_baseline(self, tmp_path):
+        (tmp_path / "scene").mkdir()
+        (tmp_path / "scene" / "layout.baseline.usd").write_text("x")
+        (tmp_path / "scene" / "layout.usd").write_text("x")
+        files = _iter_usd_files(tmp_path, exclude_dir_contains=[])
+        names = {f.name for f in files}
+        assert "layout.usd" in names
+        assert "layout.baseline.usd" not in names
+
     def test_excludes_dirs(self, tmp_path):
         (tmp_path / "scene").mkdir()
         (tmp_path / "bak").mkdir()
