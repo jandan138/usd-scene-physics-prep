@@ -746,9 +746,10 @@ def rewrite_layout(
         planned_out_usd = out_usd
         if not dry_run:
             os.makedirs(os.path.dirname(out_usd), exist_ok=True)
-            # copy file only (layers referenced by relative paths are untouched)
-            with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
-                wf.write(rf.read())
+            # In-place: out_usd == layout_usd → skip copy to avoid truncating source
+            if os.path.abspath(out_usd) != os.path.abspath(layout_usd):
+                with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
+                    wf.write(rf.read())
             target_usd = out_usd
 
     # Resolve relative reference paths from the directory of the file we are
