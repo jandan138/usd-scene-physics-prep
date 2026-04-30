@@ -606,4 +606,6 @@ A shared argument group or common function approach would have prevented this.
 | Wrong | Correct |
 |---|---|
 | `sys.executable` (system Python) | `ISAAC_PY` (Isaac Sim Python wrapper, required for pxr) |
-| Sidecar name: `layout.parallel_{label}.{category}_{policy}_{version}.usd` | `layout.{label}_{policy}_{version}.usd` (matches autorun convention) |
+| Sidecar name: `layout.parallel_{label}.{category}_{policy}_{version}.usd` | `layout.{label}_{category}_{policy}_{version}.usd` (category-specific for parallel safety) |
+| (concurrent write to shared sidecar) | SIGBUS when 25+ jobs write same file | Per-category `out_name` to avoid mmap conflicts |
+| In-place `rewrite_layout` with same `layout_usd` and `out_usd` | Self-truncation: `open(f,'wb')` truncates before `open(f,'rb')` reads | Skip copy when `out_usd == layout_usd` |

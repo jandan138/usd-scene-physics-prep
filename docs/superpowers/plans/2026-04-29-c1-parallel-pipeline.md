@@ -1837,3 +1837,45 @@ to one orchestrator subcommand, ALL sibling subcommands that invoke the same or
 similar entry scripts must be checked for the same requirement. A design that
 defines shared argument groups or a common arg-injection function would have
 prevented this asymmetry.
+
+### Fix 7: Concurrent Sidecar Write Conflict (SIGBUS)
+
+**Issue**: Phase 1's `out_name` was not category-specific:
+`layout.{group_label}_{policy}_{version}.usd`. 25+ parallel DLC jobs
+all wrote to the same sidecar file simultaneously → mmap conflict → SIGBUS
+(Bus error) killing random jobs.
+
+**Root Cause**: The serial autorun uses the same shared `out_name` because
+categories run sequentially. The parallel pipeline cloned this pattern without
+accounting for concurrency.
+
+**Fix** (commit `b8aacec`): Included `{category}` in `out_name`:
+`layout.{group_label}_{category}_{policy}_{version}.usd`. Each job now
+writes to a unique sidecar file. Phase 2 does not consume Phase 1 sidecars
+(reads `filtered_mapping.json` instead), so no downstream changes needed.
+
+### Fix 8: Phase 2 rewrite_layout In-Place Self-Truncation
+
+**Issue**: `rewrite_layout_asset_refs_with_compensation.py:750-751` opens
+`layout.usd` for read (`rb`) and write (`wb`) simultaneously. When
+`out_usd == layout_usd` (in-place mode), `open(f, "wb")` truncates the
+file BEFORE the read → reads 0 bytes → writes 0 bytes → `Usd.Stage.Open`
+fails with `Failed to open layer`.
+
+**Evidence**: Same scene (`MV4AFHQKTKJZ2AABAAAAADQ8_usd/layout.usd`)
+became 0 bytes after every Phase 2 run (confirmed `ls -la`).
+
+**Fix** (commit `57e8f1e`): Added `abs(out_usd) != abs(layout_usd)` check
+before the copy-instead-of-write block. In-place mode now skips the copy
+step and opens the stage directly on the original file.
+
+### Fix 9: 0-Byte File Guards + Baseline Scan Exclusion
+
+**Issue**: Two defensive fixes:
+(a) One `layout.usd` in the parallel dataset was 0 bytes (dataset copy race).
+(b) `_iter_usd_files` didn't exclude `.baseline.usd` backup files created by
+Phase 2 merge, causing false positives in the post-delete mega-scan.
+
+**Fix** (commits `1fcae31`, `3ebfe5b`): Added `.baseline.` to filename exclusion
+patterns in `scan_utils.py`. Added `st_size == 0` guards in `_combined_merge()`
+and `_sequential_merge()` to skip empty scene files gracefully.
