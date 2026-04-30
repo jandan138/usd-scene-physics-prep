@@ -150,6 +150,11 @@ def submit_phase1(args: argparse.Namespace):
             print("Aborted.")
             return
 
+    if not args.mode_reports_dir:
+        print("ERROR: --mode-reports-dir is required (needed for per-pair mode lookup when --bbox-gated)")
+        print("Example: --mode-reports-dir check_reports/test0_rebuilt_dedup/v8_prededup")
+        sys.exit(1)
+
     if is_mock_mode():
         print("=== MOCK MODE (DLC_BIN=echo) — commands will be printed, not submitted ===")
 
@@ -174,6 +179,8 @@ def submit_phase1(args: argparse.Namespace):
         f"--dedup-mode geom_only --v-matrix-mode auto "
         f"--out-version {out_version}"
     )
+    if args.mode_reports_dir:
+        command_args += f" --mode-reports-dir {args.mode_reports_dir}"
 
     submitted = 0
     failed = 0
@@ -383,6 +390,12 @@ Mock mode (dry-run):
     p1.add_argument("--out-version", default="v1", help="Output version suffix")
     p1.add_argument("--data-sources", default=DEFAULT_DATA_SOURCES,
                     help="Comma-separated DLC data source IDs")
+    p1.add_argument(
+        "--mode-reports-dir",
+        default=None,
+        help="Directory of mode reports (geom_only/, shape_invariant/, topo_filesize/). "
+             "Required when --bbox-gated is set for per-pair mode lookup.",
+    )
     p1.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
 
     p2 = sub.add_parser("gate-check", help="Verify all Phase 1 jobs completed")

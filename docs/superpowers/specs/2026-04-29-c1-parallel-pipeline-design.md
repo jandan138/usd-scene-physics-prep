@@ -8,7 +8,7 @@ code_reference:
   - scripts/rewrite_layout_asset_refs_with_compensation.py
   - scripts/placement_pairwise_compare.py
 created_at: 2026-04-29
-updated_at: 2026-04-29
+updated_at: 2026-04-30
 maintainer: OpenCode
 status: reviewed, v3
 doc_class: record
@@ -549,6 +549,23 @@ from all categories is complex. For transitive pairs without certificates,
 `rewrite_layout` records an `xform_compensation_error` (the reference is still
 rewritten, but without V compensation). Since transitive pairs are rare in
 practice, this is an acceptable trade-off.
+
+### Orchestrator Asymmetry: `--mode-reports-dir` Missing from Phase 1
+
+After Fix 5 added `--mode-reports-dir` to Phase 2, the same flag was NOT added to
+`orchestrate_c1_parallel.py:submit_phase1`. Since `c1_build_bulk_mapping_from_dedup_report.py`
+at line 679 raises a hard `SystemExit` when `--bbox-gated` is set without
+`--mode-reports-dir`, every Phase 1 DLC job failed at Step 1.
+
+The root cause is a pattern problem: the orchestrator defines separate arg parsers
+for `submit-phase1` and `submit-phase2` that duplicate argument definitions.
+When a cross-cutting requirement was added to one, the other was forgotten.
+A shared argument group or common function approach would have prevented this.
+
+**Fix** (commit pending):
+- Added `--mode-reports-dir` to `submit-phase1` arg parser
+- Appended `--mode-reports-dir` to `command_args` in `submit_phase1()`
+- Removed 52 stale `phase1_done.json` files (status="failed")
 
 ### Specific Arguments: Wrong vs Correct
 

@@ -7,8 +7,9 @@ code_reference:
   - scripts/scan_utils.py
   - scripts/orchestrate_c1_parallel.py
   - scripts/dlc/launch_job.sh
+  - scripts/c1_build_bulk_mapping_from_dedup_report.py
 created_at: 2026-04-29
-updated_at: 2026-04-29
+updated_at: 2026-04-30
 maintainer: OpenCode
 status: implemented
 doc_class: record
@@ -1796,3 +1797,43 @@ to `rewrite_layout()`. `--certificate-jsonl` is intentionally NOT passed for
 Phase 2 (combining certificates from all categories is complex; transitive pairs
 without certificates get an `xform_compensation_error` but the reference is still
 rewritten — acceptable since transitive pairs are rare in practice).
+
+### Fix 6: Orchestrator Missing `--mode-reports-dir` in Phase 1 Submission
+
+**Issue**: After Fix 5 added `--mode-reports-dir` to Phase 2's submission, Phase 1's
+`orchestrate_c1_parallel.py:submit_phase1` was NOT updated to pass the same flag.
+All 52 Phase 1 DLC jobs failed at Step 1 (build mapping) because
+`c1_build_bulk_mapping_from_dedup_report.py:679` enforces a hard requirement:
+`--mode-reports-dir` is mandatory when `--bbox-gated` is set — it is needed for
+per-pair mode lookup (which dedup mode was used per asset pair for V matrix
+compensation).
+
+**Root Cause**: Fix 5 added `--mode-reports-dir` to `submit-phase2` parser and
+`submit_phase2()` but did not check `submit-phase1` for the same requirement.
+The entry script `c1_phase1_apply_and_audit.py` conditionally passes
+`--mode-reports-dir` to sub-scripts (`if args.mode_reports_dir`), but the
+orchestrator never provides it, so the condition is always False → sub-script
+fails with a hard SystemExit.
+
+**Evidence** (confirmed via pod logs, phase1_done.json content, and code trace):
+- Pod logs (`dlc logs <JOB_ID>`): `[Phase1:backpack] Step 1 FAILED` →
+  `ERROR: --mode-reports-dir is required when --bbox-gated is set.`
+- All 52 `phase1_done.json` files: `{"status": "failed", "audit_passed": "Step1 build_mapping failed..."}`
+- Code: `orchestrate_c1_parallel.py:submit_phase1` command_args lacked `--mode-reports-dir`;
+  `submit_phase2` correctly includes it (asymmetry introduced by Fix 5)
+
+**Impact**: All 52 Phase 1 DLC jobs completed their script (writing `phase1_done.json`
+with `status: "failed"`) but produced no actual dedup results. Phase 2 gate-check
+would block because `gate_check_phase1` requires `status == "ok"`.
+
+**Fix** (commit pending):
+1. Added `--mode-reports-dir` to `submit-phase1` subparser in
+   `orchestrate_c1_parallel.py` (matching `submit-phase2` parser definition)
+2. Added conditional `--mode-reports-dir` append to `command_args` in `submit_phase1()`
+3. Removed 52 stale `phase1_done.json` files with `status: "failed"` before re-submission
+
+**Lesson**: When a cross-cutting CLI argument (like `--mode-reports-dir`) is added
+to one orchestrator subcommand, ALL sibling subcommands that invoke the same or
+similar entry scripts must be checked for the same requirement. A design that
+defines shared argument groups or a common arg-injection function would have
+prevented this asymmetry.
