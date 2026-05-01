@@ -1017,7 +1017,15 @@ def rewrite_layout(
                         if isinstance(old_local, tuple):
                             old_local = old_local[0]
                         V, dedup_mode = _get_V_cached(old_abs, new_abs)
-                        if dedup_mode in ("geom_only", "identity"):
+                        if V is None:
+                            changes.append({
+                                "prim": prim_path_str,
+                                "kind": "xform_compensation_skipped_unresolved",
+                                "old_asset_abs": old_abs,
+                                "canonical_asset_abs": new_abs,
+                                "dedup_mode": dedup_mode,
+                            })
+                        elif dedup_mode in ("geom_only", "identity"):
                             old_internal = _get_internal_cached(old_abs)
                             canonical_internal = _get_internal_cached(new_abs)
                             new_local = (
