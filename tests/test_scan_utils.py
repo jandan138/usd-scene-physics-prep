@@ -72,29 +72,36 @@ class TestAbsToSubsetRel:
 
 
 class TestIterUsdFiles:
+    def _iter(self, root, exclude_dir_contains=None, exclude_filename_contains=()):
+        return _iter_usd_files(
+            root,
+            exclude_dir_contains=exclude_dir_contains or [],
+            exclude_filename_contains=exclude_filename_contains,
+        )
+
     def test_excludes_pre_files(self, tmp_path):
         (tmp_path / "scene").mkdir()
-        (tmp_path / "scene" / "layout.usd").write_text("x")
         (tmp_path / "scene" / "layout.pre_backup.usd").write_text("x")
-        files = _iter_usd_files(tmp_path, exclude_dir_contains=[])
+        (tmp_path / "scene" / "layout.usd").write_text("x")
+        files = self._iter(tmp_path)
         names = {f.name for f in files}
         assert "layout.usd" in names
         assert "layout.pre_backup.usd" not in names
 
     def test_excludes_c1_files(self, tmp_path):
         (tmp_path / "scene").mkdir()
-        (tmp_path / "scene" / "layout.usd").write_text("x")
         (tmp_path / "scene" / "layout.c1_test.usd").write_text("x")
-        files = _iter_usd_files(tmp_path, exclude_dir_contains=[])
+        (tmp_path / "scene" / "layout.usd").write_text("x")
+        files = self._iter(tmp_path)
         names = {f.name for f in files}
         assert "layout.usd" in names
         assert "layout.c1_test.usd" not in names
 
     def test_excludes_parallel_files(self, tmp_path):
         (tmp_path / "scene").mkdir()
-        (tmp_path / "scene" / "layout.usd").write_text("x")
         (tmp_path / "scene" / "layout.parallel_test.usd").write_text("x")
-        files = _iter_usd_files(tmp_path, exclude_dir_contains=[])
+        (tmp_path / "scene" / "layout.usd").write_text("x")
+        files = self._iter(tmp_path)
         names = {f.name for f in files}
         assert "layout.usd" in names
         assert "layout.parallel_test.usd" not in names
@@ -103,10 +110,21 @@ class TestIterUsdFiles:
         (tmp_path / "scene").mkdir()
         (tmp_path / "scene" / "layout.baseline.usd").write_text("x")
         (tmp_path / "scene" / "layout.usd").write_text("x")
-        files = _iter_usd_files(tmp_path, exclude_dir_contains=[])
+        files = self._iter(tmp_path)
         names = {f.name for f in files}
         assert "layout.usd" in names
         assert "layout.baseline.usd" not in names
+
+    def test_excludes_filename_contains(self, tmp_path):
+        (tmp_path / "scene").mkdir()
+        (tmp_path / "scene" / "layout.test0_transitive_apply_seeded_wall_bbox_primary_rmse_observe_v1.usd").write_text("x")
+        (tmp_path / "scene" / "layout.test0_transitive_apply_seeded_bathtub_bbox_primary_rmse_observe_v1.usd").write_text("x")
+        (tmp_path / "scene" / "layout.usd").write_text("x")
+        files = self._iter(tmp_path, exclude_filename_contains=[".test0_transitive_apply_seeded_"])
+        names = {f.name for f in files}
+        assert "layout.usd" in names
+        assert "layout.test0_transitive_apply_seeded_wall_bbox_primary_rmse_observe_v1.usd" not in names
+        assert "layout.test0_transitive_apply_seeded_bathtub_bbox_primary_rmse_observe_v1.usd" not in names
 
     def test_excludes_dirs(self, tmp_path):
         (tmp_path / "scene").mkdir()
@@ -114,7 +132,7 @@ class TestIterUsdFiles:
         (tmp_path / "bak" / "_dedup_assets" / "stuff").mkdir(parents=True)
         (tmp_path / "scene" / "layout.usd").write_text("x")
         (tmp_path / "bak" / "_dedup_assets" / "stuff" / "stale.usd").write_text("x")
-        files = _iter_usd_files(tmp_path, exclude_dir_contains=["/_dedup_assets/"])
+        files = self._iter(tmp_path, exclude_dir_contains=["/_dedup_assets/"])
         names = {f.name for f in files}
         assert "layout.usd" in names
         assert "stale.usd" not in names

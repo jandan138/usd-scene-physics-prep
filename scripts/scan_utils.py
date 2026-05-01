@@ -228,7 +228,7 @@ def _emit_progress(
     print(f"  {phase} {processed}/{total} | hits={hits} | rate={rate:.2f}/s | eta={eta_msg}{cur}", flush=True)
 
 
-def _iter_usd_files(root: Path, *, exclude_dir_contains: Sequence[str]) -> List[Path]:
+def _iter_usd_files(root: Path, *, exclude_dir_contains: Sequence[str], exclude_filename_contains: Sequence[str] = ()) -> List[Path]:
     out: List[Path] = []
     for dirpath, dirnames, filenames in os.walk(root):
         dirpath_str = str(dirpath) + "/"
@@ -245,6 +245,8 @@ def _iter_usd_files(root: Path, *, exclude_dir_contains: Sequence[str]) -> List[
                 continue
             if ".baseline." in fn:
                 continue
+            if any(x and x in fn for x in exclude_filename_contains):
+                continue
             out.append(Path(dirpath) / fn)
     out.sort()
     return out
@@ -259,6 +261,7 @@ def _scan_tree_pxr(
     progress_every: int,
     progress_json: Optional[Path],
     progress_jsonl: Optional[Path],
+    exclude_filename_contains: Sequence[str] = (),
 ) -> Dict[str, object]:
     started_at = time.time()
     print(f"Listing USD files under: {root.resolve()}", flush=True)
@@ -272,7 +275,7 @@ def _scan_tree_pxr(
         progress_jsonl=progress_jsonl,
     )
 
-    files = _iter_usd_files(root, exclude_dir_contains=exclude_dir_contains)
+    files = _iter_usd_files(root, exclude_dir_contains=exclude_dir_contains, exclude_filename_contains=exclude_filename_contains)
     total = len(files)
 
     print(f"Scanning {total} USD files via pxr...", flush=True)
