@@ -814,7 +814,9 @@ def rewrite_layout(
     # Pre-filter: exclude pairs that fail the aspect-ratio guard.
     # This must happen before the traversal loop so that rejected pairs
     # never get their references rewritten.
-    if v_matrix_mode == "auto" and apply_compensation:
+    # Only runs when bbox_gated=True (Phase 1). For Phase 2 (bbox_gated=False),
+    # aspect_ratio_rejected pairs are handled lazily in the traversal loop.
+    if v_matrix_mode == "auto" and apply_compensation and bbox_gated:
         rejected_keys: List[str] = []
         for old_abs, canonical_abs in mapping_by_old.items():
             V, dedup_mode = _get_V_cached(old_abs, canonical_abs)
