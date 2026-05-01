@@ -8,7 +8,7 @@ code_reference:
   - scripts/rewrite_layout_asset_refs_with_compensation.py
   - scripts/placement_pairwise_compare.py
 created_at: 2026-04-29
-updated_at: 2026-04-30
+updated_at: 2026-05-01
 maintainer: OpenCode
 status: reviewed, v3
 doc_class: record
@@ -608,4 +608,6 @@ A shared argument group or common function approach would have prevented this.
 | `sys.executable` (system Python) | `ISAAC_PY` (Isaac Sim Python wrapper, required for pxr) |
 | Sidecar name: `layout.parallel_{label}.{category}_{policy}_{version}.usd` | `layout.{label}_{category}_{policy}_{version}.usd` (category-specific for parallel safety) |
 | (concurrent write to shared sidecar) | SIGBUS when 25+ jobs write same file | Per-category `out_name` to avoid mmap conflicts |
-| In-place `rewrite_layout` with same `layout_usd` and `out_usd` | Self-truncation: `open(f,'wb')` truncates before `open(f,'rb')` reads | Skip copy when `out_usd == layout_usd` |
+| In-place `rewrite_layout` with same `layout_usd` and `out_usd` | Self-truncation: `open(f,'wb')` truncates before `open(f,'rb')` reads | Skip copy when `out_usd == layout_usd` in rewrite_layout |
+| Eager V-matrix pre-filter for all 19374 pairs | ~4h/scene (2× USD open + Procrustes per pair) | Guard with `and bbox_gated`; Phase 2 uses lazy evaluation |
+| Mega-scan includes 8000+ sidecar files | Warning storm + I/O overflow + 8h timeout | `exclude_filename_contains` with group_label pattern |

@@ -8,8 +8,9 @@ code_reference:
   - scripts/orchestrate_c1_parallel.py
   - scripts/dlc/launch_job.sh
   - scripts/c1_build_bulk_mapping_from_dedup_report.py
+  - scripts/rewrite_layout_asset_refs_with_compensation.py
 created_at: 2026-04-29
-updated_at: 2026-04-30
+updated_at: 2026-05-01
 maintainer: OpenCode
 status: implemented
 doc_class: record
@@ -1879,3 +1880,39 @@ Phase 2 merge, causing false positives in the post-delete mega-scan.
 **Fix** (commits `1fcae31`, `3ebfe5b`): Added `.baseline.` to filename exclusion
 patterns in `scan_utils.py`. Added `st_size == 0` guards in `_combined_merge()`
 and `_sequential_merge()` to skip empty scene files gracefully.
+
+### Fix 10: Phase 2 Eager V-Matrix Pre-Filter Bottleneck
+
+**Issue**: `rewrite_layout_asset_refs_with_compensation.py:817-833` contains an
+eager pre-filter that computes V matrices for ALL mapping pairs before the prim
+traversal loop. With 19374 combined pairs in Phase 2, this cost ~4 hours per
+scene (each pair: 2× `Usd.Stage.Open` + vertex extraction + Procrustes/NN).
+The pre-filter was guarded only by `v_matrix_mode == "auto" and apply_compensation`,
+so it ran unconditionally for Phase 2.
+
+**Root Cause**: The pre-filter is only needed for `bbox_gated=True` (Phase 1,
+per-category, ~400 pairs, manageable). For `bbox_gated=False` (Phase 2 combined
+merge), the traversal loop already lazily computes V only for pairs actually
+referenced in the scene.
+
+**Fix** (commits `af1d9cd`, `489b2c8`): Added `and bbox_gated` guard to the
+pre-filter condition. Phase 2 merge dropped from ~4h/scene to seconds/scene
+(99 scenes in 31 min). Also added explicit `V is None` guard in the legacy
+compensation path (line 1019) for robustness.
+
+### Fix 11: Mega-Scan Sidecar File Exclusion
+
+**Issue**: Phase 2's mega-scan (`_scan_tree_pxr`) iterates ALL .usd files under
+`dataset_root`, including ~8000 Phase 1 sidecar files (pattern
+`layout.{group_label}_{category}_{policy}_{version}.usd`). Each sidecar triggers
+USD reference resolution, generating thousands of `Could not open asset`
+warnings per file → massive I/O overhead → scan hits the 8h timeout.
+
+**Root Cause**: `_iter_usd_files` had no mechanism to exclude pipeline-generated
+sidecar files by name pattern. Only directory-level and a few hardcoded filename
+patterns (`.pre_`, `.c1_`, `.parallel_`, `.baseline.`) were excluded.
+
+**Fix** (commit `172c33e`): Added `exclude_filename_contains` parameter to
+`_iter_usd_files` and `_scan_tree_pxr`. Phase 2 passes `f".{group_label}_"`
+(e.g., `.test0_transitive_apply_seeded_`) to exclude all pipeline-generated
+sidecars (~8000 files), reducing scanned files and eliminating the warning storm.
