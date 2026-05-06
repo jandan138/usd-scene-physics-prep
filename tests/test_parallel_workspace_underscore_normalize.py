@@ -46,14 +46,12 @@ def test_canonical_category_folders_exist():
     
     for new_cat in CATEGORY_MERGES.values():
         new_path = os.path.join(assets_root, new_cat)
-        # Note: Some canonical folders might be empty if all UIDs were moved from old
-        # We just check they exist as directories
-        if os.path.exists(new_path):
-            assert os.path.isdir(new_path), f"Canonical path exists but is not a directory: {new_path}"
+        assert os.path.exists(new_path), f"Canonical category folder missing: {new_path}"
+        assert os.path.isdir(new_path), f"Canonical path exists but is not a directory: {new_path}"
 
 
 def test_layout_usd_references_use_canonical_paths():
-    """Spot-check: sample a few layout.usd files to ensure they use canonical category paths."""
+    """Spot-check: sample layout.usd files to ensure they use canonical category paths."""
     import glob
     
     layout_files = glob.glob(
@@ -67,8 +65,22 @@ def test_layout_usd_references_use_canonical_paths():
         with open(layout_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
+        # Check old paths are absent
         for old_cat in CATEGORY_MERGES.keys():
             needle = f"GRScenes_assets/{old_cat}/"
             assert needle not in content, (
                 f"layout.usd {layout_path} still references old category: {old_cat}"
+            )
+        
+        # Check canonical paths are present (at least one per file)
+        found_canonical = False
+        for new_cat in CATEGORY_MERGES.values():
+            if f"GRScenes_assets/{new_cat}/" in content:
+                found_canonical = True
+                break
+        
+        # Only assert if the file has any asset references at all
+        if "GRScenes_assets/" in content:
+            assert found_canonical, (
+                f"layout.usd {layout_path} has asset references but no canonical categories"
             )
