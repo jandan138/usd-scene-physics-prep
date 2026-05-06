@@ -5,7 +5,7 @@ code_reference:
   - tests/test_prepare_promoted_clone_workspace.py
   - docs/superpowers/plans/2026-04-21-test0-promoted-clone.md
 created_at: 2026-04-21
-updated_at: 2026-04-21
+updated_at: 2026-04-28
 maintainer: OpenCode
 status: active
 doc_class: record
@@ -207,3 +207,39 @@ DSW-to-DLC migration note:
   `c1_bulk/_autorun/test0_transitive_apply_seeded_bbox_primary_rmse_observe_20260424_052851/ledger.jsonl`
   whose category list correctly skips completed `bed`, `blanket`, `book`,
   `bookshelf`, and `bottle`, and resumes at `bowl`
+
+SmartBot-space interruption and user-side migration plan:
+
+- the DLC resume run later advanced through `desk` and then stopped during
+  `dishwasher` Step 6 after SmartBot-side storage became unavailable or full
+- fresh ledger evidence shows `desk` has `category_done`, while `dishwasher` has
+  `category_start` without `category_done`
+- `dishwasher/04_step6/progress.json` shows the interrupted phase was the full
+  USD scan with `processed = 53000`, `total = 72765`, and `hits = 0`
+- final Step 6 reports for `dishwasher` are absent, so the corrected
+  `skip_done` predicate will not skip it on resume
+- the safe continuation path is to migrate the whole mutable workspace from
+  `/shared/smartbot/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_20260421_103046`
+  to
+  `/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_20260421_103046`
+  and submit a new single DLC job using the new absolute paths
+- this migration was completed on 2026-04-28 with `rsync`; the old SmartBot
+  source workspace was removed after a no-difference dry-run verification
+- the existing
+  `/cpfs/user/zhuzihou/assets/GRScenes-test0-transitive-full-baseline-20260418`
+  directory is a slim delivery baseline, not a resumable promoted-clone
+  workspace; sampled `layout.usd` hashes differ from the mutable workspace and
+  current sidecar outputs are absent there
+- detailed migration and cleanup notes are recorded in
+  `docs/records/research/operations/2026-04-28_promoted_clone_workspace_migration.md`
+- the DLC resume job was submitted on 2026-04-29:
+  - job name: `test0_transitive_apply_resume_usercpfs_0_1`
+  - job id: `dlcxmlbt64kka4rl`
+  - workspace: `270969`
+  - **status**: `Failed` after ~5 minutes
+  - **root cause**: missing data source mount for `/cpfs/user/zhuzihou/`
+  - **fix**: add data source `d-f1dsz5nbamclxgydo8` to `--data_sources`
+  - second attempt job name: `test0_transitive_apply_resume_usercpfs_v2_0_1`
+  - second attempt job id: `dlcoh2xvu5efzkyo`
+  - using new user-side workspace paths under `/cpfs/user/zhuzihou/assets/`
+  - will skip completed categories through `desk` and resume from `dishwasher`

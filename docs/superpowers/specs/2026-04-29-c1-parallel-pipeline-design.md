@@ -266,11 +266,34 @@ present in the baseline workspace but not copied during the parallel pipeline:
 **Action**: Copy these directories from the baseline workspace before declaring the
 dataset complete. Use `rsync -avP` for large directories to enable resumable transfers.
 
+### Post-Processing: Cleanup Intermediate Layout Files
+
+Phase 1 and Phase 2 generate many intermediate `layout.*.usd` files in each scene
+directory (backups, per-category iterations, sidecars). These are not needed in the
+final dataset.
+
+**Action**: Run `scripts/cleanup_layout_intermediates.sh` to remove all
+`layout.*.usd` files while keeping only the final `layout.usd`.
+
+```bash
+# Preview
+./scripts/cleanup_layout_intermediates.sh --dry-run
+
+# Execute
+./scripts/cleanup_layout_intermediates.sh
+```
+
+**Safety**: The script verifies `layout.usd` exists in each scene directory before
+deleting anything.
+
+**Impact**: Typical cleanup removes ~9,000 files and frees ~14GB.
+
 **Verification checklist:**
 - [ ] `GRScenes100/` contains all scenes (99 total)
 - [ ] `GRScenes_assets/` contains all asset categories (114+)
 - [ ] `Material/` directory exists and is a real directory (not symlink)
 - [ ] Scene files can resolve material references (no broken MDL paths)
+- [ ] Each scene directory contains only `layout.usd` (no intermediate files)
 
 ## Verification Strategy
 

@@ -1,7 +1,7 @@
 ---
 title: "GRScenes Test0 Transitive Full Baseline Delivery Spot Check"
 created_at: "2026-04-21"
-updated_at: "2026-04-21"
+updated_at: "2026-04-28"
 maintainer: "OpenCode"
 status: "completed"
 code_reference:
@@ -112,6 +112,29 @@ than a proven promote-applied clone:
   as evidence that duplicate-removal promotion already completed in place
 
 This means a downstream user can open the dataset, but some scenes may log missing-asset warnings and load with incomplete content.
+
+# 2026-04-28 Cleanup Disposition
+
+This delivery root is obsolete for the promoted-clone resume workflow. It should
+not be used as the target workspace for continuing the current apply run because
+it is not the mutable cumulative workspace.
+
+Fresh migration planning found:
+
+- the current mutable workspace lives under
+  `/shared/smartbot/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_20260421_103046`
+- this delivery root lacks `dataset/`, `bak/`, `c1_bulk/`, current autorun
+  ledgers, and `workspace_manifest.json`
+- sampled `layout.usd` files differ by MD5 from the mutable workspace
+- current sidecar outputs such as
+  `layout.test0_transitive_apply_seeded_bbox_primary_rmse_observe_v1.usd` are
+  absent in this delivery root
+
+Operational result: cleanup was approved on 2026-04-28. `README.md`,
+`MANIFEST.json`, and `dangling_references.json` were archived to
+`/cpfs/user/zhuzihou/assets/_archived_metadata/GRScenes-test0-transitive-full-baseline-20260418_20260428/`,
+then the delivery root was deleted. A post-cleanup check confirmed the delivery
+root no longer exists and the three archived metadata files remain present.
 
 # Verification Commands
 

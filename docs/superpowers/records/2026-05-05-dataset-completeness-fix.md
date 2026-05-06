@@ -4,7 +4,7 @@ code_reference:
   - scripts/c1_phase2_merge_scan_delete.py
   - scripts/orchestrate_c1_parallel.py
 created_at: 2026-05-05
-updated_at: 2026-05-05
+updated_at: 2026-05-06
 maintainer: OpenCode
 status: design
 ---
@@ -88,7 +88,37 @@ For future parallel pipeline runs, Phase 2 should either:
 Serial workspace remains untouched. Parallel workspace is now fully self-contained.
 All material references in scene files will resolve correctly.
 
+## Step 4: Cleanup Layout Intermediate Files
+
+After Phase 2, each scene directory contains dozens of intermediate `layout.*.usd` files (backups, per-category iterations, etc.). These are not needed in the final dataset.
+
+### Script
+
+`scripts/cleanup_layout_intermediates.sh` — safely removes all `layout.*.usd` while keeping only `layout.usd`.
+
+```bash
+# Preview (dry run)
+./scripts/cleanup_layout_intermediates.sh --dry-run
+
+# Execute
+./scripts/cleanup_layout_intermediates.sh
+```
+
+**Safety features**:
+- Verifies `layout.usd` exists in each scene directory before deleting anything
+- Reports space to be freed
+- Shows progress every 500 files
+
+### Execution Results
+
+- **Files deleted**: 9,138 intermediate layout files
+- **Space freed**: 14GB → 162MB per scene directory
+- **Final state**: Each scene directory contains only `layout.usd`
+
 ## Documentation Updates
 
-1. Update `docs/superpowers/specs/2026-04-29-c1-parallel-pipeline-design.md` to mention Material directory handling
+1. Update `docs/superpowers/specs/2026-04-29-c1-parallel-pipeline-design.md` to mention:
+   - Material directory handling
+   - Layout intermediate cleanup
 2. Create this record document for traceability
+3. Add cleanup script to repo: `scripts/cleanup_layout_intermediates.sh`
