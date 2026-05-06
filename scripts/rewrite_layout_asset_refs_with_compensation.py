@@ -746,9 +746,10 @@ def rewrite_layout(
         planned_out_usd = out_usd
         if not dry_run:
             os.makedirs(os.path.dirname(out_usd), exist_ok=True)
-            # copy file only (layers referenced by relative paths are untouched)
-            with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
-                wf.write(rf.read())
+            # In-place: out_usd == layout_usd → skip copy to avoid truncating source
+            if os.path.abspath(out_usd) != os.path.abspath(layout_usd):
+                with open(layout_usd, "rb") as rf, open(out_usd, "wb") as wf:
+                    wf.write(rf.read())
             target_usd = out_usd
 
     # Resolve relative reference paths from the directory of the file we are
@@ -813,7 +814,9 @@ def rewrite_layout(
     # Pre-filter: exclude pairs that fail the aspect-ratio guard.
     # This must happen before the traversal loop so that rejected pairs
     # never get their references rewritten.
-    if v_matrix_mode == "auto" and apply_compensation:
+    # Only runs when bbox_gated=True (Phase 1). For Phase 2 (bbox_gated=False),
+    # aspect_ratio_rejected pairs are handled lazily in the traversal loop.
+    if v_matrix_mode == "auto" and apply_compensation and bbox_gated:
         rejected_keys: List[str] = []
         for old_abs, canonical_abs in mapping_by_old.items():
             V, dedup_mode = _get_V_cached(old_abs, canonical_abs)
@@ -1014,7 +1017,15 @@ def rewrite_layout(
                         if isinstance(old_local, tuple):
                             old_local = old_local[0]
                         V, dedup_mode = _get_V_cached(old_abs, new_abs)
-                        if dedup_mode in ("geom_only", "identity"):
+                        if V is None:
+                            changes.append({
+                                "prim": prim_path_str,
+                                "kind": "xform_compensation_skipped_unresolved",
+                                "old_asset_abs": old_abs,
+                                "canonical_asset_abs": new_abs,
+                                "dedup_mode": dedup_mode,
+                            })
+                        elif dedup_mode in ("geom_only", "identity"):
                             old_internal = _get_internal_cached(old_abs)
                             canonical_internal = _get_internal_cached(new_abs)
                             new_local = (

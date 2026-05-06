@@ -8,9 +8,9 @@ code_reference:
   - scripts/rewrite_layout_asset_refs_with_compensation.py
   - scripts/placement_pairwise_compare.py
 created_at: 2026-04-29
-updated_at: 2026-04-29
+updated_at: 2026-05-06
 maintainer: OpenCode
-status: design (reviewed, v2)
+status: reviewed, v3
 doc_class: record
 ---
 
@@ -463,3 +463,168 @@ After it finishes:
 
 The parallel pipeline is designed as an **alternative execution strategy** for the
 same C1 workflow, not a replacement that requires workspace conversion.
+
+## Implementation Notes
+
+### CLI Argument Fabrication Bug
+
+During initial implementation of `scripts/c1_phase1_apply_and_audit.py`, the
+subprocess command arguments for all three steps (build mapping, bulk apply,
+placement audit) were **invented** based on what seemed plausible, rather than
+verified against the actual `argparse.ArgumentParser` definitions in the target
+scripts. This caused every subprocess call to fail at runtime with
+`unrecognized arguments` errors, since the fabricated arg names did not match
+anything the target scripts accepted.
+
+**Root cause**: The integration code was written without inspecting the target
+scripts' argparse definitions. Arg names like `--layout-root`, `--out-dir`,
+`--subset-dirs`, `--mode`, `--output-basename`, `--bak-root`, and
+`--no-bbox-gated` were fabricated — none of these exist in the respective
+target scripts.
+
+### Fix Approach
+
+The fix referenced `scripts/c1_autorun_categories.py` as the **gold standard**
+for correct subprocess command construction. This script already shells out to
+the same three target scripts and has been tested through extensive serial runs.
+The fix involved:
+
+1. Reading the actual argparse definitions in each target script.
+2. Cross-referencing every argument against `c1_autorun_categories.py`'s
+   `_run_bbox_gated` and `_build_bbox_audit_cmd` functions (lines 423-420).
+3. Replacing all fabricated args with the correct ones.
+4. Also correcting the subprocess launcher from `sys.executable` to `ISAAC_PY`
+   (Isaac Sim Python wrapper required for pxr imports).
+
+Fixed in commit `0220513`.
+
+### Lesson
+
+**Always verify subprocess command arguments against the target script's
+argparse definitions before writing integration code.** When an existing,
+battle-tested script (like `c1_autorun_categories.py`) already shells out to
+the same targets, use it as the authoritative reference for correct argument
+names and values.
+
+### Phase 2 Function Signature Mismatches
+
+The initial Phase 2 implementation plan called the `rewrite_layout()` function
+and constructed `MappingPair` objects with fabricated signatures. The actual
+`MappingPair` namedtuple (`scripts/rewrite_layout_asset_refs_with_compensation.py`)
+uses fields `(old, canonical)` but the plan's `_load_mapping_from_dict()` constructed
+them as `MappingPair(old_key=..., canonical_key=...)` — nonexistent field names.
+Additionally, `rewrite_layout()` uses keyword-only parameters (`mapping_pairs`,
+`apply_compensation`, `set_instanceable`) that were either missing or incorrectly
+passed as positional args.
+
+Fixed in commit `b3a0636`:
+- Corrected `MappingPair` construction to `MappingPair(old=..., canonical=...)`
+- Added missing required args: `--group-label`, `--set-instanceable`, `--v-matrix-mode`
+- Corrected `rewrite_layout()` call to use keyword arguments matching the actual signature
+
+### Phase 2 Sequential Merge Dead-End
+
+The initial Phase 2 implementation's `_sequential_merge()` function wrote sidecar
+files (with `--out-name`) instead of modifying the scene files in-place. This meant
+the sequential merge produced per-category sidecars just like Phase 1, leaving
+the baseline scene files untouched — a dead-end.
+
+**Fix** (commit `c2bf569`): Changed `_sequential_merge()` to pass the same file
+as both input and output (`--scene-files` with in-place rewrites), copying the
+baseline to a `.baseline` backup first (matching the `_combined_merge()` approach).
+
+### Phase 2 Empty Mapping Guard
+
+Some categories have zero dedup pairs (filtered_mapping.json is empty or doesn't
+exist). The initial Phase 2 code called `rewrite_layout()` with an empty mapping,
+which caused unnecessary no-op rewrites to every scene file. Additionally,
+empty mappings passed to `merge_category_mappings()` added no pairs but were
+logged as successful.
+
+**Fix** (commit `c2bf569`): Added explicit guard in `discover_category_mappings()`
+to skip categories with empty mappings. Added guard in `_combined_merge()` and
+`_sequential_merge()` to skip categories with no mapping file.
+
+### Phase 2 V Matrix Compensation Fix
+
+Phase 2 merges all category sidecars by re-applying the combined mapping to the
+baseline `layout.usd` (same as Phase 1 apply). The initial implementation used
+`v_matrix_mode="none"` as a lazy workaround, which caused visual displacement
+because the merge skipped V matrix compensation for deduped asset placements.
+
+**Fix**: Changed `v_matrix_mode` from `"none"` to `"auto"` in both
+`_combined_merge()` and `_sequential_merge()`, and added `--mode-reports-dir`
+CLI argument to both `c1_phase2_merge_scan_delete.py` and
+`orchestrate_c1_parallel.py` so the mode reports directory
+(`check_reports/test0_rebuilt_dedup/v8_prededup`) is passed through to the
+`rewrite_layout()` call. This allows the V matrix compensation logic to look up
+dedup mode information (geom_only vs shape_invariant vs transitive) and compute
+the correct transform compensation for each asset pair.
+
+`--certificate-jsonl` is NOT passed for Phase 2, because combining certificates
+from all categories is complex. For transitive pairs without certificates,
+`rewrite_layout` records an `xform_compensation_error` (the reference is still
+rewritten, but without V compensation). Since transitive pairs are rare in
+practice, this is an acceptable trade-off.
+
+### Orchestrator Asymmetry: `--mode-reports-dir` Missing from Phase 1
+
+After Fix 5 added `--mode-reports-dir` to Phase 2, the same flag was NOT added to
+`orchestrate_c1_parallel.py:submit_phase1`. Since `c1_build_bulk_mapping_from_dedup_report.py`
+at line 679 raises a hard `SystemExit` when `--bbox-gated` is set without
+`--mode-reports-dir`, every Phase 1 DLC job failed at Step 1.
+
+The root cause is a pattern problem: the orchestrator defines separate arg parsers
+for `submit-phase1` and `submit-phase2` that duplicate argument definitions.
+When a cross-cutting requirement was added to one, the other was forgotten.
+A shared argument group or common function approach would have prevented this.
+
+**Fix** (commit pending):
+- Added `--mode-reports-dir` to `submit-phase1` arg parser
+- Appended `--mode-reports-dir` to `command_args` in `submit_phase1()`
+- Removed 52 stale `phase1_done.json` files (status="failed")
+
+### Specific Arguments: Wrong vs Correct
+
+#### Step 1 – Build Mapping (`c1_build_bulk_mapping_from_dedup_report.py`)
+
+| Wrong (fabricated) | Correct |
+|---|---|
+| `--c1-bulk-dir <path>` | `--out-mapping-json <path>` and `--out-stats-json <path>` |
+| `--out-dir <path>` | `--out-certificate-jsonl <path>`, `--out-certificate-summary-json <path>`, `--out-certified-graph-json <path>` |
+| `--dedup-mode` always passed | Only passed when `--bbox-gated` is set |
+| (missing) `--dataset-root` | Added (required by target script) |
+
+#### Step 2 – Bulk Apply (`c1_bulk_apply_layout_dedup.py`)
+
+| Wrong (fabricated) | Correct |
+|---|---|
+| `--bak-root <path>` | Script does not accept this arg (removed) |
+| `--no-bbox-gated` | Script only has `--bbox-gated` (store_true); no inverse flag exists |
+| `--bbox-gated` / `--no-bbox-gated` ternary | Just pass `--bbox-gated` when enabled (no else branch) |
+| (missing) `--mapping-stats-json` | Added for bbox-gated traceability |
+| (missing) `--certificate-jsonl` | Added for bbox-gated traceability |
+| (missing) `--reject-ledger-jsonl` | Added for bbox-gated reject tracking |
+
+#### Step 3 – Audit (`placement_pairwise_compare.py`)
+
+| Wrong (fabricated) | Correct |
+|---|---|
+| `--layout-root <path>` | `--left-root <path>` and `--right-root <path>` |
+| `--subset-dirs GRScenes100:<path>` | `--scene-list-json <path>` (JSON array of scene IDs) |
+| `--report-dir <path>` | `--out <path>` and `--verdict-out <path>` |
+| `--out-name <name>` | `--right-layout-name <name>` |
+| `--mode audit` | `--left-mode current` and `--right-mode current` |
+| `--output-basename <name>` | Script does not accept this arg (removed) |
+| `--bbox-gated` | Script uses `--certificate-jsonl` for certificate-aware semantics |
+
+#### General Issues
+
+| Wrong | Correct |
+|---|---|
+| `sys.executable` (system Python) | `ISAAC_PY` (Isaac Sim Python wrapper, required for pxr) |
+| Sidecar name: `layout.parallel_{label}.{category}_{policy}_{version}.usd` | `layout.{label}_{category}_{policy}_{version}.usd` (category-specific for parallel safety) |
+| (concurrent write to shared sidecar) | SIGBUS when 25+ jobs write same file | Per-category `out_name` to avoid mmap conflicts |
+| In-place `rewrite_layout` with same `layout_usd` and `out_usd` | Self-truncation: `open(f,'wb')` truncates before `open(f,'rb')` reads | Skip copy when `out_usd == layout_usd` in rewrite_layout |
+| Eager V-matrix pre-filter for all 19374 pairs | ~4h/scene (2× USD open + Procrustes per pair) | Guard with `and bbox_gated`; Phase 2 uses lazy evaluation |
+| Mega-scan includes 8000+ sidecar files | Warning storm + I/O overflow + 8h timeout | `exclude_filename_contains` with group_label pattern |

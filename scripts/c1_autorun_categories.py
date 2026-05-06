@@ -167,6 +167,10 @@ def _is_step6_complete(step6_dir: Path) -> bool:
     return hit_files == 0 and hit_layouts == 0
 
 
+# Public aliases for external consumers (e.g., orchestrator)
+is_step6_complete = _is_step6_complete
+
+
 def _iter_step6_dirs(category: str, c1_bulk_dir: Path) -> list[Path]:
     prefix = f"{category}_bulk_step6"
     dirs: list[Path] = []
