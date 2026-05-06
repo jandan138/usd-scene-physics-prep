@@ -288,12 +288,33 @@ deleting anything.
 
 **Impact**: Typical cleanup removes ~9,000 files and frees ~14GB.
 
+### Post-Processing: MDL Import Fix
+
+The Material directory may contain MDL files with absolute imports
+(`import ::KooPbr::*`) which cause Isaac Sim to render materials as solid red.
+These must be converted to relative imports.
+
+**Action**: Run `scripts/fix_mdl_absolute_imports.py` on `Material/mdl/`.
+
+```bash
+# Dry run
+python scripts/fix_mdl_absolute_imports.py \
+  --mdl-dir <dataset-root>/Material/mdl \
+  --dry-run
+
+# Apply
+python scripts/fix_mdl_absolute_imports.py \
+  --mdl-dir <dataset-root>/Material/mdl
+```
+
 **Verification checklist:**
 - [ ] `GRScenes100/` contains all scenes (99 total)
 - [ ] `GRScenes_assets/` contains all asset categories (114+)
 - [ ] `Material/` directory exists and is a real directory (not symlink)
 - [ ] Scene files can resolve material references (no broken MDL paths)
 - [ ] Each scene directory contains only `layout.usd` (no intermediate files)
+- [ ] MDL files use relative imports (`using .::KooPbr import ...;`)
+- [ ] No residual absolute imports (`import ::KooPbr::...`)
 
 ## Verification Strategy
 

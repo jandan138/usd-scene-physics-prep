@@ -115,10 +115,45 @@ After Phase 2, each scene directory contains dozens of intermediate `layout.*.us
 - **Space freed**: 14GB → 162MB per scene directory
 - **Final state**: Each scene directory contains only `layout.usd`
 
+## Step 5: MDL Import Fix
+
+The Material directory copied from serial workspace contains MDL files with
+absolute imports (`import ::KooPbr::*`) which cause Isaac Sim to render
+materials as solid red. These need to be converted to relative imports.
+
+### Script
+
+`scripts/fix_mdl_absolute_imports.py` — batch-fixes MDL absolute imports.
+
+```bash
+# Dry run
+python scripts/fix_mdl_absolute_imports.py \
+  --mdl-dir /cpfs/user/.../dataset/Material/mdl \
+  --dry-run
+
+# Apply
+python scripts/fix_mdl_absolute_imports.py \
+  --mdl-dir /cpfs/user/.../dataset/Material/mdl
+```
+
+### Execution Results
+
+- **Files scanned**: 1,566
+- **Files modified**: 1,566
+- **Replacements**: 3,683
+- **Residual absolute imports**: 0
+- **Errors**: 0
+
+**11 import patterns replaced**:
+- `import ::KooPbr::KooMtl;` → `using .::KooPbr import KooMtl;`
+- `import ::KooPbr_maps::KooPbr_bitmap;` → `using .::KooPbr_maps import KooPbr_bitmap;`
+- ... (and 9 more patterns)
+
 ## Documentation Updates
 
 1. Update `docs/superpowers/specs/2026-04-29-c1-parallel-pipeline-design.md` to mention:
    - Material directory handling
    - Layout intermediate cleanup
+   - MDL import fix
 2. Create this record document for traceability
 3. Add cleanup script to repo: `scripts/cleanup_layout_intermediates.sh`
