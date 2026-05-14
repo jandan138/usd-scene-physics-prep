@@ -2,7 +2,7 @@
 title: GRScenes OSS Rclone Runbook
 code_reference: skills/oss-rclone-ops/SKILL.md
 created_at: 2026-03-14
-updated_at: 2026-03-14
+updated_at: 2026-05-14
 maintainer: Codex
 status: Active
 ---
@@ -20,6 +20,62 @@ status: Active
 - 当前机器未发现：`ossutil`、`aws`、`s3cmd`
 - 当前可见 remote：`aliyun-a-oss-demo:`
 - 本文统一以 `aliyun-a-oss-demo:` 为准；若历史记录里出现 `aliyun-oss-demo:`，按旧别名或口误处理
+- 2026-05-13 当前 DSW 实例只配置了 `aliyun-beijing-internal:`；本次上传按同一 bucket 与 release prefix 使用该 remote 完成。
+
+## New DSW Quickstart (Zero to Upload)
+
+换了全新的 DSW 实例后，本机配置全部丢失，但 `/cpfs` 上的仓库还在。按以下步骤快速恢复 OSS 上传能力：
+
+### Step 1: 一键安装与配置
+
+```bash
+bash scripts/setup_rclone_for_oss.sh
+```
+
+该脚本会自动完成以下操作：
+
+1. **检测现有 rclone**：如果已安装但版本 < v1.68.1，会提示并升级
+2. **安装 rclone v1.68.1**：支持 Alibaba Cloud OSS provider
+3. **写入配置**：创建 `~/.config/rclone/rclone.conf`，使用**内网 endpoint**
+4. **验证连通性**：测试 bucket 是否可达
+
+### Step 2: 验证 remote 存在
+
+```bash
+rclone listremotes
+# 预期输出包含: aliyun-a-oss-demo:
+```
+
+### Step 3: 执行上传
+
+```bash
+LOCAL_ROOT='/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset'
+RELEASE_NAME='GRScenes-test1-parallel-dedup-20260506'
+REMOTE='aliyun-a-oss-demo:'
+BUCKET_ROOT='pjlab-bjpai-zhuzihou-assets'
+
+rclone copy "${LOCAL_ROOT}" "${REMOTE}${BUCKET_ROOT}/${RELEASE_NAME}" \
+  --transfers 16 \
+  --checkers 32 \
+  --stats 10s \
+  --progress
+```
+
+### Step 4: 校验
+
+```bash
+rclone check "${LOCAL_ROOT}" "${REMOTE}${BUCKET_ROOT}/${RELEASE_NAME}" --one-way
+```
+
+### 为什么需要这个脚本？（踩坑记录）
+
+| 坑 | 现象 | 解决方案 |
+|---|---|---|
+| **apt 版本太老** | `apt install rclone` 装的是 v1.53.3，不支持 Alibaba Cloud OSS provider | 手动安装 v1.68.1+ |
+| **外网下载极慢** | DSW 外网 ~20 KB/s，21MB 的包要下 15+ 分钟 | 脚本支持预下载包检测，或耐心等待 |
+| **IP 白名单** | 公网 endpoint `oss-cn-beijing.aliyuncs.com` 返回 403 | 使用**内网 endpoint** `oss-cn-beijing-internal.aliyuncs.com` |
+| **代理变量导致 hang** | 非交互 shell 中 rclone 创建 backend 后卡住 | 执行时 `env -u HTTP_PROXY -u HTTPS_PROXY ...` |
+| **权限不足** | `AccessDenied` 错误 | 确认 AK/SK 对应 RAM 用户有 bucket 读写权限 |
 
 ## Safety Rules
 
@@ -227,6 +283,44 @@ timeout 20s rclone lsf "${REMOTE}${BUCKET_ROOT}" -vv
 
 ## Recorded Release Uploads
 
+### 2026-05-13: `GRScenes-test1-parallel-dedup-20260506`
+
+- 本地源：`/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset`
+- 远端目标：`aliyun-beijing-internal:pjlab-bjpai-zhuzihou-assets/GRScenes-test1-parallel-dedup-20260506`
+- 放置策略：bucket root 顶层新发布目录，不放到 `GRScenes/` 子目录
+- remote 说明：
+  - runbook canonical remote 为 `aliyun-a-oss-demo:`，但当前 DSW 的 `rclone listremotes` 仅返回 `aliyun-beijing-internal:`
+  - `rclone backend features aliyun-beijing-internal:` 成功，确认该 remote 是 bucket-based S3 backend，支持 `Copy`、`ListR` 与 MD5 hash
+- 预检结论：
+  - 本地源目录存在
+  - 本地顶层目录确认只有 `GRScenes100/`、`GRScenes_assets/`、`Material/`
+  - bucket-root `rclone lsf aliyun-beijing-internal:pjlab-bjpai-zhuzihou-assets` 可正常列举
+  - 对精确目标前缀执行无代理 `rclone lsf`，得到空输出并正常退出，按“目标不存在或为空”处理
+- 执行命令：
+
+```bash
+LOCAL_ROOT='/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset'
+REMOTE_PATH='aliyun-beijing-internal:pjlab-bjpai-zhuzihou-assets/GRScenes-test1-parallel-dedup-20260506'
+
+env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy -u ALL_PROXY -u all_proxy \
+  rclone copy "$LOCAL_ROOT" "$REMOTE_PATH" \
+  --transfers 16 \
+  --checkers 32 \
+  --stats 30s \
+  --stats-one-line \
+  --progress
+```
+
+- 结果：
+  - `rclone copy` 退出码为 `0`
+  - 最终传输总量 `108.107 GBytes`
+  - 远端对象数 `341311`
+- 验收：
+  - 远端顶层列举结果为 `GRScenes100/`、`GRScenes_assets/`、`Material/`
+  - `rclone size` 结果为 `341311` objects，`108.107 GBytes (116079065243 Bytes)`
+  - `rclone check --one-way` 退出码为 `0`
+  - `rclone check --one-way` 结果为 `0 differences found`，`341311 matching files`
+
 ### 2026-03-14: `GRScenes-test0-rebuilt-standard-20260314`
 
 - 本地源：`/cpfs/shared/simulation/zhuzihou/dev/usd-scene-physics-prep/GRScenes-test0-rebuilt`
@@ -248,4 +342,4 @@ timeout 20s rclone lsf "${REMOTE}${BUCKET_ROOT}" -vv
 
 ## Skill
 
-本仓库已提供配套 skill：`skills/oss-rclone-ops/`。当前机器同步安装了一份同名 skill 到本机 Codex skills 目录，供后续直接触发使用。
+本机已安装配套 skill：`oss-rclone-ops`（位于 `~/.config/opencode/skills/oss-rclone-ops/`）。该 skill 提供了项目级的 OSS 操作规范和安全检查清单。
