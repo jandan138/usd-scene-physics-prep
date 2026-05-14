@@ -5,10 +5,11 @@ code_reference:
   - scripts/check_usd_external_assets.py
   - scripts/sync_missing_mdl_textures.py
   - scripts/scan_usd_for_asset_paths.py
+  - scripts/oneoff_clear_invalid_asset_shells.py
 created_at: 2026-05-14
 updated_at: 2026-05-14
 maintainer: Codex
-status: investigation-complete
+status: asset-shells-resolved-material-open
 ---
 
 # Test0 Parallel Dataset Asset and Material Integrity Investigation
@@ -292,6 +293,105 @@ Add pre-upload checks before OSS publication:
 3. Material gate:
    - run `scripts/check_usd_external_assets.py` across all layouts and fail on missing `Material/mdl` paths
    - run `scripts/sync_missing_mdl_textures.py` and fail on MDL-internal missing textures
+
+## Resolution Applied 2026-05-14
+
+The missing USD/PNG asset-shell problem has been resolved in the current parallel dataset by removing the invalid scene references and moving the four annotation-only asset directories out of the final dataset.
+
+Script added:
+
+`scripts/oneoff_clear_invalid_asset_shells.py`
+
+Test added:
+
+`tests/test_oneoff_clear_invalid_asset_shells.py`
+
+Dry-run command:
+
+```bash
+python scripts/oneoff_clear_invalid_asset_shells.py \
+  --dataset-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset \
+  --dry-run \
+  --quarantine-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514 \
+  --report check_reports/test0_parallel_invalid_asset_shells_dryrun_20260514.json
+```
+
+Dry-run result:
+
+| metric | value |
+| --- | ---: |
+| layouts scanned | 99 |
+| stages planned | 4 |
+| references planned | 15 |
+| asset shells found | 4 |
+
+Apply command:
+
+```bash
+python scripts/oneoff_clear_invalid_asset_shells.py \
+  --dataset-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset \
+  --apply \
+  --backup-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shell_cleanup_20260514 \
+  --quarantine-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514 \
+  --report check_reports/test0_parallel_invalid_asset_shells_apply_20260514.json
+```
+
+Apply result:
+
+| metric | value |
+| --- | ---: |
+| references removed | 15 |
+| touched layout stages | 4 |
+| prims touched | 15 |
+| asset shells quarantined | 4 |
+
+Layout backups:
+
+```text
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shell_cleanup_20260514/layouts/GRScenes100/commercial/MVSGSAIKTKJ66AABAAAAADY8_usd/layout.usd
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shell_cleanup_20260514/layouts/GRScenes100/commercial/MVSYCXYKTKJ66AABAAAAAAA8_usd/layout.usd
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shell_cleanup_20260514/layouts/GRScenes100/home/MVUCSQAKTKJ5EAABAAAAABY8_usd/layout.usd
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shell_cleanup_20260514/layouts/GRScenes100/home/MWAX5JYKTKJZ2AABAAAAADI8_usd/layout.usd
+```
+
+Quarantined asset shells:
+
+```text
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514/GRScenes_assets/cabinet/b98d6ccbeb75dfdeb60e27649a5b055a
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514/GRScenes_assets/other/d41d8cd98f00b204e9800998ecf8427e
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514/GRScenes_assets/person/351316cbb083f9f4df0cccd60cbfa848
+/cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514/GRScenes_assets/person/d41d8cd98f00b204e9800998ecf8427e
+```
+
+Post-check command:
+
+```bash
+python scripts/oneoff_clear_invalid_asset_shells.py \
+  --dataset-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/dataset \
+  --dry-run \
+  --quarantine-root /cpfs/user/zhuzihou/assets/dedup_workspaces/test0_transitive_apply_parallel/bak_invalid_asset_shells_20260514 \
+  --report check_reports/test0_parallel_invalid_asset_shells_postcheck_20260514.json
+```
+
+Post-check result:
+
+| metric | value |
+| --- | ---: |
+| layouts scanned | 99 |
+| references planned | 0 |
+| references removed | 0 |
+| touched stages | 0 |
+| asset shells found in final dataset | 0 |
+
+Independent verification:
+
+- Exact USD API scan over all 99 layouts found 0 authored references to the four invalid asset USD paths.
+- Opening all 99 layouts emitted 0 stderr lines containing the three target UIDs.
+- Full `GRScenes_assets/<category>/<uid>` scan found 0 asset dirs missing `usd/<uid>.usd`.
+- Full four-view PNG scan found 0 asset dirs missing `front.png`, `left.png`, `back.png`, or `right.png`.
+- Annotation-only direct asset shell scan found 0 remaining entries.
+
+The Material/MDL issues recorded above were not changed by this asset-shell cleanup and remain open.
 
 ## Appendix A: Unique Missing MDL Texture Paths
 
