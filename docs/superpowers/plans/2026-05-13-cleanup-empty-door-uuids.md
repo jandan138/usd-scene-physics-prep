@@ -1,3 +1,11 @@
+---
+title: Cleanup Empty door_UUID Directories Implementation Plan
+created_at: 2026-05-13
+updated_at: 2026-05-13
+maintainer: Codex
+status: planned
+---
+
 # Cleanup Empty door_UUID Directories Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -1,3 +1,14 @@
+---
+title: Parallel Workspace Asset Category Underscore Normalization Implementation Plan
+code_reference:
+  - scripts/merge_asset_categories_test1.py
+  - tests/test_parallel_workspace_underscore_normalize.py
+created_at: 2026-05-06
+updated_at: 2026-05-06
+maintainer: Codex
+status: completed
+---
+
 # Parallel Workspace Asset Category Underscore Normalization Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

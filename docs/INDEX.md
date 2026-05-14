@@ -1,6 +1,6 @@
 # Project Documentation Index
 
-> Generated at: 2026-05-07
+> Generated at: 2026-05-14
 
 ## Primary Docs
 
@@ -88,10 +88,11 @@
 
 | Document | Status | Last Updated | Related Code |
 | :--- | :--- | :--- | :--- |
-| [2026-05-06-parallel-workspace-underscore-normalization.md](superpowers/plans/2026-05-06-parallel-workspace-underscore-normalization.md) | Unknown | N/A | - |
+| [Cleanup Empty door_UUID Directories Implementation Plan](superpowers/plans/2026-05-13-cleanup-empty-door-uuids.md) | planned | 2026-05-13 | - |
 | [Dataset Completeness Fix - Material Directory Copy](superpowers/records/2026-05-05-dataset-completeness-fix.md) | design | 2026-05-06 | [`c1_phase2_merge_scan_delete.py`](scripts/c1_phase2_merge_scan_delete.py), [`orchestrate_c1_parallel.py`](scripts/orchestrate_c1_parallel.py) |
 | [Dataset Completeness Fix Implementation Plan](superpowers/plans/2026-05-05-dataset-completeness-fix.md) | completed | 2026-05-05 | [`c1_phase2_merge_scan_delete.py`](scripts/c1_phase2_merge_scan_delete.py), [`orchestrate_c1_parallel.py`](scripts/orchestrate_c1_parallel.py) |
 | [Docs Reorganization Design](superpowers/specs/2026-04-10-docs-reorganization-design.md) | approved | 2026-04-10 | [`docs`](docs/), [`INDEX.md`](docs/INDEX.md), [`index.md`](docs/index.md), [`doc_manager.py`](scripts/doc_manager.py) |
+| [Parallel Workspace Asset Category Underscore Normalization Implementation Plan](superpowers/plans/2026-05-06-parallel-workspace-underscore-normalization.md) | completed | 2026-05-06 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py), [`test_parallel_workspace_underscore_normalize.py`](tests/test_parallel_workspace_underscore_normalize.py) |
 | [Transitive BBox Gating Design](superpowers/specs/2026-04-10-transitive-bbox-gating-design.md) | approved | 2026-04-10 | [`compute_vertex_transform.py`](scripts/compute_vertex_transform.py), [`c1_build_bulk_mapping_from_dedup_report.py`](scripts/c1_build_bulk_mapping_from_dedup_report.py), [`placement_pairwise_compare.py`](scripts/placement_pairwise_compare.py), [`c1_autorun_categories.py`](scripts/c1_autorun_categories.py), [`test_compute_vertex_transform.py`](tests/test_compute_vertex_transform.py), [`test_bbox_gated_mapping.py`](tests/test_bbox_gated_mapping.py), [`test_placement_pairwise_compare_bbox_gate.py`](tests/test_placement_pairwise_compare_bbox_gate.py) |
 
 ## Records
@@ -126,8 +127,8 @@
 | [2026-01-20 — Generate layout.json for Blender (scene subset)](records/changes/2026-01-20_layout_json_blender.md) | completed | 2026-01-20 | [`generate_layout_json_from_usd.py`](scripts/generate_layout_json_from_usd.py) |
 | [2026-01-23 — GRScenes-test1 类别别名合并（coffeemaker/sofachair/tvstand）](records/changes/2026-01-23_test1_category_alias_merge.md) | completed | 2026-01-23 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py) |
 | [2026-02-09 — GRScenes-test1: 目录别名统一、door_* 缺失引用清理、Material/mdl 缺失排查](records/changes/2026-02-09_test1_missing_cleanup.md) | completed | 2026-02-09 | [`oneoff_clear_missing_door_references.py`](scripts/oneoff_clear_missing_door_references.py), [`oneoff_fix_missing_mdl_assets.py`](scripts/oneoff_fix_missing_mdl_assets.py) |
+| [2026-05-06 - Parallel Workspace: Asset Category Underscore Normalization](records/changes/2026-05-06_parallel_workspace_underscore_normalize.md) | completed | 2026-05-06 | [`merge_asset_categories_test1.py`](scripts/merge_asset_categories_test1.py) |
 | [2026-05-06 — Parallel Workspace: door_UUID Missing Reference Cleanup](records/changes/2026-05-06_door_uuid_cleanup.md) | completed | 2026-05-06 | [`oneoff_clear_missing_door_references.py`](scripts/oneoff_clear_missing_door_references.py) |
-| [2026-05-06_parallel_workspace_underscore_normalize.md](records/changes/2026-05-06_parallel_workspace_underscore_normalize.md) | Unknown | N/A | - |
 | [Add allowlist-aware center gap check to gate scripts](records/changes/2026-03-15_gate_allowlist_support.md) | active | 2026-03-15 | [`check_normalize_gate_from_reports.py`](scripts/check_normalize_gate_from_reports.py), [`build_normalize_gate_verdict.py`](scripts/build_normalize_gate_verdict.py), [`assemble_normalize_gate_bundle.py`](scripts/assemble_normalize_gate_bundle.py), [`orchestrate_test0_rebuilt_normalize.py`](scripts/orchestrate_test0_rebuilt_normalize.py) |
 | [BBox-Gated Transitive Mapping Admission](records/changes/2026-04-13_bbox_gated_transitive_mapping.md) | active | 2026-04-13 | [`c1_build_bulk_mapping_from_dedup_report.py`](scripts/c1_build_bulk_mapping_from_dedup_report.py) |
 | [Baseline Failure Fix Review](records/changes/2026-04-13_baseline_failure_fix_review.md) | active | 2026-04-13 | [`compute_vertex_transform.py`](scripts/compute_vertex_transform.py), [`test_compute_vertex_transform.py`](tests/test_compute_vertex_transform.py), [`2026-04-13_pair_certificate_numpy_v_path.md`](docs/records/changes/2026-04-13_pair_certificate_numpy_v_path.md), [`2026-04-10_transitive_bbox_gating.md`](docs/records/changes/2026-04-10_transitive_bbox_gating.md) |
@@ -244,6 +245,7 @@
 | [Task 1 Transitive BBox Gating Code Review](records/research/operations/2026-04-13-task1-transitive-bbox-gating-code-review.md) | active | 2026-04-13 | [`compute_vertex_transform.py`](scripts/compute_vertex_transform.py), [`test_compute_vertex_transform.py`](tests/test_compute_vertex_transform.py) |
 | [Team 工具对比分析](records/research/team_tools_comparison.md) | complete | 2026-04-03 | [`Claude Code Agent SDK`](Claude Code Agent SDK) |
 | [Team 工具通俗讲解](records/research/team_tools_guide.md) | complete | 2026-04-03 | - |
+| [Test0 Parallel Dataset Asset and Material Integrity Investigation](records/research/2026-05-14_test0_parallel_dataset_integrity_investigation.md) | investigation-complete | 2026-05-14 | [`check_usd_external_assets.py`](scripts/check_usd_external_assets.py), [`sync_missing_mdl_textures.py`](scripts/sync_missing_mdl_textures.py), [`scan_usd_for_asset_paths.py`](scripts/scan_usd_for_asset_paths.py) |
 | [Tier-2 Gate Threshold Analysis for Topo Precheck Recovery](records/research/operations/tier2_gate_threshold_analysis.md) | complete | 2026-04-03 | [`analyze_tier2_gate_thresholds.py`](scripts/analyze_tier2_gate_thresholds.py) |
 | [Tier2 Audit 40-Category Failure Investigation](records/research/operations/tier2_audit_40cat_failure_investigation_20260407.md) | active | 2026-04-10 | [`placement_pairwise_compare.py`](scripts/placement_pairwise_compare.py), [`c1_autorun_categories.py`](scripts/c1_autorun_categories.py) |
 | [Topo BBox Precheck Rejects — Recovery Investigation (bottle)](records/research/operations/topo_precheck_recovery_investigation_20260404.md) | draft | 2026-04-04 | [`debug_topo_precheck_recovery_spike.py`](scripts/debug_topo_precheck_recovery_spike.py), [`compute_vertex_transform.py`](scripts/compute_vertex_transform.py) |

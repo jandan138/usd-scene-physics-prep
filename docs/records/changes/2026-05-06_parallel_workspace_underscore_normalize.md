@@ -1,5 +1,5 @@
 ---
-title: '2026-05-06 — Parallel Workspace: Asset Category Underscore Normalization'
+title: '2026-05-06 - Parallel Workspace: Asset Category Underscore Normalization'
 code_reference: scripts/merge_asset_categories_test1.py
 created_at: '2026-05-06'
 updated_at: '2026-05-06'
@@ -7,7 +7,7 @@ maintainer: Claude
 status: completed
 ---
 
-# 2026-05-06 — Parallel Workspace: Asset Category Underscore Normalization
+# 2026-05-06 - Parallel Workspace: Asset Category Underscore Normalization
 
 ## Background
 The parallel C1 deduplication workspace (`test0_transitive_apply_parallel/dataset/`) contained both underscore and non-underscore style category folders (e.g., `tvstand` + `tv_stand`, `coffeemaker` + `coffee_maker`). This was inherited from the original dataset and persisted through deduplication.
@@ -55,7 +55,7 @@ Results: `99 / 99` scenes validated, `104` missing (pre-existing Material/mdl an
   --report check_reports/parallel_category_merge_postcheck.json
 ```
 
-Results: `move_count: 0`, `usd_rewrite_preview_count: 0` → fully converged.
+Results: `move_count: 0`, `usd_rewrite_preview_count: 0`; fully converged.
 
 ## TDD Validation
 Added `tests/test_parallel_workspace_underscore_normalize.py` which verifies:
