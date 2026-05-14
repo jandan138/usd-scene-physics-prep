@@ -104,5 +104,41 @@ Implemented in:
 
 `aeb83ed fix: clear invalid asset shell references`
 
+## OSS Refresh
+
+After the dataset cleanup, the existing OSS release prefix was refreshed in
+place:
+
+```text
+aliyun-beijing-internal:pjlab-bjpai-zhuzihou-assets/GRScenes-test1-parallel-dedup-20260506
+```
+
+This was not a full re-copy of the 108GB package. The upload used a targeted
+incremental update:
+
+- Uploaded the 4 changed `layout.usd` files with `rclone copyto`.
+- Deleted the 4 stale remote annotation JSON objects that used to represent the
+  invalid asset shells.
+
+Remote stale objects removed:
+
+```text
+GRScenes_assets/cabinet/b98d6ccbeb75dfdeb60e27649a5b055a/b98d6ccbeb75dfdeb60e27649a5b055a_annotation.json
+GRScenes_assets/other/d41d8cd98f00b204e9800998ecf8427e/d41d8cd98f00b204e9800998ecf8427e_annotation.json
+GRScenes_assets/person/351316cbb083f9f4df0cccd60cbfa848/351316cbb083f9f4df0cccd60cbfa848_annotation.json
+GRScenes_assets/person/d41d8cd98f00b204e9800998ecf8427e/d41d8cd98f00b204e9800998ecf8427e_annotation.json
+```
+
+Upload verification:
+
+```text
+rclone check: 0 differences found
+rclone check: 341307 matching files
+```
+
+The previous OSS upload had 341311 matching files. The new count is 4 lower
+because the four invalid annotation-only shell JSON objects were intentionally
+removed from the final dataset and from OSS.
+
 This cleanup does not address the separate Material/MDL missing dependency
 issue, which remains tracked in the investigation record.
